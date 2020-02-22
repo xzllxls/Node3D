@@ -129,10 +129,10 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         _start_time = time.time()
 
-        # try:
-        self.run()
-        # except Exception as error:
-        #    self.error(error)
+        try:
+            self.run()
+        except Exception as error:
+            self.error(error)
 
         self._autoCook = _tmp
 
@@ -340,5 +340,7 @@ class AutoNode(BaseNode, QtCore.QObject):
             if 'children' not in p.keys():
                 prop_name = p['name']
                 p['value'] = self.get_property(prop_name)
+                if p['type'] == 'action':
+                    p['node'] = self
             else:
                 self.__update_params(p['children'])

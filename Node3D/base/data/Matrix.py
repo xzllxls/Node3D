@@ -73,7 +73,7 @@ class matrix3x3(object):
         try:
             return np.linalg.inv(self._data)
         except:
-            return np.zeros((3,3))
+            return np.zeros((3, 3))
 
     def rotateVector(self, vec):
         return vector.fromList(np.dot(self._data, vec))
@@ -209,6 +209,7 @@ class matrix3x3(object):
         m[2][1] = scale * dir.y() * dir.z()
         m[2][2] = 1 + scale * dir.z() * dir.z()
         return matrix3x3(m)
+
 
 class matrix4x4(object):
     def __init__(self, _data=None):
@@ -374,20 +375,20 @@ class matrix4x4(object):
 
     @staticmethod
     def from_projection(point, normal, direction=None,
-                          perspective=None, pseudo=False):
+                        perspective=None, pseudo=False):
         M = np.identity(4)
         point = np.array(point[:3], dtype=np.float64, copy=False)
         normal = np.array(normal.normalized())
         if perspective is not None:
             # perspective projection
             perspective = np.array(perspective[:3], dtype=np.float64,
-                                      copy=False)
-            M[0, 0] = M[1, 1] = M[2, 2] = np.dot(perspective-point, normal)
+                                   copy=False)
+            M[0, 0] = M[1, 1] = M[2, 2] = np.dot(perspective - point, normal)
             M[:3, :3] -= np.outer(perspective, normal)
             if pseudo:
                 # preserve relative depth
                 M[:3, :3] -= np.outer(normal, normal)
-                M[:3, 3] = np.dot(point, normal) * (perspective+normal)
+                M[:3, 3] = np.dot(point, normal) * (perspective + normal)
             else:
                 M[:3, 3] = np.dot(point, normal) * perspective
             M[3, :3] = -normal
@@ -403,7 +404,7 @@ class matrix4x4(object):
             M[:3, :3] -= np.outer(normal, normal)
             M[:3, 3] = np.dot(point, normal) * normal
         return matrix4x4(M)
-    
+
     @staticmethod
     def from_scale(factor, origin=None, direction=None):
         '''Return matrix to scale by factor around origin in direction.'''
@@ -411,9 +412,9 @@ class matrix4x4(object):
         if direction is None:
             # uniform scaling
             M = np.array(((factor, 0.0, 0.0, 0.0),
-                             (0.0, factor, 0.0, 0.0),
-                             (0.0, 0.0, factor, 0.0),
-                             (0.0, 0.0, 0.0, 1.0)), dtype=np.float64)
+                          (0.0, factor, 0.0, 0.0),
+                          (0.0, 0.0, factor, 0.0),
+                          (0.0, 0.0, 0.0, 1.0)), dtype=np.float64)
             if origin is not None:
                 M[:3, 3] = origin[:3]
                 M[:3, 3] *= 1.0 - factor
@@ -486,7 +487,7 @@ class matrix4x4(object):
 
     @staticmethod
     def from_compose(scale=None, shear=None, angles=None, translate=None,
-                       perspective=None):
+                     perspective=None):
         M = np.identity(4)
         if perspective is not None:
             P = np.identity(4)
@@ -582,7 +583,6 @@ class matrix4x4(object):
         ymax = near * np.tan(fovy * np.pi / 360.0)
         xmax = ymax * aspect
         return matrix4x4.create_perspective_projection_from_bounds(-xmax, xmax, -ymax, ymax, near, far)
-
 
 
 if __name__ == "__main__":

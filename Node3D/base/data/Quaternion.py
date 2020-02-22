@@ -222,7 +222,7 @@ if __name__ == '__main__':
     a = vector(1, 0, 1)
     #a.normalize()
     #print(a)
-
+    quat = quaternion.from_axi_angle(vector(0,1,0),90)
     b = vector(0,1,0)
 
     print(b / 5)
