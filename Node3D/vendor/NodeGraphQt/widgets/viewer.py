@@ -247,9 +247,14 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         items = self._items_near(map_pos, None, 20, 20)
         nodes = [i for i in items if isinstance(i, AbstractNodeItem)]
-        pipes = [i for i in items if isinstance(i, Pipe)]
+        # pipes = [i for i in items if isinstance(i, Pipe)]
 
         if nodes:
+            if self.MMB_state:
+                pass
+                # TODO: show panel
+                # self.show_panel(nodes[0])
+
             self.MMB_state = False
 
         # toggle extend node selection.
@@ -289,6 +294,12 @@ class NodeViewer(QtWidgets.QGraphicsView):
             self.RMB_state = False
         elif event.button() == QtCore.Qt.MiddleButton:
             self.MMB_state = False
+
+        if self.MMB_state:
+            pass
+            # TODO: close pannel
+            # if self.panel is opened
+            #        self.panel.close()
 
         # hide pipe slicer.
         if self._SLICER_PIPE.isVisible():
