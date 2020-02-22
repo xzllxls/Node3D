@@ -16,7 +16,6 @@ TYPE_MAP = {
     NODE_PROP_FLOAT: 'float',
     NODE_PROP_INT: 'int',
     NODE_PROP_BUTTON: 'action',
-    'colorRamp': 'colorRamp',
 }
 
 

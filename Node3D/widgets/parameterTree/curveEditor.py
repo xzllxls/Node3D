@@ -1,8 +1,5 @@
-from Qt.QtGui import *
-from Qt.QtWidgets import *
-from Qt.QtCore import *
+from Qt import QtGui, QtCore, QtWidgets
 from scipy.interpolate import interp1d
-import numpy as np
 
 
 def build_curve_ramp(values, kind):
@@ -121,14 +118,14 @@ class Curve(object):
         return "[" + ','.join(points) + "]"
 
 
-class CurveWidget(QWidget):
-    valueChangeFinished = Signal(object)
-    valueChanged = Signal(object)
+class CurveWidget(QtWidgets.QWidget):
+    valueChangeFinished = QtCore.Signal(object)
+    valueChanged = QtCore.Signal(object)
 
     def __init__(self, parent=None):
         """ Constructs the CurveWidget, we start with an initial curve """
-        QWidget.__init__(self, parent)
-        self.setFocusPolicy(Qt.ClickFocus)
+        super(CurveWidget, self).__init__(parent)
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.curve = Curve()
 
         # Widget render constants
@@ -158,7 +155,7 @@ class CurveWidget(QWidget):
 
     def paintEvent(self, e):
         """ Internal QT paint event, draws the entire widget """
-        qp = QPainter()
+        qp = QtGui.QPainter()
         qp.begin(self)
         self._draw(qp)
         qp.end()
@@ -239,7 +236,7 @@ class CurveWidget(QWidget):
     def keyPressEvent(self, event):
         """ Internal keypress handler """
         # Delete anchor point
-        if event.key() == Qt.Key_Delete:
+        if event.key() == QtCore.Qt.Key_Delete:
             self.delete_current_point()
 
     def delete_current_point(self):
@@ -276,8 +273,8 @@ class CurveWidget(QWidget):
         height = self.height()
 
         # Draw field background
-        painter.setPen(QColor(70, 70, 70))
-        painter.setBrush(QColor(40, 40, 40))
+        painter.setPen(QtGui.QColor(70, 70, 70))
+        painter.setBrush(QtGui.QColor(40, 40, 40))
         painter.drawRect(0, 0, width - 1, height - 1)
 
         if self.show_unit:
@@ -288,19 +285,19 @@ class CurveWidget(QWidget):
             line_spacing_y = height / num_horiz_lines
 
             # Draw vertical lines
-            painter.setPen(QColor(50, 50, 50))
+            painter.setPen(QtGui.QColor(50, 50, 50))
             for i in range(num_vert_lines + 1):
                 line_pos = i * line_spacing_x - 1
                 painter.drawLine(line_pos, 0, line_pos, height)
 
             # Draw horizontal lines
-            # painter.setPen(QColor(200, 200, 200))
+            # painter.setPen(QtGui.QColor(200, 200, 200))
             for i in range(num_horiz_lines):
                 line_pos = height - i * line_spacing_y
                 painter.drawLine(0, line_pos, width, line_pos)
 
             # Draw vetical legend labels
-            painter.setPen(QColor(70, 70, 70))
+            painter.setPen(QtGui.QColor(70, 70, 70))
             for i in range(num_horiz_lines):
                 if i > 0:
                     line_pos = height - i * line_spacing_y
@@ -314,7 +311,7 @@ class CurveWidget(QWidget):
                 painter.drawText(line_pos - 14, height - 10, "{:.1f}".format(i * 0.1))
 
         # Draw curve
-        painter.setPen(QColor(*self.curve.color))
+        painter.setPen(QtGui.QColor(*self.curve.color))
         last_value = 0
         for i in range(width):
             rel_offset = i / (width - 1.0)
@@ -326,47 +323,34 @@ class CurveWidget(QWidget):
             last_value = curve_height
 
         # Draw the CV points of the curve
-        painter.setBrush(QColor(240, 240, 240))
+        painter.setBrush(QtGui.QColor(240, 240, 240))
 
         for cv_index, (x, y) in enumerate(self.curve.control_points):
             offs_x = x * width
             offs_y = (1 - y) * height
 
             if self._selected_point and self._selected_point == cv_index:
-                painter.setPen(QColor(255, 0, 0))
+                painter.setPen(QtGui.QColor(255, 0, 0))
             else:
-                painter.setPen(QColor(100, 100, 100))
+                painter.setPen(QtGui.QColor(100, 100, 100))
             painter.drawRect(
                 offs_x - self._cv_point_size, offs_y - self._cv_point_size,
                 2 * self._cv_point_size, 2 * self._cv_point_size)
 
         # Draw selected value
         if self._drag_point:
-            painter.setBrush(QColor(200, 200, 200))
-            painter.setPen(QColor(200, 200, 200))
+            painter.setBrush(QtGui.QColor(200, 200, 200))
+            painter.setPen(QtGui.QColor(200, 200, 200))
             offs_x = max(0, min(width + 10, self._drag_value * width - 19))
             painter.drawText(offs_x + 7, height - 20, "{:.2f} , {:.2f}".format(self._drag_value, self._height))
-            painter.setPen(QColor(150, 150, 150))
+            painter.setPen(QtGui.QColor(150, 150, 150))
             painter.drawLine(offs_x + 19, 0, offs_x + 19, height + 5)
 
 
-def interp():
-    x = np.linspace(0, 10, 11)
-    # x=[  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.  10.]
-    y = np.sin(x)
-    xnew = np.linspace(0, 10, 5)
-    for kind in ["nearest", "zero", "slinear", "quadratic", "cubic"]:  # 插值方式
-        # "nearest","zero"为阶梯插值
-        # slinear 线性插值
-        # "quadratic","cubic" 为2阶、3阶B样条曲线插值
-        f = interp1d(x, y, kind=kind)
-        ynew = f([0,1,2,3])
-        print(type(ynew))
+if __name__ == '__main__':
+    app = QtWidgets.QApplication()
+    editor = CurveWidget()
 
-
-# app = QApplication(sys.argv)
-# editor = CurveWidget()
-#
-# editor.show()
-# print(editor.value())
-# app.exec_()
+    editor.show()
+    print(editor.value())
+    app.exec_()

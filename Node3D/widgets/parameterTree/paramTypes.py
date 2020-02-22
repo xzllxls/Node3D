@@ -243,7 +243,7 @@ class ColorRampParameterItem(pTypes.WidgetParameterItem):
             self.selected(False)
 
     def makeWidget(self):
-        from pyqtgraph.widgets.GradientWidget import GradientWidget
+        from ...vendor.pyqtgraph.widgets.GradientWidget import GradientWidget
         self.ramp = GradientWidget(orientation='bottom', height=40)
         self.ramp.setMaximumHeight(65)
         self.hideWidget = False

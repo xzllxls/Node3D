@@ -1,10 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import sys
-from Node3D.vendor.NodeGraphQt import *
-from Node3D.vendor.NodeGraphQt.constants import *
-from PySide2 import QtWidgets
-from PySide2.QtGui import *
+import os
+from Node3D.vendor.NodeGraphQt import BackdropNode
+from PySide2 import QtWidgets, QtGui
 from Node3D.widgets.mainWindow import mainWindow
 import inspect
 import importlib
@@ -23,19 +22,19 @@ class CommonHelper:
 
 def run(nodes=[]):
     app = QtWidgets.QApplication([])
-    app.setFont(QFont("Consolas", 9))
+    app.setFont(QtGui.QFont("Consolas", 9))
     win = mainWindow()
 
     # styleFile = './Node3D/vendor/qss/Obit.qss'
     # qssStyle = CommonHelper.readQss(styleFile)
     # win.setStyleSheet(qssStyle)
     app.setStyleSheet(qdarkstyle.load_stylesheet_from_environment())
-    # app.setStyleSheet(mainStyle)
 
     # create node graph.
     graph = win.graph
 
     # registered nodes.
+    BackdropNode.__identifier__ = 'Utility'
     nodes.append(BackdropNode)
     for n in nodes:
         graph.register_node(n)
@@ -44,7 +43,7 @@ def run(nodes=[]):
 
     win.node_tree.update()
     win.show()
-    win.closed.connect(lambda:app.exit(0))
+    win.closed.connect(lambda: app.exit(0))
     sys.exit(app.exec_())
 
 
