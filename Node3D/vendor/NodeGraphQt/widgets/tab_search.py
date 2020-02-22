@@ -163,8 +163,10 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
             return match
 
         self._searched_actions = [action for action in self._actions if match(action)]
-
         self.SearchMenu.addActions(self._searched_actions)
+
+        if self._searched_actions:
+            self.SearchMenu.setActiveAction(self._searched_actions[0])
 
     def _clear_actions(self):
         for action in self._searched_actions:
@@ -262,4 +264,3 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
             self.build_menu_tree()
 
         self._show()
-
