@@ -118,9 +118,9 @@ class mainWindow(QMainWindow):
         self.graph.node_double_clicked.connect(self.update_data)
         self.graph.master = self
 
-        self.properties_bin = NodePropBin(node_graph=self.graph)
-        self.properties_bin.setWindowFlags(QtCore.Qt.Tool)
-        self.properties_bin.set_limit(2)
+        self.propertiesBin = NodePropBin(node_graph=self.graph)
+        self.propertiesBin.setWindowFlags(QtCore.Qt.Tool)
+        self.propertiesBin.set_limit(2)
         self.node_tree = NodeTreeWidget(node_graph=self.graph)
 
         self.dataTreeWidget = NodeDataTreeWidget()
@@ -137,7 +137,7 @@ class mainWindow(QMainWindow):
         self.setDockNestingEnabled(True)
 
         graphDock = self.add_dock(self.graph.widget, "Graph")
-        propertiesDock = self.add_dock(self.properties_bin, "Properties")
+        propertiesDock = self.add_dock(self.propertiesBin, "Properties")
         nodeTreeDock = self.add_dock(self.node_tree, "Node tree")
         dataTreeDock = self.add_dock(self.dataTreeWidget, "Data tree")
         consoleDock = self.add_dock(self.consoleWidget, "Console")
