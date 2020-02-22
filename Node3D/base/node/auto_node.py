@@ -6,6 +6,7 @@ import hashlib
 import copy
 import time
 from ...widgets.parameterTree import DEFAULT_VALUE_MAP, build_curve_ramp, get_ramp_colors, get_ramp_color
+import numpy as np
 
 
 # Generate random color based on strings
@@ -28,6 +29,7 @@ class CryptoColors(object):
 
 class AutoNode(BaseNode, QtCore.QObject):
     cooked = QtCore.Signal()
+    paramChanged = QtCore.Signal()
 
     def __init__(self, defaultInputType=None, defaultOutputType=None):
         super(AutoNode, self).__init__()
@@ -36,8 +38,8 @@ class AutoNode(BaseNode, QtCore.QObject):
         self._autoCook = True
         self._error = False
         self.matchTypes = [[float, int]]
-        self.errorColor = (200, 50, 50)
-        self.stopCookColor = (200, 200, 200)
+        self.errorColor = (0.784, 0.196, 0.196)
+        self.stopCookColor = (0.784, 0.784, 0.784)
         self._cryptoColors = CryptoColors()
 
         self.defaultColor = self.get_property("color")
@@ -283,9 +285,10 @@ class AutoNode(BaseNode, QtCore.QObject):
             self.create_property("node_parameters", {tab: params})
         else:
             self.get_property("node_parameters").update({tab: params})
-        self.create_props(params)
+        self.__create_props(params)
+        self.paramChanged.emit()
 
-    def create_props(self, params: list):
+    def __create_props(self, params: list):
         for p in params:
             if 'children' not in p.keys():
                 prop_name = p['name']
@@ -298,7 +301,7 @@ class AutoNode(BaseNode, QtCore.QObject):
                 else:
                     self.set_property(prop_name, value)
             else:
-                self.create_props(p['children'])
+                self.__create_props(p['children'])
 
     def get_ramp_values(self, name, keys):
         p = self.get_property(name)
@@ -311,6 +314,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         f = build_curve_ramp(p[0], p[1])
         if p is None:
             return None
+        keys = np.clip(keys, 0, 1)
         return f(keys)
 
     def get_ramp_colors(self, name, keys):
@@ -334,6 +338,7 @@ class AutoNode(BaseNode, QtCore.QObject):
     def update_parameters(self):
         params = self.get_property("node_parameters")
         [self.__update_params(p) for p in params.values()]
+        self.paramChanged.emit()
 
     def __update_params(self, params: list):
         for p in params:
