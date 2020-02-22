@@ -244,8 +244,9 @@ class ColorRampParameterItem(pTypes.WidgetParameterItem):
 
     def makeWidget(self):
         from ...vendor.pyqtgraph.widgets.GradientWidget import GradientWidget
-        self.ramp = GradientWidget(orientation='bottom', height=40)
-        self.ramp.setMaximumHeight(65)
+        ramp_widget = GradientWidget(orientation='bottom', height=40)
+        ramp_widget.setMaximumHeight(65)
+        self.ramp = ramp_widget.item
         self.hideWidget = False
         self.combox = QtWidgets.QComboBox()
         items = ['linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous', 'next']
@@ -256,33 +257,33 @@ class ColorRampParameterItem(pTypes.WidgetParameterItem):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         wid.setLayout(layout)
-        layout.addWidget(self.ramp)
+        layout.addWidget(ramp_widget)
         layout.addWidget(self.combox)
-        wid.sigChanged = self.ramp.sigGradientChangeFinished
-        wid.sigChanging = self.ramp.sigGradientChanged
+        wid.sigChanged = ramp_widget.sigGradientChangeFinished
+        wid.sigChanging = ramp_widget.sigGradientChanged
         wid.value = self.value
         wid.setValue = self.setValue
 
         return wid
 
     def _on_kind_change(self):
-        self.ramp.item.set_kind(self.combox.currentText())
+        self.ramp.set_kind(self.combox.currentText())
 
     def value(self):
         """
         :return: [ list: colors, list: pos, str:kind ]
         """
-        return self.ramp.item.value()
+        return self.ramp.value()
 
     def setValue(self, value):
         """
-        :param value: [ np.ndarray, str ]
+        :param value: [ np.ndarray, np.ndarray, str ]
         """
         if value is None:
             return
         idx = self.combox.findText(value[2], QtCore.Qt.MatchExactly)
         self.combox.setCurrentIndex(idx)
-        self.ramp.item.setValue(value)
+        self.ramp.setValue(value)
 
 
 class ColorRampParameter(Parameter):
@@ -292,22 +293,9 @@ class ColorRampParameter(Parameter):
 registerParameterType('colorRamp', ColorRampParameter, override=True)
 
 
-class CurveRampParameterItem(pTypes.WidgetParameterItem):
+class CurveRampParameterItem(ColorRampParameterItem):
     def __init__(self, param, depth):
         super(CurveRampParameterItem, self).__init__(param, depth)
-        self.hideWidget = False
-        self.subItem = QtWidgets.QTreeWidgetItem()
-        self.addChild(self.subItem)
-
-    def treeWidgetChanged(self):
-        ParameterItem.treeWidgetChanged(self)
-        if self.widget is not None:
-            tree = self.treeWidget()
-            if tree is None:
-                return
-            tree.setFirstItemColumnSpanned(self.subItem, True)
-            tree.setItemWidget(self.subItem, 0, self.widget)
-            self.selected(False)
 
     def makeWidget(self):
         self.ramp = CurveWidget()
@@ -333,26 +321,53 @@ class CurveRampParameterItem(pTypes.WidgetParameterItem):
         wid.setMinimumHeight(200)
         return wid
 
-    def _on_kind_change(self):
-        self.ramp.set_interp_kind(self.combox.currentText())
-
-    def value(self):
-        """
-        :return: [ list[(tuple,...)], str ]
-        """
-        return self.ramp.value()
-
     def setValue(self, value):
         """
-        :param value: [ list[(tuple,...)], str ]
+        :param value: [ np.ndarray , str ]
         """
+        if value is None:
+            return
         idx = self.combox.findText(value[1], QtCore.Qt.MatchExactly)
         self.combox.setCurrentIndex(idx)
         self.ramp.setValue(value)
-
 
 class CurveRampParameter(Parameter):
     itemClass = CurveRampParameterItem
 
 
 registerParameterType('curveRamp', CurveRampParameter, override=True)
+
+
+class SpacerParameterItem(ParameterItem):
+    def __init__(self, param, depth):
+        ParameterItem.__init__(self, param, depth)
+        self._widget = QtWidgets.QWidget()
+        opts = param.opts
+        color = opts.get('color', None)
+        if color is None:
+            color = (0.15, 0.15, 0.15)
+        height = opts.get('height', None)
+        if height is None:
+            height = 2
+
+        c = [int(max(min(i*255, 255), 0)) for i in color]
+        self._widget.setStyleSheet(
+            '''QWidget {{background-color: rgb({0}, {1}, {2});}}'''.format(*c))
+        self._widget.setFixedHeight(height)
+        self.setText(0, '')
+
+    def treeWidgetChanged(self):
+        ParameterItem.treeWidgetChanged(self)
+        tree = self.treeWidget()
+        if tree is None:
+            return
+
+        tree.setFirstItemColumnSpanned(self, True)  # one line just show one widget
+        tree.setItemWidget(self, 0, self._widget)
+
+
+class SpacerParameter(Parameter):
+    itemClass = SpacerParameterItem
+
+
+registerParameterType('spacer', SpacerParameter, override=True)

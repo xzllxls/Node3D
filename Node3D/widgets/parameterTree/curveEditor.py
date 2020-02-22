@@ -142,7 +142,7 @@ class CurveWidget(QtWidgets.QWidget):
         self._selected_point = None
         self.show_unit = True
 
-    def set_interp_kind(self, kind):
+    def set_kind(self, kind):
         self.curve.set_interp_kind(kind)
         self.update()
 
@@ -256,7 +256,7 @@ class CurveWidget(QtWidgets.QWidget):
 
     def _get_y_value_for(self, local_value):
         """ Converts a value from 0 to 1 to a value from 0 .. canvas height """
-        local_value = max(0, min(1.0, 1.0 - local_value))
+        local_value = 1.0 - local_value
         local_value *= self.height()
         return local_value
 

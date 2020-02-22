@@ -13,13 +13,13 @@ class Point(GeometryNode):
 
     def __init__(self):
         super(Point, self).__init__()
-        self.create_property("Color", (255, 255, 255, 255), widget_type=NODE_PROP_COLORPICKER)
+        self.create_property("Color", (1.0, 1.0, 1.0), widget_type=NODE_PROP_COLORPICKER)
         self.create_property("Size", 0.1, widget_type=NODE_PROP_FLOAT)
         self.create_property("Pos", [0.0, 0.0, 0.0], widget_type=NODE_PROP_VECTOR3)
         self.cook()
 
     def run(self):
-        color = [i / 255.0 for i in self.get_property("Color")]
+        color = list(self.get_property("Color"))
         self.geo = Mesh()
         self.geo.addVertex(self.get_property("Pos"))
         self.geo.mesh.vertex_property_array("color")
@@ -286,7 +286,7 @@ class Color(GeometryNode):
     def __init__(self):
         super(Color, self).__init__()
         self.create_property(
-            "Color", (255, 255, 255, 255), widget_type=NODE_PROP_COLORPICKER)
+            "Color", (1.0, 1.0, 1.0), widget_type=NODE_PROP_COLORPICKER)
         self.create_property(
             "Random", False, widget_type=NODE_PROP_QCHECKBOX)
 
@@ -296,11 +296,10 @@ class Color(GeometryNode):
         if not self.copyData():
             return
         if self.get_property("Random"):
-            cols = np.random.random((self.geo.getNumVertexes(), 4))
-            cols[..., 3] = 1
+            cols = np.random.random((self.geo.getNumVertexes(), 3))
         else:
-            cols = np.ones((self.geo.getNumVertexes(), 4), dtype=np.float64)
-            cd = [i / 255.0 for i in self.get_property("Color")]
+            cols = np.ones((self.geo.getNumVertexes(), 3), dtype=np.float64)
+            cd = list(self.get_property("Color"))
             cols[...] = cd
 
         self.geo.setVertexAttribData("color", cols, True)
@@ -312,10 +311,16 @@ class Visualize(GeometryNode):
 
     def __init__(self):
         super(Visualize, self).__init__()
-        self.add_combo_menu('Attribute', 'Attribute', items=['No Attribute'])
         self.add_input("geo", GeometryNode)
-        self.set_parameters([{'name': 'Gradient', 'type': 'colorRamp'}])
-        self.add_checkbox("Flat Color", "Flat Color", state=False)
+        self.set_parameters([{'name': 'Attribute', 'type': 'list', 'limits': ['No Attribute']},
+                             {'name': 'Flat Color', 'type': 'bool'},
+                             {'name': 'Spacer', 'type': 'spacer'},
+                             {'name': 'Ramp', 'type': 'group', 'children': [
+                                 {'name': 'Use Ramp', 'type': 'bool'},
+                                 {'name': 'Auto Normalize', 'type': 'bool'},
+                                 {'name': 'Range', 'type': 'vector2', "value": [0.0, 1.0]},
+                                 {'name': 'ColorRamp', 'type': 'colorRamp'}]}
+                             ])
 
     def run(self):
         if not self.copyData():
@@ -335,6 +340,8 @@ class Visualize(GeometryNode):
 
         shape = data.shape
         typematch = False
+
+        d = None
         if len(shape) == 2:
             for nm in ["int", "float"]:
                 if nm in type(data[0][0]).__name__:
@@ -345,20 +352,29 @@ class Visualize(GeometryNode):
             if shape[1] >= 3:
                 d = data[..., [0, 1, 2]]
                 d = np.hstack([d, np.ones((shape[0], 1))])
-                self.geo.setVertexAttribData("color", d, True)
             elif shape[1] == 2:
                 d = np.hstack([data, np.zeros((shape[0], 1)), np.ones((shape[0], 1))])
-                self.geo.setVertexAttribData("color", d, True)
             elif shape[1] == 1:
                 d = np.repeat(data, 3, axis=1)
                 d = np.hstack([d, np.ones((shape[0], 1))])
-                self.geo.setVertexAttribData("color", d, True)
         elif len(shape) == 1:
             d = data.reshape(shape[0], 1)
             d = np.repeat(d, 3, axis=1)
             d = np.hstack([d, np.ones((shape[0], 1))])
+
+        if d is not None:
+            if self.get_property("Use Ramp"):
+                d0 = np.average(d, axis=1)
+                if self.get_property('Auto Normalize'):
+                    _min = np.min(d0)
+                    _max = np.max(d0)
+                    d0 = (d0 - _min) / (_max - _min)
+                else:
+                    _range = self.get_property("Range")
+                    d0 = np.clip(d0, _range[0], _range[1])
+                    d0 = (d0 - _range[0]) / (_range[1] - _range[0])
+                d = self.get_ramp_colors('ColorRamp', d0)
             self.geo.setVertexAttribData("color", d, True)
 
         if self.get_property("Flat Color"):
             self.geo.setFlatColor(True)
-

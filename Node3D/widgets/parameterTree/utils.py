@@ -59,10 +59,12 @@ class color_gradient_builder(object):
 
 
 def get_ramp_colors(colors, pos, kind, keys):
+    keys = np.clip(keys, 0, 1)
     b = color_gradient_builder(colors, pos, kind)
     return b.getColors(keys)
 
 
-def get_ramp_color(colors, pos, kind, keys):
+def get_ramp_color(colors, pos, kind, key):
+    key = np.clip(key, 0, 1)
     b = color_gradient_builder(colors, pos, kind)
-    return b.getColor(keys)
+    return b.getColor(key)

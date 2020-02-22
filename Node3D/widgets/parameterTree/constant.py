@@ -34,6 +34,7 @@ DEFAULT_VALUE_MAP = {
     'vector3': [0, 0, 0],
     'vector4': [0, 0, 0, 0],
     'action': None,
+    'spacer': None,
     'curveRamp': [[(0, 0), [1, 1]], 'quadratic'],
     'colorRamp': [[(0.0, 0.0, 0.0, 1.0), (1.0, 1.0, 1.0, 1.0)], [0, 1], 'linear'],
 }
