@@ -1,8 +1,7 @@
 #!/usr/bin/python
 from .. import QtCore, QtWidgets, QtGui
-
 from .stylesheet import STYLE_TABSEARCH, STYLE_TABSEARCH_LIST, STYLE_QMENU
-
+from collections import OrderedDict
 
 class TabSearchCompleter(QtWidgets.QCompleter):
     """
@@ -150,9 +149,20 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
             return
 
         self._set_menu_visible(False)
+        text = text.lower()
 
-        self._searched_actions = [action for action in self._actions\
-                                 if text.lower() in action.text().lower()]
+        def match(action):
+            act_name = action.text().lower()
+            match = True
+            for byte in text:
+                if byte not in act_name:
+                    match = False
+                    break
+                idx = act_name.index(byte)
+                act_name = act_name[idx+1:]
+            return match
+
+        self._searched_actions = [action for action in self._actions if match(action)]
 
         self.SearchMenu.addActions(self._searched_actions)
 
@@ -161,9 +171,8 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
             self.SearchMenu.removeAction(action)
         self._searched_actions = []
 
-    def _set_menu_visible(self,visible):
-        for menu in self._menus.values():
-            menu.menuAction().setVisible(visible)
+    def _set_menu_visible(self, visible):
+        [menu.menuAction().setVisible(visible) for menu in self._menus.values()]
 
     def _close(self):
         self._set_menu_visible(False)
@@ -171,10 +180,10 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
         self.SearchMenu.menuAction().setVisible(False)
 
     def _show(self):
-        self.SearchMenu.exec_(QtGui.QCursor.pos())
         self.setText("")
         self.setFocus()
         self._set_menu_visible(True)
+        self.SearchMenu.exec_(QtGui.QCursor.pos())
 
     def _on_search_submitted(self):
         action = self.sender()
@@ -192,21 +201,40 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
 
         self._close()
 
-    def _generate_items_from_node_dict(self):
-        node_names = sorted(self._node_dict.keys())
+    def build_menu_tree(self):
         node_types = sorted(self._node_dict.values())
+        node_names = sorted(self._node_dict.keys())
+        menu_tree = OrderedDict()
 
-        self._menus.clear()
-        self._actions.clear()
-        self._searched_actions.clear()
-
+        max_depth = 0
         for node_type in node_types:
-            menu_name = ".".join(node_type.split(".")[:-1])
-            if menu_name not in self._menus.keys():
-                new_menu = QtWidgets.QMenu(menu_name)
-                new_menu.setStyleSheet(STYLE_QMENU)
-                self._menus[menu_name] = new_menu
-                self.SearchMenu.addMenu(new_menu)
+            trees = node_type.split(".")
+            trees.pop(-1)
+            for depth, menu_name in enumerate(trees):
+                menu_path = ".".join(trees[:depth+1])
+                if depth in menu_tree.keys():
+                    if menu_name not in menu_tree[depth].keys():
+                        new_menu = QtWidgets.QMenu(menu_name)
+                        new_menu.setStyleSheet(STYLE_QMENU)
+                        menu_tree[depth][menu_path] = new_menu
+                else:
+                    new_menu = QtWidgets.QMenu(menu_name)
+                    new_menu.setStyleSheet(STYLE_QMENU)
+                    menu_tree[depth] = {menu_path: new_menu}
+                if depth > 0:
+                    new_menu.parentPath = ".".join(trees[:depth])
+
+                max_depth = max(max_depth,depth)
+
+        for i in range(max_depth+1):
+            menus = menu_tree[i]
+            for menu_path, menu in menus.items():
+                self._menus[menu_path] = menu
+                if i == 0:
+                    self.SearchMenu.addMenu(menu)
+                else:
+                    parentMenu = self._menus[menu.parentPath]
+                    parentMenu.addMenu(menu)
 
         for name in node_names:
             action = QtWidgets.QAction(name, self)
@@ -215,10 +243,10 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
             self._actions.append(action)
 
             menu_name = self._node_dict[name]
-            menu_name = ".".join(menu_name.split(".")[:-1])
+            menu_path = ".".join(menu_name.split(".")[:-1])
 
-            if menu_name in self._menus.keys():
-                self._menus[menu_name].addAction(action)
+            if menu_path in self._menus.keys():
+                self._menus[menu_path].addAction(action)
             else:
                 self.SearchMenu.addAction(action)
 
@@ -231,7 +259,7 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
                     continue
                 for node_id in node_types:
                     self._node_dict['{} ({})'.format(name, node_id)] = node_id
-            self._generate_items_from_node_dict()
+            self.build_menu_tree()
 
         self._show()
 
