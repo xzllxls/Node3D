@@ -1,0 +1,358 @@
+from ...vendor.pyqtgraph.parametertree import parameterTypes as pTypes
+from ...vendor.pyqtgraph.parametertree import Parameter, ParameterItem, registerParameterType
+from ...vendor.NodeGraphQt.widgets.properties import PropFilePath, _valueEdit, \
+    _valueSliderEdit, PropVector2, PropVector3, PropVector4, PropLabel, \
+    PropColorPicker
+from Qt import QtGui, QtWidgets, QtCore
+from .curveEditor import CurveWidget
+
+
+class FileParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        opts = self.param.opts
+        w = PropFilePath()
+        w.set_ext(opts['ext'])
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class FileParameter(Parameter):
+    itemClass = FileParameterItem
+
+
+registerParameterType('file', FileParameter, override=True)
+
+
+class FloatEditParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = _valueEdit()
+        w.setMaximumHeight(30)
+        w.sigChanged = w.valueChanged
+        return w
+
+
+class FloatEditParameter(Parameter):
+    itemClass = FloatEditParameterItem
+
+
+registerParameterType('float_', FloatEditParameter, override=True)
+
+
+class IntEditParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = _valueEdit()
+        w.set_data_type(int)
+        w.setMaximumHeight(30)
+        w.sigChanged = w.valueChanged
+        return w
+
+
+class IntEditParameter(Parameter):
+    itemClass = IntEditParameterItem
+
+
+registerParameterType('int_', IntEditParameter, override=True)
+
+
+class FloatSliderEditParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = _valueSliderEdit()
+        opts = self.param.opts
+        if 'limits' in opts:
+            _min, _max = opts['limits']
+            w.set_min(_min)
+            w.set_max(_max)
+
+        w.setMaximumHeight(30)
+        w.sigChanged = w.valueChanged
+        return w
+
+
+class FloatSliderEditParameter(Parameter):
+    itemClass = FloatSliderEditParameterItem
+
+
+registerParameterType('float', FloatSliderEditParameter, override=True)
+
+
+class IntSliderEditParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = _valueSliderEdit()
+        w.set_data_type(int)
+        opts = self.param.opts
+        if 'limits' in opts:
+            _min, _max = opts['limits']
+            w.set_min(_min)
+            w.set_max(_max)
+
+        w.setMaximumHeight(30)
+        w.sigChanged = w.valueChanged
+        return w
+
+
+class IntSliderEditParameter(Parameter):
+    itemClass = IntSliderEditParameterItem
+
+
+registerParameterType('int', IntSliderEditParameter, override=True)
+
+
+class Vector3ParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropVector3()
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class Vector3Parameter(Parameter):
+    itemClass = Vector3ParameterItem
+
+
+registerParameterType('vector3', Vector3Parameter, override=True)
+
+
+class Vector2ParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropVector2()
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class Vector2Parameter(Parameter):
+    itemClass = Vector2ParameterItem
+
+
+registerParameterType('vector2', Vector2Parameter, override=True)
+
+
+class Vector4ParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropVector4()
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class Vector4Parameter(Parameter):
+    itemClass = Vector4ParameterItem
+
+
+registerParameterType('vector4', Vector4Parameter, override=True)
+
+
+class ColorParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropColorPicker()
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class ColorParameter(Parameter):
+    itemClass = ColorParameterItem
+
+
+registerParameterType('color', ColorParameter, override=True)
+
+
+class LabelParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropLabel()
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class LabelParameter(Parameter):
+    itemClass = LabelParameterItem
+
+
+registerParameterType('label', LabelParameter, override=True)
+
+
+class ColorRampParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        super(ColorRampParameterItem, self).__init__(param, depth)
+        self.hideWidget = False
+        self.subItem = QtWidgets.QTreeWidgetItem()
+        self.addChild(self.subItem)
+
+    def treeWidgetChanged(self):
+        ParameterItem.treeWidgetChanged(self)
+        if self.widget is not None:
+            tree = self.treeWidget()
+            if tree is None:
+                return
+            tree.setFirstItemColumnSpanned(self.subItem, True)
+            tree.setItemWidget(self.subItem, 0, self.widget)
+            self.selected(False)
+
+    def makeWidget(self):
+        from pyqtgraph.widgets.GradientWidget import GradientWidget
+        self.ramp = GradientWidget(orientation='bottom', height=40)
+        self.ramp.setMaximumHeight(65)
+        self.hideWidget = False
+        self.combox = QtWidgets.QComboBox()
+        items = ['linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous', 'next']
+        self.combox.addItems(items)
+        self.combox.currentIndexChanged.connect(self._on_kind_change)
+
+        wid = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        wid.setLayout(layout)
+        layout.addWidget(self.ramp)
+        layout.addWidget(self.combox)
+        wid.sigChanged = self.ramp.sigGradientChangeFinished
+        wid.sigChanging = self.ramp.sigGradientChanged
+        wid.value = self.value
+        wid.setValue = self.setValue
+
+        return wid
+
+    def _on_kind_change(self):
+        self.ramp.item.set_kind(self.combox.currentText())
+
+    def value(self):
+        """
+        :return: [ list: colors, list: pos, str:kind ]
+        """
+        return self.ramp.item.value()
+
+    def setValue(self, value):
+        """
+        :param value: [ np.ndarray, str ]
+        """
+        if value is None:
+            return
+        idx = self.combox.findText(value[2], QtCore.Qt.MatchExactly)
+        self.combox.setCurrentIndex(idx)
+        self.ramp.item.setValue(value)
+
+
+class ColorRampParameter(Parameter):
+    itemClass = ColorRampParameterItem
+
+
+registerParameterType('colorRamp', ColorRampParameter, override=True)
+
+
+class CurveRampParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        super(CurveRampParameterItem, self).__init__(param, depth)
+        self.hideWidget = False
+        self.subItem = QtWidgets.QTreeWidgetItem()
+        self.addChild(self.subItem)
+
+    def treeWidgetChanged(self):
+        ParameterItem.treeWidgetChanged(self)
+        if self.widget is not None:
+            tree = self.treeWidget()
+            if tree is None:
+                return
+            tree.setFirstItemColumnSpanned(self.subItem, True)
+            tree.setItemWidget(self.subItem, 0, self.widget)
+            self.selected(False)
+
+    def makeWidget(self):
+        self.ramp = CurveWidget()
+        self.ramp.setMaximumHeight(500)
+        self.hideWidget = False
+        self.combox = QtWidgets.QComboBox()
+
+        items = ['linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'previous', 'next']
+        self.combox.addItems(items)
+        self.combox.currentIndexChanged.connect(self._on_kind_change)
+        self.combox.setCurrentIndex(4)
+
+        wid = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        wid.setLayout(layout)
+        layout.addWidget(self.ramp)
+        layout.addWidget(self.combox)
+        wid.sigChanged = self.ramp.valueChangeFinished
+        wid.sigChanging = self.ramp.valueChanged
+        wid.value = self.value
+        wid.setValue = self.setValue
+        wid.setMinimumHeight(200)
+        return wid
+
+    def _on_kind_change(self):
+        self.ramp.set_interp_kind(self.combox.currentText())
+
+    def value(self):
+        """
+        :return: [ list[(tuple,...)], str ]
+        """
+        return self.ramp.value()
+
+    def setValue(self, value):
+        """
+        :param value: [ list[(tuple,...)], str ]
+        """
+        idx = self.combox.findText(value[1], QtCore.Qt.MatchExactly)
+        self.combox.setCurrentIndex(idx)
+        self.ramp.setValue(value)
+
+
+class CurveRampParameter(Parameter):
+    itemClass = CurveRampParameterItem
+
+
+registerParameterType('curveRamp', CurveRampParameter, override=True)

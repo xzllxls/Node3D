@@ -1,0 +1,20 @@
+<html>
+	<head>
+		<title></title>
+	</head>
+	<body>
+		<h3>
+			Variables:</h3>
+		<ul>
+			<li>
+				<strong>gp</strong>: (NodeGraph) graph</li>
+			<li>
+				<strong>wid</strong>: (QMainWindow) mainWindow</li>
+			<li>
+				<strong>node</strong>: (GeometryNode) current node</li>
+			<li>
+				<strong>np</strong>: (module) numpy</li>
+		</ul>
+		<p><br/></p>
+	</body>
+</html>
