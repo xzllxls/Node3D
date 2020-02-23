@@ -90,9 +90,9 @@ openmesh.PolyMesh.set_edge_property_array = sepa
 class Mesh(GLGraphicsItem):
     def __init__(self, mesh=None):
         self.opts = {
-            'color': (1., 1., 1., 1.),
-            'edgeColor': (0.5, 0.5, 0.5, 1.0),
-            'pointColor': (1.0, 1.0, 0.0, 1.0),
+            'color': (1., 1., 1.),
+            'edgeColor': (0.5, 0.5, 0.5),
+            'pointColor': (1.0, 1.0, 0.0),
             'shader': standShader,
             'smooth': True,
             'computeNormals': False,
@@ -320,7 +320,7 @@ class Mesh(GLGraphicsItem):
                 glEnableClientState(GL_VERTEX_ARRAY)
                 try:
                     glVertexPointerf(verts)
-                    glColor4f(*(self.idx, 0, 0, 1))
+                    glColor3f(*(self.idx, 0, 0))
                     if faces is None:
                         glDrawArrays(GL_TRIANGLES, 0, np.product(verts.shape[:-1]))
                     else:
@@ -345,7 +345,7 @@ class Mesh(GLGraphicsItem):
         color = self.getColors()
         hasColor = color is not None
         if not hasColor:
-            glColor4f(*self.opts['color'])
+            glColor3f(*self.opts['color'])
         else:
             glEnableClientState(GL_COLOR_ARRAY)
             glColorPointerf(color)
@@ -377,7 +377,7 @@ class Mesh(GLGraphicsItem):
         if self.view().opts['drawPoints']:
             pscale = self.getVertexAttribData("pscale", True)
             if not hasColor:
-                glColor4f(*self.opts['pointColor'])
+                glColor3f(*self.opts['pointColor'])
             with PointShader:
                 camPos = self.view().cameraPosition()
                 if camPos is not None:
@@ -405,7 +405,7 @@ class Mesh(GLGraphicsItem):
             # color = self.getEdgesColors()
             try:
                 # if color is None:
-                glColor4f(*self.opts['edgeColor'])
+                glColor3f(*self.opts['edgeColor'])
                 # else:
                 # glEnableClientState(GL_COLOR_ARRAY)
                 # glColorPointerf(color)

@@ -6,6 +6,12 @@ import hashlib
 import copy
 import time
 from ...widgets.parameterTree import DEFAULT_VALUE_MAP, build_curve_ramp, get_ramp_colors, get_ramp_color
+import numpy as np
+import traceback
+
+NODE_NONE = 0
+NODE_WARNING = 1
+NODE_ERROR = 2
 
 
 # Generate random color based on strings
@@ -28,6 +34,7 @@ class CryptoColors(object):
 
 class AutoNode(BaseNode, QtCore.QObject):
     cooked = QtCore.Signal()
+    paramChanged = QtCore.Signal()
 
     def __init__(self, defaultInputType=None, defaultOutputType=None):
         super(AutoNode, self).__init__()
@@ -36,8 +43,8 @@ class AutoNode(BaseNode, QtCore.QObject):
         self._autoCook = True
         self._error = False
         self.matchTypes = [[float, int]]
-        self.errorColor = (200, 50, 50)
-        self.stopCookColor = (200, 200, 200)
+        self.errorColor = (0.784, 0.196, 0.196)
+        self.stopCookColor = (0.784, 0.784, 0.784)
         self._cryptoColors = CryptoColors()
 
         self.defaultColor = self.get_property("color")
@@ -46,7 +53,8 @@ class AutoNode(BaseNode, QtCore.QObject):
         self.defaultOutputType = defaultOutputType
 
         self._cookTime = 0.0
-        self._toolTip = self._setup_tool_tip()
+        self._message = ""
+        self._message_level = NODE_NONE
 
     @property
     def autoCook(self):
@@ -64,20 +72,13 @@ class AutoNode(BaseNode, QtCore.QObject):
             self.defaultColor = self.get_property("color")
             self.set_property('color', self.stopCookColor)
 
-    @property
-    def cookTime(self):
+    def getCookTime(self):
         return self._cookTime
-
-    @autoCook.setter
-    def cookTime(self, time):
-        self._cookTime = time
-        self._update_tool_tip()
 
     def cookNextNode(self):
         for nodeList in self.connected_output_nodes().values():
             for n in nodeList:
-                if n is not self:
-                    n.cook()
+                n.cook()
 
     def getData(self, port):
         # for custom output data
@@ -124,22 +125,21 @@ class AutoNode(BaseNode, QtCore.QObject):
         _tmp = self._autoCook
         self._autoCook = False
 
-        if self.error():
-            self._close_error()
+        self._close_message()
 
         _start_time = time.time()
 
         try:
             self.run()
-        except Exception as error:
-            self.error(error)
+        except:
+            self.error(traceback.format_exc())
 
         self._autoCook = _tmp
 
-        if self.error():
+        if self._message_level is NODE_ERROR:
             return
 
-        self.cookTime = time.time() - _start_time
+        self._cookTime = time.time() - _start_time
 
         self.cooked.emit()
         self.cookNextNode()
@@ -239,42 +239,31 @@ class AutoNode(BaseNode, QtCore.QObject):
         else:
             self.cook()
 
-    def _close_error(self):
-        self._error = False
-        self.set_property('color', self.defaultColor)
-        self._update_tool_tip()
+    def get_message(self):
+        return self._message, self._message_level
 
-    def _show_error(self, message):
-        if not self._error:
+    def _close_message(self):
+        if self._message_level is not NODE_NONE:
+            self.set_property('color', self.defaultColor)
+            self._message = ""
+            self._message_level = NODE_NONE
+
+    def _set_message(self, message, message_level):
+        if self._message_level is NODE_NONE:
             self.defaultColor = self.get_property("color")
+        self._message = message
+        self._message_level = message_level
+        if message_level is NODE_ERROR:
+            self.set_property('color', self.errorColor)
 
-        self._error = True
-        self.set_property('color', self.errorColor)
-        tooltip = '<font color="red"><br>({})</br></font>'.format(message)
-        self._update_tool_tip(tooltip)
+    def error(self, message):
+        self._set_message(message, NODE_ERROR)
 
-    def _update_tool_tip(self, message=None):
-        if message is None:
-            tooltip = self._toolTip.format(self._cookTime)
-        else:
-            tooltip = '<b>{}</b>'.format(self.name())
-            tooltip += message
-            tooltip += '<br/>{}<br/>'.format(self._view.type_)
-        self.view.setToolTip(tooltip)
-        return tooltip
-
-    def _setup_tool_tip(self):
-        tooltip = '<br> last cook used: {}s</br>'
-        return self._update_tool_tip(tooltip)
-
-    def error(self, message=None):
-        if message is None:
-            return self._error
-
-        self._show_error(message)
+    def warning(self, message):
+        self._set_message(message, NODE_WARNING)
 
     def update_model(self):
-        if self.error():
+        if self._message_level is not NODE_NONE:
             self.set_property('color', self.defaultColor)
         super(AutoNode, self).update_model()
 
@@ -283,9 +272,10 @@ class AutoNode(BaseNode, QtCore.QObject):
             self.create_property("node_parameters", {tab: params})
         else:
             self.get_property("node_parameters").update({tab: params})
-        self.create_props(params)
+        self.__create_props(params)
+        self.paramChanged.emit()
 
-    def create_props(self, params: list):
+    def __create_props(self, params: list):
         for p in params:
             if 'children' not in p.keys():
                 prop_name = p['name']
@@ -298,7 +288,7 @@ class AutoNode(BaseNode, QtCore.QObject):
                 else:
                     self.set_property(prop_name, value)
             else:
-                self.create_props(p['children'])
+                self.__create_props(p['children'])
 
     def get_ramp_values(self, name, keys):
         p = self.get_property(name)
@@ -311,6 +301,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         f = build_curve_ramp(p[0], p[1])
         if p is None:
             return None
+        keys = np.clip(keys, 0, 1)
         return f(keys)
 
     def get_ramp_colors(self, name, keys):
@@ -334,6 +325,7 @@ class AutoNode(BaseNode, QtCore.QObject):
     def update_parameters(self):
         params = self.get_property("node_parameters")
         [self.__update_params(p) for p in params.values()]
+        self.paramChanged.emit()
 
     def __update_params(self, params: list):
         for p in params:

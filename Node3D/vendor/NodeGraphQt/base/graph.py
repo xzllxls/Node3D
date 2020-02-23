@@ -144,8 +144,8 @@ class NodeGraph(QtCore.QObject):
         self._undo_stack = QtWidgets.QUndoStack(self)
 
         tab = QtWidgets.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Tab), self._viewer)
-        tab.activated.connect(self._toggle_tab_search)
-        self._viewer.need_show_tab_search.connect(self._toggle_tab_search)
+        tab.activated.connect(self._show_tab_search)
+        self._viewer.need_show_tab_search.connect(self._show_tab_search)
 
         self._wire_signals()
         self.widget.setAcceptDrops(True)
@@ -200,13 +200,12 @@ class NodeGraph(QtCore.QObject):
         self._on_nodes_moved(prev_node_pos)
         self._undo_stack.endMacro()
 
-    def _toggle_tab_search(self):
+    def _show_tab_search(self):
         """
-        toggle the tab search widget.
+        show the tab search widget.
         """
         if self._viewer.underMouse():
-            self._viewer.tab_search_set_nodes(self._node_factory.names)
-            self._viewer.tab_search_toggle()
+            self._viewer.show_tab_search(self._node_factory.names)
 
     def _on_property_bin_changed(self, node_id, prop_name, prop_value):
         """

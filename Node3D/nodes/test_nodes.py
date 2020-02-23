@@ -9,6 +9,7 @@ def print100(node):
 params = [
     {'name': 'Basic parameter data types', 'type': 'group', 'children': [
         {'name': 'Integer', 'type': 'int', 'value': 10},
+        {'name': 'Spacer', 'type': 'spacer', 'height': 4, 'color': (1, 0.7, 0.5)},
         {'name': 'Float', 'type': 'float', 'value': 10.5},
         {'name': 'String', 'type': 'str', 'value': "hi"},
         {'name': 'List', 'type': 'list', 'values': [1, 2, 3], 'value': 1},

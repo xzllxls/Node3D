@@ -228,6 +228,10 @@ class NodePropBin(PropertiesBinWidget):
         items = self._prop_list.findItems(node_id, QtCore.Qt.MatchExactly)
         [self._prop_list.removeRow(i.row()) for i in items]
 
+    def reload(self):
+        # TODO: reload node parameters
+        pass
+
     def add_node(self, node):
         if self.limit() == 0 or self._lock:
             return
