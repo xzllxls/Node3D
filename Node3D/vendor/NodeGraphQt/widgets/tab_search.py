@@ -148,7 +148,7 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
             else:
                 self.SearchMenu.addAction(action)
 
-    def set_nodes(self, node_dict=None):
+    def show(self, node_dict=None):
         if not self._node_dict:
             self._node_dict.clear()
             for name, node_types in node_dict.items():

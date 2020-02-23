@@ -228,10 +228,6 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self._prev_selection_nodes, \
         self._prev_selection_pipes = self.selected_items()
 
-        # close tab search
-        if self._search_widget.isVisible():
-            self.tab_search_toggle()
-
         # cursor pos.
         map_pos = self.mapToScene(event.pos())
 
@@ -702,26 +698,8 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
     # --- viewer ---
 
-    def tab_search_set_nodes(self, nodes):
-        self._search_widget.set_nodes(nodes)
-
-    def tab_search_toggle(self):
-        if type(self._search_widget) is TabSearchMenuWidget:
-            return
-
-        pos = self._previous_pos
-        state = not self._search_widget.isVisible()
-        if state:
-            rect = self._search_widget.rect()
-            new_pos = QtCore.QPoint(pos.x() - rect.width() / 2,
-                                    pos.y() - rect.height() / 2)
-            self._search_widget.move(new_pos)
-            self._search_widget.setVisible(state)
-            rect = self.mapToScene(rect).boundingRect()
-            self.scene().update(rect)
-        else:
-            self._search_widget.setVisible(state)
-            self.clearFocus()
+    def show_tab_search(self, nodes):
+        self._search_widget.show(nodes)
 
     def context_menus(self):
         return {'graph': self._ctx_menu,
