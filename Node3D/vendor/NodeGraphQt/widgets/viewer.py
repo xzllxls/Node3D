@@ -249,7 +249,6 @@ class NodeViewer(QtWidgets.QGraphicsView):
             if self.MMB_state:
                 pass
                 # TODO: show panel
-                # self.show_panel(nodes[0])
 
             self.MMB_state = False
 
