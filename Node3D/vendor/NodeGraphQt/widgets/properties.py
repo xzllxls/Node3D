@@ -19,6 +19,7 @@ from ..constants import (NODE_PROP_QLABEL,
                          NODE_PROP_BUTTON)
 from .file_dialog import file_dialog
 from ..constants import ICON_CLOSE
+from .stylesheet import STYLE_QMENU
 
 
 class BaseProperty(QtWidgets.QWidget):
@@ -32,7 +33,6 @@ class BaseProperty(QtWidgets.QWidget):
 
 
 class PropColorPicker(BaseProperty):
-
     def __init__(self, parent=None):
         super(PropColorPicker, self).__init__(parent)
         self._color = (1, 1, 1)
@@ -328,6 +328,7 @@ class _valueMenu(QtWidgets.QMenu):
         self.step = 1
         self.last_action = None
         self.steps = []
+        self.setStyleSheet(STYLE_QMENU)
 
     def set_steps(self, steps):
         self.clear()
@@ -600,9 +601,8 @@ class PropVector(BaseProperty):
 
     def _update_items(self):
         for index, value in enumerate(self._value):
-            if index < len(self._items):
-                if self._items[index].value() != value:
-                    self._items[index].setValue(value)
+            if index < len(self._items) and self._items[index].value() != value:
+                self._items[index].setValue(value)
 
     def get_value(self):
         return self._value

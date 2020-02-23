@@ -1,114 +1,20 @@
 #!/usr/bin/python
 from .. import QtCore, QtWidgets, QtGui
-from .stylesheet import STYLE_TABSEARCH, STYLE_TABSEARCH_LIST, STYLE_QMENU
+from .stylesheet import STYLE_TABSEARCH, STYLE_QMENU
 from collections import OrderedDict
-
-class TabSearchCompleter(QtWidgets.QCompleter):
-    """
-    QCompleter adapted from:
-    https://stackoverflow.com/questions/5129211/qcompleter-custom-completion-rules
-    """
-
-    def __init__(self, nodes=None, parent=None):
-        super(TabSearchCompleter, self).__init__(nodes, parent)
-        self.setCompletionMode(self.PopupCompletion)
-        self.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        self._local_completion_prefix = ''
-        self._using_orig_model = False
-        self._source_model = None
-        self._filter_model = None
-
-    def splitPath(self, path):
-        self._local_completion_prefix = path
-        self.updateModel()
-
-        if self._filter_model.rowCount() == 0:
-            self._using_orig_model = False
-            self._filter_model.setSourceModel(QtCore.QStringListModel([]))
-            return []
-        return []
-
-    def updateModel(self):
-        if not self._using_orig_model:
-            self._filter_model.setSourceModel(self._source_model)
-
-        pattern = QtCore.QRegExp(self._local_completion_prefix,
-                                 QtCore.Qt.CaseInsensitive,
-                                 QtCore.QRegExp.FixedString)
-        self._filter_model.setFilterRegExp(pattern)
-
-    def setModel(self, model):
-        self._source_model = model
-        self._filter_model = QtCore.QSortFilterProxyModel(self)
-        self._filter_model.setSourceModel(self._source_model)
-        super(TabSearchCompleter, self).setModel(self._filter_model)
-        self._using_orig_model = True
+import re
 
 
-class TabSearchWidget(QtWidgets.QLineEdit):
+def fuzzyFinder(key, collection):
+    suggestions = []
+    pattern = '.*?'.join(key.lower())
+    regex = re.compile(pattern)
+    for item in collection:
+        match = regex.search(item.lower())
+        if match:
+            suggestions.append((len(match.group()), match.start(), item))
 
-    search_submitted = QtCore.Signal(str)
-
-    def __init__(self, parent=None, node_dict=None):
-        super(TabSearchWidget, self).__init__(parent)
-        self.setAttribute(QtCore.Qt.WA_MacShowFocusRect, 0)
-        self.setStyleSheet(STYLE_TABSEARCH)
-        self.setMinimumSize(200, 22)
-        self.setTextMargins(2, 0, 2, 0)
-        self.hide()
-
-        self._node_dict = node_dict or {}
-
-        node_names = sorted(self._node_dict.keys())
-        self._model = QtCore.QStringListModel(node_names, self)
-
-        self._completer = TabSearchCompleter()
-        self._completer.setModel(self._model)
-        self.setCompleter(self._completer)
-
-        popup = self._completer.popup()
-        popup.setStyleSheet(STYLE_TABSEARCH_LIST)
-        popup.clicked.connect(self._on_search_submitted)
-        self.returnPressed.connect(self._on_search_submitted)
-
-    def __repr__(self):
-        return '<{} at {}>'.format(self.__class__.__name__, hex(id(self)))
-
-    def _on_search_submitted(self, index=0):
-        node_type = self._node_dict.get(self.text())
-        if not node_type:
-            model = self._completer.popup().model()
-            text = model.data(model.index(0, 0))
-            node_type = self._node_dict.get(text)
-
-        if node_type:
-            self.search_submitted.emit(node_type)
-
-        self.close()
-        self.parentWidget().clearFocus()
-
-    def showEvent(self, event):
-        super(TabSearchWidget, self).showEvent(event)
-        self.setFocus()
-        self.setText("")
-        self.completer().popup().show()
-        self.completer().complete()
-
-    def mousePressEvent(self, event):
-        if not self.text():
-            self.completer().complete()
-
-    def set_nodes(self, node_dict=None):
-        self._node_dict = {}
-        for name, node_types in node_dict.items():
-            if len(node_types) == 1:
-                self._node_dict[name] = node_types[0]
-                continue
-            for node_id in node_types:
-                self._node_dict['{} ({})'.format(name, node_id)] = node_id
-        node_names = sorted(self._node_dict.keys())
-        self._model.setStringList(node_names)
-        self._completer.setModel(self._model)
+    return [x for _, _, x in sorted(suggestions)]
 
 
 class TabSearchMenuWidget(QtWidgets.QLineEdit):
@@ -131,7 +37,7 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
         self.SearchMenu.addAction(searchWidget)
         self.SearchMenu.setStyleSheet(STYLE_QMENU)
 
-        self._actions = []
+        self._actions = {}
         self._menus = {}
         self._searched_actions = []
 
@@ -149,20 +55,10 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
             return
 
         self._set_menu_visible(False)
-        text = text.lower()
 
-        def match(action):
-            act_name = action.text().lower()
-            match = True
-            for byte in text:
-                if byte not in act_name:
-                    match = False
-                    break
-                idx = act_name.index(byte)
-                act_name = act_name[idx+1:]
-            return match
+        action_names = fuzzyFinder(text, self._actions.keys())
 
-        self._searched_actions = [action for action in self._actions if match(action)]
+        self._searched_actions = [self._actions[name] for name in action_names]
         self.SearchMenu.addActions(self._searched_actions)
 
         if self._searched_actions:
@@ -242,7 +138,7 @@ class TabSearchMenuWidget(QtWidgets.QLineEdit):
             action = QtWidgets.QAction(name, self)
             action.setText(name)
             action.triggered.connect(self._on_search_submitted)
-            self._actions.append(action)
+            self._actions[name] = action
 
             menu_name = self._node_dict[name]
             menu_path = ".".join(menu_name.split(".")[:-1])
