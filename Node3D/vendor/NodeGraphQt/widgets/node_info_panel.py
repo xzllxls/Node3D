@@ -13,34 +13,57 @@ class NodeInfoPanel(QtWidgets.QWidget):
 
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.width = 400
-        self.height = 500
+        self.height = 600
         self.resize(self.width, self.height)
 
         self.screenSize = QtWidgets.QDesktopWidget().screenGeometry()
         self.screenWidth = self.screenSize.width()
         self.screenHeight = self.screenSize.height()
 
+        self.attribTextEdits = {"vertex": self.ui.vertexAttrText,
+                           "edge": self.ui.edgeAttrText,
+                           "face": self.ui.faceAttrText,
+                           "detail": self.ui.detailAttrText}
+
+        self.attribColor = {"float": '<font color="yellow">',
+                       "vector": '<font color="lime">',
+                       "int": '<font color="teal">',
+                       "bool": '<font color="purple">',
+                       "str": '<font color="lightpink">',
+                       "none": '<font>'}
+
+        self.messageColor = {"none": '<font color="lime">',
+                             "warning": '<font color="orange">',
+                             "error": '<font color="red">'}
+
     def refresh(self, node):
         # node is the specific type of node, eg: bunny node
         # collect node related info
         nodeName = node.name()
         nodeType = node.type_
-        nodeCookTime = node._cookTime
-        nodeError = node.error()
+        nodeCookTime = node.getCookTime()
+        nodeMessage, nodeMessageLevel = node.get_message()
 
         self.ui.nodeNameLabel.setText(nodeName)
         self.ui.nodeTypeLabel.setText(nodeType)
         self.ui.cookTimeLabel.setText(str(nodeCookTime))
 
         errorMessage = ""
-        if not nodeError:
-            errorMessage = '<font color="lime">Well Cooked<font>'
-        else:
-            errorMessage = '<font color="red">' + "Error Occurred" + '<font>'
+        if nodeMessageLevel == 0:
+            # no message
+            errorMessage += self.messageColor["none"] + "Well Cooked"
+        elif nodeMessageLevel == 1:
+            # warning
+            errorMessage += self.messageColor["warning"] + nodeMessage
+        elif nodeMessageLevel == 2:
+            # error
+            errorMessage = self.messageColor["error"] + nodeMessage
+
+        errorMessage += '</font>'
         self.ui.nodeErrorText.setHtml(errorMessage)
 
+        # collect geo related info
         if isinstance(node, GeometryNode) and node.geo is not None:
-            # collect geo related info
             vertexCount = node.geo.getNumVertexes()
             edgeCount = node.geo.getNumEdges()
             faceCount = node.geo.getNumFaces()
@@ -73,17 +96,6 @@ class NodeInfoPanel(QtWidgets.QWidget):
 
                 # collect attribute related info
                 attribData = node.geo.getAttribNames()
-                attribTextEdits = {"vertex": self.ui.vertexAttrText,
-                                   "edge": self.ui.edgeAttrText,
-                                   "face": self.ui.faceAttrText,
-                                   "detail": self.ui.detailAttrText}
-
-                attribColor = {"float": '<font color="yellow">',
-                                "vector": '<font color="lime">',
-                               "int": '<font color="teal">',
-                               "bool": '<font color="purple">',
-                               "str": '<font color="lightpink">',
-                               "none": '<font>'}
 
                 for attrLevel in attribData:
                     # vertex, edge, face, detail
@@ -93,13 +105,13 @@ class NodeInfoPanel(QtWidgets.QWidget):
                             attrDisplayStr += ","
 
                         attrType = node.geo.getAttribType(attrLevel, attr)
-                        attrDisplayStr += attribColor[attrType]
+                        attrDisplayStr += self.attribColor[attrType]
                         attrDisplayStr = attrDisplayStr + attr
                         attrDisplayStr += "</font>"
                         attrDisplayStr += "(" + attrType + ")"
 
 
-                    attribTextEdits[attrLevel].setHtml(attrDisplayStr)
+                    self.attribTextEdits[attrLevel].setHtml(attrDisplayStr)
 
         self.adjustWindowPos()
 
