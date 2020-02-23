@@ -14,7 +14,6 @@ from ..base.menu import BaseMenu
 from .scene import NodeScene
 from .tab_search import TabSearchMenuWidget
 from .file_dialog import file_dialog, messageBox
-
 ZOOM_MIN = -0.95
 ZOOM_MAX = 2.0
 
@@ -38,6 +37,10 @@ class NodeViewer(QtWidgets.QGraphicsView):
     node_selected = QtCore.Signal(str)
     node_double_clicked = QtCore.Signal(str)
     data_dropped = QtCore.Signal(QtCore.QMimeData, QtCore.QPoint)
+
+    # node info panel signals
+    show_node_info_panel_triggered = QtCore.Signal(str)
+    close_node_info_panel_triggered = QtCore.Signal(str)
 
     def __init__(self, parent=None):
         super(NodeViewer, self).__init__(parent)
@@ -247,8 +250,8 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         if nodes:
             if self.MMB_state:
-                pass
-                # TODO: show panel
+                # node selected and mmb clicked, show the node info panel
+                self.show_node_info_panel_triggered.emit(nodes[0].id)
 
             self.MMB_state = False
 
@@ -288,13 +291,13 @@ class NodeViewer(QtWidgets.QGraphicsView):
         elif event.button() == QtCore.Qt.RightButton:
             self.RMB_state = False
         elif event.button() == QtCore.Qt.MiddleButton:
-            self.MMB_state = False
+            self.MMB_state = True
 
         if self.MMB_state:
-            pass
-            # TODO: close pannel
-            # if self.panel is opened
-            #        self.panel.close()
+            # close the node info panel
+            self.close_node_info_panel_triggered.emit("")
+
+            self.MMB_state = False
 
         # hide pipe slicer.
         if self._SLICER_PIPE.isVisible():

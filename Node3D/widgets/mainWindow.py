@@ -116,6 +116,8 @@ class mainWindow(QMainWindow):
         self.graph.use_opengl()
         self.graph.session_changed.connect(self.on_session_changed)
         self.graph.node_double_clicked.connect(self.update_data)
+        self.graph.show_node_info_panel_triggerd.connect(self.show_node_info_panel)
+        self.graph.close_node_info_panel_triggered.connect(self.close_node_info_panel)
         self.graph.master = self
 
         self.propertiesBin = NodePropBin(node_graph=self.graph)
@@ -130,6 +132,8 @@ class mainWindow(QMainWindow):
         self.timeline = TimeLine()
         self.timeline.setFps(25)
         self.setCentralWidget(self.timeline)
+
+        self.nodeInfoPanel = None
 
         # set up default menu and commands.
         self.setup_menus()
@@ -249,3 +253,12 @@ class mainWindow(QMainWindow):
                 self.graph.import_session(url.toLocalFile())
         else:
             event.ignore()
+
+    def show_node_info_panel(self, node):
+        self.nodeInfoPanel = NodeInfoPanel()
+        self.nodeInfoPanel.refresh(node)
+
+    def close_node_info_panel(self, node):
+        if self.nodeInfoPanel is not None:
+            self.nodeInfoPanel.close()
+            self.nodeInfoPanel = None
