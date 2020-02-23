@@ -251,7 +251,7 @@ class AutoNode(BaseNode, QtCore.QObject):
     def _set_message(self, message, message_level):
         if self._message_level is NODE_NONE:
             self.defaultColor = self.get_property("color")
-        self._message = message
+        self._message = str(message)
         self._message_level = message_level
         if message_level is NODE_ERROR:
             self.set_property('color', self.errorColor)

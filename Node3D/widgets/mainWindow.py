@@ -133,7 +133,7 @@ class mainWindow(QMainWindow):
         self.timeline.setFps(25)
         self.setCentralWidget(self.timeline)
 
-        self.nodeInfoPanel = None
+        self.nodeInfoPanel = NodeInfoPanel()
 
         # set up default menu and commands.
         self.setup_menus()
@@ -255,10 +255,7 @@ class mainWindow(QMainWindow):
             event.ignore()
 
     def show_node_info_panel(self, node):
-        self.nodeInfoPanel = NodeInfoPanel()
         self.nodeInfoPanel.refresh(node)
 
     def close_node_info_panel(self, node):
-        if self.nodeInfoPanel is not None:
-            self.nodeInfoPanel.close()
-            self.nodeInfoPanel = None
+        self.nodeInfoPanel.close()

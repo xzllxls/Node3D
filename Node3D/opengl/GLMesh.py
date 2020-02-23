@@ -32,7 +32,6 @@ def svpa(self, prop_name, array=None, element_shape=None, element_value=None):
 
 openmesh.PolyMesh.set_vertex_property_array = svpa
 
-
 orig_set_face_property_array = openmesh.PolyMesh.set_face_property_array
 
 
@@ -59,7 +58,6 @@ def sfpa(self, prop_name, array=None, element_shape=None, element_value=None):
 
 openmesh.PolyMesh.set_face_property_array = sfpa
 
-
 orig_set_edge_property_array = openmesh.PolyMesh.set_edge_property_array
 
 
@@ -85,6 +83,15 @@ def sepa(self, prop_name, array=None, element_shape=None, element_value=None):
 
 
 openmesh.PolyMesh.set_edge_property_array = sepa
+
+DATA_TYPE_MAP = {
+    float: "float",
+    int: "int",
+    bool: "bool",
+    str: "str",
+    np.ndarray: "vector",
+    list: "list",
+}
 
 
 class Mesh(GLGraphicsItem):
@@ -172,12 +179,16 @@ class Mesh(GLGraphicsItem):
 
     @property
     def bbox_center(self):
+        _, __, self._bbox_center = self.get_bbox_info()
+        return self._bbox_center
+
+    def get_bbox_info(self):
         _min = self.bbox_min
         _max = self.bbox_max
-        self._bbox_center = [(_min[0] + _max[0]) / 2.0,
-                             (_min[1] + _max[1]) / 2.0,
-                             (_min[2] + _max[2]) / 2.0]
-        return self._bbox_center
+        _center = [(_min[0] + _max[0]) / 2.0,
+                   (_min[1] + _max[1]) / 2.0,
+                   (_min[2] + _max[2]) / 2.0]
+        return _min, _max, _center
 
     @property
     def detailAttribute(self):
@@ -203,7 +214,7 @@ class Mesh(GLGraphicsItem):
 
     def getAttribType(self, attrLevel, attribName):
         # get the type of a given attribute
-        checkType = ""
+        checkType = None
         if attrLevel == "vertex":
             checkType = type(self.getVertexAttrib(attribName, 0))
         elif attrLevel == "edge":
@@ -213,18 +224,7 @@ class Mesh(GLGraphicsItem):
         elif attrLevel == "detail":
             checkType = type(self.getDetailAttrib(attribName))
 
-        if checkType is float:
-            return "float"
-        elif checkType is int:
-            return "int"
-        elif checkType is bool:
-            return "bool"
-        elif checkType is str:
-            return "str"
-        elif checkType is np.ndarray:
-            return "vector"
-        else:
-            return "none"
+        return DATA_TYPE_MAP.get(checkType, 'none')
 
     def _build_dict(self):
         self._mapGetData = {
@@ -812,7 +812,7 @@ class Mesh(GLGraphicsItem):
 
     def createGroup(self, level, name, default=False):
         if level == 'vertex':
-            name = "v:"+name
+            name = "v:" + name
             self._mesh.vertex_property(name)
             self._mesh.set_vertex_property(np.broadcast_to(default, (self.getNumVertexes(),)).tolist())
             self._detailAttribute['vertex'][name] = None
@@ -829,7 +829,7 @@ class Mesh(GLGraphicsItem):
 
     def getGroupData(self, level, name):
         if level == 'vertex':
-            name = "v:"+name
+            name = "v:" + name
             if self._mesh.has_vertex_property(name):
                 return self._mesh.vertex_property(name)
         elif level == 'face':
@@ -843,7 +843,7 @@ class Mesh(GLGraphicsItem):
 
     def setGroupData(self, level, name, data):
         if level == 'vertex':
-            name = "v:"+name
+            name = "v:" + name
             self.setVertexAttribData(name, data, False)
         elif level == 'face':
             name = "f:" + name

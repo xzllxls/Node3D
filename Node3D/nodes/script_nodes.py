@@ -2,6 +2,7 @@ from Node3D.base.node import ScriptNode
 from Node3D.opengl import Mesh
 import numba
 from collections import namedtuple
+import traceback
 
 
 class Python(ScriptNode):
@@ -16,8 +17,8 @@ class Python(ScriptNode):
             self.namespace['gp'] = self.graph
         try:
             exec(self.get_property('Script').strip(), self.namespace)
-        except Exception as error:
-            self.error(error)
+        except:
+            self.error(traceback.format_exc())
 
     def run(self):
         if not self.copyData():
