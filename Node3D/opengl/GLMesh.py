@@ -201,6 +201,31 @@ class Mesh(GLGraphicsItem):
             result["detail"] = d
         return result
 
+    def getAttribType(self, attrLevel, attribName):
+        # get the type of a given attribute
+        checkType = ""
+        if attrLevel == "vertex":
+            checkType = type(self.getVertexAttrib(attribName, 0))
+        elif attrLevel == "edge":
+            checkType = type(self.getEdgeAttrib(attribName, 0))
+        elif attrLevel == "face":
+            checkType = type(self.getFaceAttrib(attribName, 0))
+        elif attrLevel == "detail":
+            checkType = type(self.getDetailAttrib(attribName))
+
+        if checkType is float:
+            return "float"
+        elif checkType is int:
+            return "int"
+        elif checkType is bool:
+            return "bool"
+        elif checkType is str:
+            return "str"
+        elif checkType is np.ndarray:
+            return "vector"
+        else:
+            return "none"
+
     def _build_dict(self):
         self._mapGetData = {
             # "color": [self._mesh.vertex_colors, self._mesh.face_colors, self._mesh.edge_colors],

@@ -119,6 +119,20 @@ class NodeGraph(QtCore.QObject):
     :parameters: :str
     :emits: new session path
     """
+    show_node_info_panel_triggerd = QtCore.Signal(NodeObject)
+    """
+    Signal triggered when MMB clicked in viewer with node selected.
+
+    :parameters: :class:`NodeGraphQt.NodeObject`
+    :emits: selected node
+    """
+    close_node_info_panel_triggered = QtCore.Signal(NodeObject)
+    """
+    Signal triggered when MMB is released in viewer with node selected.
+
+    :parameters: :class:`NodeGraphQt.NodeObject`
+    :emits: selected node
+    """
 
     def __init__(self, parent=None):
         super(NodeGraph, self).__init__(parent)
@@ -147,6 +161,8 @@ class NodeGraph(QtCore.QObject):
         self._viewer.moved_nodes.connect(self._on_nodes_moved)
         self._viewer.node_double_clicked.connect(self._on_node_double_clicked)
         self._viewer.insert_node.connect(self._insert_node)
+        self._viewer.show_node_info_panel_triggered.connect(self._on_show_node_info_panel_triggered)
+        self._viewer.close_node_info_panel_triggered.connect(self._on_close_node_info_panel_triggered)
 
         # pass through signals.
         self._viewer.node_selected.connect(self._on_node_selected)
@@ -330,6 +346,20 @@ class NodeGraph(QtCore.QObject):
             port2 = getattr(node2, ptypes[p2_view.port_type])()[p2_view.name]
             port1.disconnect_from(port2)
         self._undo_stack.endMacro()
+
+    def _on_show_node_info_panel_triggered(self, node_id):
+        """
+        show info panel with current node information
+        """
+        node = self.get_node_by_id(node_id)
+        self.show_node_info_panel_triggerd.emit(node)
+
+    def _on_close_node_info_panel_triggered(self, node_id):
+        """
+        close info panel
+        """
+        node = self.get_node_by_id(node_id)
+        self.close_node_info_panel_triggered.emit(node)
 
     @property
     def model(self):
