@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>336</width>
-    <height>555</height>
+    <width>327</width>
+    <height>551</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -369,27 +369,6 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>Edge Attrs</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>Face Attrs</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_6">
-           <property name="text">
-            <string>Detail Attrs</string>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="1">
           <widget class="QTextEdit" name="vertexAttrText">
            <property name="sizeAdjustPolicy">
@@ -397,6 +376,13 @@
            </property>
            <property name="readOnly">
             <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Edge Attrs</string>
            </property>
           </widget>
          </item>
@@ -410,6 +396,13 @@
            </property>
           </widget>
          </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Face Attrs</string>
+           </property>
+          </widget>
+         </item>
          <item row="2" column="1">
           <widget class="QTextEdit" name="faceAttrText">
            <property name="sizeAdjustPolicy">
@@ -417,6 +410,13 @@
            </property>
            <property name="readOnly">
             <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Detail Attrs</string>
            </property>
           </widget>
          </item>
@@ -432,10 +432,6 @@
          </item>
         </layout>
        </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
         <layout class="QFormLayout" name="formLayout">
          <property name="leftMargin">
@@ -451,20 +447,6 @@
           <widget class="QLabel" name="label_8">
            <property name="text">
             <string>Cook Time</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLabel" name="cookTimeLabel">
-           <property name="text">
-            <string>0</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_9">
-           <property name="text">
-            <string>Errors</string>
            </property>
           </widget>
          </item>
@@ -484,6 +466,20 @@
            </property>
            <property name="readOnly">
             <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Message</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="cookTimeLabel">
+           <property name="text">
+            <string>0</string>
            </property>
           </widget>
          </item>
