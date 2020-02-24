@@ -21,16 +21,16 @@ class NodeInfoPanel(QtWidgets.QWidget):
         self.screenHeight = self.screenSize.height()
 
         self.attribTextEdits = {"vertex": self.ui.vertexAttrText,
-                           "edge": self.ui.edgeAttrText,
-                           "face": self.ui.faceAttrText,
-                           "detail": self.ui.detailAttrText}
+                                "edge": self.ui.edgeAttrText,
+                                "face": self.ui.faceAttrText,
+                                "detail": self.ui.detailAttrText}
 
         self.attribColor = {"float": '<font color="yellow">',
-                       "vector": '<font color="lime">',
-                       "int": '<font color="teal">',
-                       "bool": '<font color="purple">',
-                       "str": '<font color="lightpink">',
-                       "none": '<font>'}
+                            "vector": '<font color="lime">',
+                            "int": '<font color="teal">',
+                            "bool": '<font color="purple">',
+                            "str": '<font color="lightpink">',
+                            "none": '<font>'}
 
         self.messageColor = {"none": '<font color="lime">',
                              "warning": '<font color="orange">',
@@ -75,9 +75,7 @@ class NodeInfoPanel(QtWidgets.QWidget):
                 self.ui.faceCntLabel.setText(str(faceCount))
 
                 # set bbox related info to labels
-                bboxCenter = node.geo.bbox_center
-                bboxMin = node.geo.bbox_min
-                bboxMax = node.geo.bbox_max
+                bboxMin, bboxMax, bboxCenter = node.geo.get_bbox_info()
                 bboxSize = [abs(bboxMin[0] - bboxMax[0]),
                             abs(bboxMin[1] - bboxMax[1]),
                             abs(bboxMin[2] - bboxMax[2])]
@@ -109,7 +107,6 @@ class NodeInfoPanel(QtWidgets.QWidget):
                         attrDisplayStr = attrDisplayStr + attr
                         attrDisplayStr += "</font>"
                         attrDisplayStr += "(" + attrType + ")"
-
 
                     self.attribTextEdits[attrLevel].setHtml(attrDisplayStr)
 
