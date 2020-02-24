@@ -94,7 +94,6 @@ from .base.utils import setup_context_menu
 # widgets
 from .widgets.node_tree import NodeTreeWidget
 from .widgets.properties_bin import PropertiesBinWidget
-from .widgets.node_info_panel import NodeInfoPanel
 
 __version__ = VERSION
 __all__ = [
@@ -111,7 +110,6 @@ __all__ = [
     'PropertiesBinWidget',
     'VERSION',
     'constants',
-    'setup_context_menu',
-    "NodeInfoPanel"
+    'setup_context_menu'
 ]
 

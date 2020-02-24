@@ -10,7 +10,7 @@ class GeometryNode(AutoNode):
 
     def __init__(self, pre_generate=True):
         super(GeometryNode, self).__init__(defaultInputType=GeometryNode, defaultOutputType=GeometryNode)
-        self.geo = Mesh()
+        self.geo = None
         if pre_generate:
             self.add_output("out")
             self.create_property("out", None)

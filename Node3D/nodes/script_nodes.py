@@ -89,8 +89,8 @@ class Vertex_Wrangle(ScriptNode):
             self.updateCode()
         try:
             self.func(*data)
-        except Exception as error:
-            self.error(error)
+        except:
+            self.error(traceback.format_exc())
 
     def run(self):
         if not self.copyData():

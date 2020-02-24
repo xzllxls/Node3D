@@ -14,6 +14,7 @@ from .scriptEditor import nodeScriptEditor
 from .dataTreeWidget import NodeDataTreeWidget
 import numpy
 from .parameterTree import NodePropBin
+from .nodeInfoPanel import NodeInfoPanel
 
 
 def cook_node(graph, node):

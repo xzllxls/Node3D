@@ -1,5 +1,5 @@
-from .. import QtWidgets, QtCore, QtGui, QtCompat
-from ....base.node.geometry_node import GeometryNode
+from Qt import QtWidgets, QtCore, QtGui, QtCompat
+from ..base.node.geometry_node import GeometryNode
 import os
 
 
@@ -8,13 +8,14 @@ class NodeInfoPanel(QtWidgets.QWidget):
 
     def __init__(self):
         super().__init__()
-        self.workingPath = os.path.dirname(__file__)
-        self.ui = QtCompat.loadUi(self.workingPath + "/node_info_panel.ui", self)
+        self.workingPath = os.path.dirname(__file__).replace("\\", "/")
+        self.ui = QtCompat.loadUi(self.workingPath + "/uiFiles/nodeInfoPanel.ui", self)
 
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.width = 400
         self.height = 600
         self.resize(self.width, self.height)
+        self.nodeInfoWidget.setFixedHeight(100)
 
         self.screenSize = QtWidgets.QDesktopWidget().screenGeometry()
         self.screenWidth = self.screenSize.width()
@@ -36,31 +37,76 @@ class NodeInfoPanel(QtWidgets.QWidget):
                              "warning": '<font color="orange">',
                              "error": '<font color="red">'}
 
-    def refresh(self, node):
+        self.attribLabels = {"vertex": self.ui.label_23,
+                             "edge": self.ui.label,
+                             "face": self.ui.label_3,
+                             "detail": self.ui.label_6}
+
+        self.node = None
+        self._always_show = False
+
+    @property
+    def always_show(self):
+        return self._always_show
+
+    @always_show.setter
+    def always_show(self, state):
+        self._always_show = state
+        if state:
+            self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        else:
+            self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+
+    def clear(self, clear_all=True):
+        # clear node info
+        if clear_all:
+            self.ui.nodeNameLabel.setText("")
+            self.ui.nodeTypeLabel.setText("")
+        self.ui.cookTimeLabel.setText("")
+        self.nodeErrorText.setText("")
+        self.ui.vertexCntLabel.setText("")
+        self.ui.edgeCntLabel.setText("")
+        self.ui.faceCntLabel.setText("")
+
+        [i.setText('') for i in [self.ui.bboxCenterXLabel, self.ui.bboxCenterYLabel, self.ui.bboxCenterZLabel]]
+        [i.setText('') for i in [self.ui.bboxMinXLabel, self.ui.bboxMinYLabel, self.ui.bboxMinZLabel]]
+        [i.setText('') for i in [self.ui.bboxMaxXLabel, self.ui.bboxMaxYLabel, self.ui.bboxMaxZLabel]]
+        [i.setText('') for i in [self.ui.bboxSizeXLabel, self.ui.bboxSizeYLabel, self.ui.bboxSizeZLabel]]
+        [i.setText('') for i in self.attribTextEdits.values()]
+
+    def hide_elements(self):
+        [i.setVisible(False) for i in self.attribTextEdits.values()]
+        [i.setVisible(False) for i in self.attribLabels.values()]
+        self.ui.nodeErrorText.setVisible(False)
+        self.ui.label_9.setVisible(False)
+
+    def setNode(self, node):
         # node is the specific type of node, eg: bunny node
         # collect node related info
+
         nodeName = node.name()
         nodeType = node.type_
         nodeCookTime = node.getCookTime()
         nodeMessage, nodeMessageLevel = node.get_message()
 
+        self.hide_elements()
         self.ui.nodeNameLabel.setText(nodeName)
         self.ui.nodeTypeLabel.setText(nodeType)
         self.ui.cookTimeLabel.setText(str(nodeCookTime))
 
-        errorMessage = ""
-        if nodeMessageLevel == 0:
-            # no message
-            errorMessage += self.messageColor["none"] + "Well Cooked"
-        elif nodeMessageLevel == 1:
-            # warning
-            errorMessage += self.messageColor["warning"] + nodeMessage
-        elif nodeMessageLevel == 2:
-            # error
-            errorMessage = self.messageColor["error"] + nodeMessage
+        if nodeMessageLevel > 0:
+            errorMessage = ""
+            if nodeMessageLevel == 1:
+                # warning
+                errorMessage = self.messageColor["warning"] + nodeMessage
+            elif nodeMessageLevel == 2:
+                # error
+                errorMessage = self.messageColor["error"] + nodeMessage
 
-        errorMessage += '</font>'
-        self.ui.nodeErrorText.setHtml(errorMessage)
+            errorMessage += '</font>'
+            self.ui.label_9.setVisible(True)
+            self.ui.nodeErrorText.setVisible(True)
+            self.ui.nodeErrorText.setHtml(errorMessage)
 
         # collect geo related info
         if isinstance(node, GeometryNode) and node.geo is not None:
@@ -81,24 +127,29 @@ class NodeInfoPanel(QtWidgets.QWidget):
                             abs(bboxMin[2] - bboxMax[2])]
 
                 bboxCenterLabels = [self.ui.bboxCenterXLabel, self.ui.bboxCenterYLabel, self.ui.bboxCenterZLabel]
-                [bboxCenterLabels[i].setText('%.3f' % (bboxCenter[i])) for i in range(len(bboxCenterLabels))]
+                [label.setText('%.3f' % (bboxCenter[i])) for i, label in enumerate(bboxCenterLabels)]
 
                 bboxMinLabels = [self.ui.bboxMinXLabel, self.ui.bboxMinYLabel, self.ui.bboxMinZLabel]
-                [bboxMinLabels[i].setText('%.3f' % (bboxMin[i])) for i in range(len(bboxMinLabels))]
+                [label.setText('%.3f' % (bboxMin[i])) for i, label in enumerate(bboxMinLabels)]
 
                 bboxMaxLabels = [self.ui.bboxMaxXLabel, self.ui.bboxMaxYLabel, self.ui.bboxMaxZLabel]
-                [bboxMaxLabels[i].setText('%.3f' % (bboxMax[i])) for i in range(len(bboxMaxLabels))]
+                [label.setText('%.3f' % (bboxMax[i])) for i, label in enumerate(bboxMaxLabels)]
 
                 bboxSizeLabels = [self.ui.bboxSizeXLabel, self.ui.bboxSizeYLabel, self.ui.bboxSizeZLabel]
-                [bboxSizeLabels[i].setText('%.3f' % (bboxSize[i])) for i in range(len(bboxSizeLabels))]
+                [label.setText('%.3f' % (bboxSize[i])) for i, label in enumerate(bboxSizeLabels)]
 
                 # collect attribute related info
                 attribData = node.geo.getAttribNames()
 
-                for attrLevel in attribData:
+                for attrLevel, attrNames in attribData.items():
                     # vertex, edge, face, detail
+                    if not attrNames:
+                        continue
+                    else:
+                        self.attribLabels[attrLevel].setVisible(True)
+                        self.attribTextEdits[attrLevel].setVisible(True)
                     attrDisplayStr = ""
-                    for attr in attribData[attrLevel]:
+                    for attr in attrNames:
                         if attrDisplayStr != "":
                             attrDisplayStr += ","
 
@@ -109,10 +160,41 @@ class NodeInfoPanel(QtWidgets.QWidget):
                         attrDisplayStr += "(" + attrType + ")"
 
                     self.attribTextEdits[attrLevel].setHtml(attrDisplayStr)
+        else:
+            self.clear(False)
 
-        self.adjustWindowPos()
+    def refresh(self, node=None, always_show=False):
+        isVisible = self.isVisible()
+        if node is not None:
+            self.node = node
+            self.setNode(node)
+        elif self.node is not None:
+            self.setNode(self.node)
+        else:
+            self.clear()
 
-        self.show()
+        if self._always_show and isVisible:
+            return
+
+        self.always_show = always_show
+
+        if not isVisible or self._always_show:
+            self.show()
+        if not isVisible:
+            self.adjustWindowPos()
+
+    def keyPressEvent(self, event):
+        # use "S" key to make panel always show
+        if not self._always_show and event.key() == QtCore.Qt.Key_S:
+            self.refresh(None, True)
+        super().keyPressEvent(event)
+
+    def close(self):
+        # if the panel is in always show state , don't auto close it
+        if self._always_show:
+            return
+        self.always_show = False
+        super().close()
 
     def adjustWindowPos(self):
         # make sure window is inside the screen
