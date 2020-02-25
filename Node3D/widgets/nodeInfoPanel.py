@@ -2,17 +2,17 @@ from Qt import QtWidgets, QtCore, QtGui, QtCompat
 from ..base.node.geometry_node import GeometryNode
 import os
 
-ATTRIBUTE_DATA_COLOR = {"float": '<font color="yellow">',
-                        "vector": '<font color="MediumSpringGreen">',
-                        "int": '<font color="Orange">',
-                        "bool": '<font color="Orchid">',
-                        "str": '<font color="lightpink">',
-                        "group": '<font color="DeepSkyBlue">',
-                        "none": '<font>'}
+ATTRIBUTE_DATA_COLOR = {"float": '<font color="yellow">{}</font>({})',
+                        "vector": '<font color="MediumSpringGreen">{}</font>({})',
+                        "int": '<font color="Orange">{}</font>({})',
+                        "bool": '<font color="Orchid">{}</font>({})',
+                        "str": '<font color="lightpink">{}</font>({})',
+                        "group": '<font color="DeepSkyBlue">{}</font>({})',
+                        "none": '<font>{0}</font>'}
 
-MESSAGE_COLOR = {"none": '<font color="lime">',
-                 "warning": '<font color="orange">',
-                 "error": '<font color="red">'}
+MESSAGE_COLOR = {"none": '<font color="lime">{}</font>',
+                 "warning": '<font color="orange">{}</font>',
+                 "error": '<font color="red">{}</font>'}
 
 
 class NodeInfoPanel(QtWidgets.QWidget):
@@ -95,18 +95,19 @@ class NodeInfoPanel(QtWidgets.QWidget):
         self.ui.cookTimeLabel.setText(str(nodeCookTime))
 
         if nodeMessageLevel > 0:
-            errorMessage = ""
             if nodeMessageLevel == 1:
                 # warning
-                errorMessage = MESSAGE_COLOR["warning"] + nodeMessage
+                messageColor = MESSAGE_COLOR["warning"]
             elif nodeMessageLevel == 2:
                 # error
-                errorMessage = MESSAGE_COLOR["error"] + nodeMessage
+                messageColor = MESSAGE_COLOR["error"]
+            else:
+                # other
+                messageColor = MESSAGE_COLOR["none"]
 
-            errorMessage += '</font>'
             self.ui.label_9.setVisible(True)
             self.ui.nodeErrorText.setVisible(True)
-            self.ui.nodeErrorText.setHtml(errorMessage)
+            self.ui.nodeErrorText.setHtml(messageColor.format(nodeMessage))
         else:
             self.ui.nodeErrorText.setText("")
 
@@ -150,21 +151,17 @@ class NodeInfoPanel(QtWidgets.QWidget):
                     else:
                         self.attribLabels[attrLevel].setVisible(True)
                         self.attribTextEdits[attrLevel].setVisible(True)
-                    attrDisplayStr = ""
+
+                    attrDisplay = []
                     for attr in attrNames:
-                        if attrDisplayStr != "":
-                            attrDisplayStr += ", "
                         if ":" in attr:
                             attr = attr[2:]
                             attrType = "group"
                         else:
                             attrType = node.geo.getAttribType(attrLevel, attr)
-                        attrDisplayStr += ATTRIBUTE_DATA_COLOR[attrType]
-                        attrDisplayStr = attrDisplayStr + attr
-                        attrDisplayStr += "</font>"
-                        attrDisplayStr += "(" + attrType + ")"
+                        attrDisplay.append(ATTRIBUTE_DATA_COLOR[attrType].format(attr, attrType))
 
-                    self.attribTextEdits[attrLevel].setHtml(attrDisplayStr)
+                    self.attribTextEdits[attrLevel].setHtml("; ".join(attrDisplay))
         else:
             self.clear(False)
 
