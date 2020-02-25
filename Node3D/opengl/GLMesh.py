@@ -196,9 +196,9 @@ class Mesh(GLGraphicsItem):
 
     def getAttribNames(self, allInOne=False, with_group=False):
         if with_group:
-            v = [i for i in self._detailAttribute["vertex"].keys()]
-            f = [i for i in self._detailAttribute["face"].keys()]
-            e = [i for i in self._detailAttribute["edge"].keys()]
+            v = list(self._detailAttribute["vertex"].keys())
+            f = list(self._detailAttribute["face"].keys())
+            e = list(self._detailAttribute["edge"].keys())
         else:
             v = [i for i in self._detailAttribute["vertex"].keys() if ":" not in i]
             f = [i for i in self._detailAttribute["face"].keys() if ":" not in i]

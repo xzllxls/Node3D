@@ -1,7 +1,18 @@
 from Qt import QtWidgets, QtCore, QtGui, QtCompat
 from ..base.node.geometry_node import GeometryNode
 import os
-import sys
+
+ATTRIBUTE_DATA_COLOR = {"float": '<font color="yellow">',
+                        "vector": '<font color="MediumSpringGreen">',
+                        "int": '<font color="Orange">',
+                        "bool": '<font color="Orchid">',
+                        "str": '<font color="lightpink">',
+                        "group": '<font color="DeepSkyBlue">',
+                        "none": '<font>'}
+
+MESSAGE_COLOR = {"none": '<font color="lime">',
+                 "warning": '<font color="orange">',
+                 "error": '<font color="red">'}
 
 
 class NodeInfoPanel(QtWidgets.QWidget):
@@ -26,18 +37,6 @@ class NodeInfoPanel(QtWidgets.QWidget):
                                 "edge": self.ui.edgeAttrText,
                                 "face": self.ui.faceAttrText,
                                 "detail": self.ui.detailAttrText}
-
-        self.attribColor = {"float": '<font color="yellow">',
-                            "vector": '<font color="MediumSpringGreen">',
-                            "int": '<font color="Orange">',
-                            "bool": '<font color="Orchid">',
-                            "str": '<font color="lightpink">',
-                            "group": '<font color="DeepSkyBlue">',
-                            "none": '<font>'}
-
-        self.messageColor = {"none": '<font color="lime">',
-                             "warning": '<font color="orange">',
-                             "error": '<font color="red">'}
 
         self.attribLabels = {"vertex": self.ui.label_23,
                              "edge": self.ui.label,
@@ -99,10 +98,10 @@ class NodeInfoPanel(QtWidgets.QWidget):
             errorMessage = ""
             if nodeMessageLevel == 1:
                 # warning
-                errorMessage = self.messageColor["warning"] + nodeMessage
+                errorMessage = MESSAGE_COLOR["warning"] + nodeMessage
             elif nodeMessageLevel == 2:
                 # error
-                errorMessage = self.messageColor["error"] + nodeMessage
+                errorMessage = MESSAGE_COLOR["error"] + nodeMessage
 
             errorMessage += '</font>'
             self.ui.label_9.setVisible(True)
@@ -160,7 +159,7 @@ class NodeInfoPanel(QtWidgets.QWidget):
                             attrType = "group"
                         else:
                             attrType = node.geo.getAttribType(attrLevel, attr)
-                        attrDisplayStr += self.attribColor[attrType]
+                        attrDisplayStr += ATTRIBUTE_DATA_COLOR[attrType]
                         attrDisplayStr = attrDisplayStr + attr
                         attrDisplayStr += "</font>"
                         attrDisplayStr += "(" + attrType + ")"
