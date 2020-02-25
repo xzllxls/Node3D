@@ -55,7 +55,6 @@ def create_data(element_num, data, attrib_name):
             default = 0.0
             if tp is int:
                 default = 0
-        print(data[0], tp, default)
         data = [default for i in range(element_num)]
         return data
 

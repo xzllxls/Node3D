@@ -74,17 +74,18 @@ class Grid(GeometryNode):
 
     def __init__(self):
         super(Grid, self).__init__()
-        self.create_property("Size", value=[10, 10], widget_type=NODE_PROP_VECTOR2)
-        self.create_property("Frequency", value=[10, 11], widget_type=NODE_PROP_VECTOR2)
+        params = [{'name': 'Size', 'type': 'vector2', 'value': [10, 10]},
+                  {'name': 'Resolution', 'type': 'vector2i', 'value': [10, 10]}]
+        self.set_parameters(params)
         self.cook()
 
     def run(self):
         size = self.get_property("Size")
-        frequency = self.get_property("Frequency")
+        resolution = self.get_property("Resolution")
         x = size[0] * 0.5
         z = size[1] * 0.5
-        fx = int(frequency[0])
-        fz = int(frequency[1])
+        fx = resolution[0]
+        fz = resolution[1]
 
         x_range = np.linspace(-x, x, fx)
         z_range = np.linspace(-z, z, fz)

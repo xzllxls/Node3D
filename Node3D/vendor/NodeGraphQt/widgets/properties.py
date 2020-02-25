@@ -582,6 +582,12 @@ class PropVector(BaseProperty):
 
         self._can_emit = True
         self.setLayout(hbox)
+        self._data_type = float
+
+    def set_data_type(self, dt):
+        if dt in [int, float]:
+            [i.set_data_type(dt) for i in self._items]
+            self._data_type = dt
 
     def _add_item(self, index, hbox):
         _ledit = _valueEdit()
@@ -609,7 +615,7 @@ class PropVector(BaseProperty):
 
     def set_value(self, value):
         if value != self.get_value():
-            self._value = value.copy()
+            self._value = [self._data_type(i) for i in value]
             self._can_emit = False
             self._update_items()
             self._can_emit = True

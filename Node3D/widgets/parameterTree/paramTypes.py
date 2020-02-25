@@ -183,6 +183,74 @@ class Vector4Parameter(Parameter):
 registerParameterType('vector4', Vector4Parameter, override=True)
 
 
+class Vector3iParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropVector3()
+        w.set_data_type(int)
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class Vector3iParameter(Parameter):
+    itemClass = Vector3iParameterItem
+
+
+registerParameterType('vector3i', Vector3iParameter, override=True)
+
+
+class Vector2iParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropVector2()
+        w.set_data_type(int)
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class Vector2iParameter(Parameter):
+    itemClass = Vector2iParameterItem
+
+
+registerParameterType('vector2i', Vector2iParameter, override=True)
+
+
+class Vector4iParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropVector4()
+        w.set_data_type(int)
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class Vector4iParameter(Parameter):
+    itemClass = Vector4iParameterItem
+
+
+registerParameterType('vector4i', Vector4iParameter, override=True)
+
+
+
+
 class ColorParameterItem(pTypes.WidgetParameterItem):
     def __init__(self, param, depth):
         self.hideWidget = False
