@@ -195,9 +195,9 @@ class Mesh(GLGraphicsItem):
         return self._detailAttribute
 
     def getAttribNames(self, allInOne=False):
-        v = list(self._detailAttribute["vertex"].keys())
-        f = list(self._detailAttribute["face"].keys())
-        e = list(self._detailAttribute["edge"].keys())
+        v = [i for i in self._detailAttribute["vertex"].keys() if ":" not in i]
+        f = [i for i in self._detailAttribute["face"].keys() if ":" not in i]
+        e = [i for i in self._detailAttribute["edge"].keys() if ":" not in i]
         d = [i for i in self._detailAttribute.keys() if i not in ["vertex", "face", "edge"]]
         if allInOne:
             result = []
@@ -205,11 +205,10 @@ class Mesh(GLGraphicsItem):
             result.extend(f)
             result.extend(e)
         else:
-            result = {}
-            result["vertex"] = v
-            result["face"] = f
-            result["edge"] = e
-            result["detail"] = d
+            result = {'vertex': v,
+                      'face': f,
+                      'edge': e,
+                      'detail': d}
         return result
 
     def getAttribType(self, attrLevel, attribName):
@@ -868,3 +867,29 @@ class Mesh(GLGraphicsItem):
             if self._mesh.has_edge_property(name):
                 eh = self._mesh.edge_handle(index)
                 return self._mesh.edge_property(name, eh)
+
+    def getGroupNames(self, allInOne=False):
+        v = [i for i in self._detailAttribute["vertex"].keys() if ":" in i]
+        f = [i for i in self._detailAttribute["face"].keys() if ":" in i]
+        e = [i for i in self._detailAttribute["edge"].keys() if ":" in i]
+        if allInOne:
+            result = []
+            result.extend(v)
+            result.extend(f)
+            result.extend(e)
+        else:
+            result = {'vertex': v,
+                      'face': f,
+                      'edge': e}
+        return result
+
+    def removeGroup(self, level, name):
+        if level == 'vertex':
+            name = "v:" + name
+        elif level == 'face':
+            name = "f:" + name
+        elif level == 'edge':
+            name = "e:" + name
+
+        if ":" in name:
+            self.removeAttribute(level, name)
