@@ -1,6 +1,7 @@
 from Qt import QtWidgets, QtCore, QtGui, QtCompat
 from ..base.node.geometry_node import GeometryNode
 import os
+import sys
 
 
 class NodeInfoPanel(QtWidgets.QWidget):
@@ -63,7 +64,7 @@ class NodeInfoPanel(QtWidgets.QWidget):
             self.ui.nodeNameLabel.setText("")
             self.ui.nodeTypeLabel.setText("")
         self.ui.cookTimeLabel.setText("")
-        self.nodeErrorText.setText("")
+        # self.nodeErrorText.setText("")
         self.ui.vertexCntLabel.setText("")
         self.ui.edgeCntLabel.setText("")
         self.ui.faceCntLabel.setText("")
@@ -194,6 +195,7 @@ class NodeInfoPanel(QtWidgets.QWidget):
         if self._always_show:
             return
         self.always_show = False
+        self.node = None
         super().close()
 
     def adjustWindowPos(self):
