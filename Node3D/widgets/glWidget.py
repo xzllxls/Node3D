@@ -94,17 +94,16 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
         self.opts[name] = state
 
     def addItem(self, item, MeshItem=False):
-        if MeshItem:
-            self.MeshItems.append(item)
-        else:
-            self.items.append(item)
         if hasattr(item, 'initializeGL'):
             self.makeCurrent()
             try:
                 item.initializeGL()
             except:
                 checkOpenGLVersion('Error while adding item %s to GLViewWidget.' % str(item))
-
+        if MeshItem:
+            self.MeshItems.append(item)
+        else:
+            self.items.append(item)
         item._setView(self)
         self.update()
 
@@ -274,8 +273,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texwidth, texwidth, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                          data.transpose((1, 0, 2)))
 
-            self.opts['viewport'] = (
-            0, 0, w, h)  # viewport is the complete image; this ensures that paintGL(region=...)
+            self.opts['viewport'] = (0, 0, w, h)  # viewport is the complete image; this ensures that paintGL(region=...)
             # is interpreted correctly.
             p2 = 2 * padding
             for x in range(-padding, w - padding, texwidth - p2):
@@ -333,16 +331,17 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
                 items = self.MeshItems
             else:
                 items = self.MeshItems + self.items
-            items.sort(key=lambda a: a.depthValue())
+            # items.sort(key=lambda a: a.depthValue())
             for i in items:
                 if not i.visible():
                     continue
                 glMatrixMode(GL_MODELVIEW)
                 glPushMatrix()
                 try:
-                    tr = i.transform()
-                    a = np.array(tr.copyDataTo()).reshape((4, 4))
-                    glMultMatrixf(a.transpose())
+                    if isinstance(i, gl.GLGraphicsItem.GLGraphicsItem):
+                        tr = i.transform()
+                        a = np.array(tr.copyDataTo()).reshape((4, 4))
+                        glMultMatrixf(a.transpose())
                     self.drawItemTree(i, drawID=drawID)
                 finally:
                     glMatrixMode(GL_MODELVIEW)
@@ -362,14 +361,15 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
             glPopAttrib()
 
     def itemsAt(self, x=None, y=None):
-        num = len(self.MeshItems)
-        [item.setID((idx + 1)/num) for idx, item in enumerate(self.MeshItems)]
-        self.paintGL(drawID=True)
-        a = glReadPixels(x, y, 1, 1, GL_RED, type=GL_FLOAT)
-        idx = int(a[0][0]*num)-1
-        if 0 <= idx < num:
-            return self.MeshItems[idx]
         return None
+        # num = len(self.MeshItems)
+        # [item.setID((idx + 1)/num) for idx, item in enumerate(self.MeshItems)]
+        # self.paintGL(drawID=True)
+        # a = glReadPixels(x, y, 1, 1, GL_RED, type=GL_FLOAT)
+        # idx = int(a[0][0]*num)-1
+        # if 0 <= idx < num:
+        #     return self.MeshItems[idx]
+        # return None
 
     def mousePressEvent(self, ev):
         self.mousePos = ev.pos()

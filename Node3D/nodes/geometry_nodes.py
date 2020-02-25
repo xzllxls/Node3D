@@ -252,6 +252,7 @@ class EdgeCusp(GeometryNode):
 
         fv = self.geo.mesh.face_vertex_indices()
         pos = self.geo.mesh.points()
+        to_remove = self.geo.mesh.vertices()
 
         for f, vs in enumerate(fv):
             new_vhs = []
@@ -266,7 +267,7 @@ class EdgeCusp(GeometryNode):
             old_f = self.geo.mesh.face_handle(f)
             self.geo.mesh.copy_all_properties(old_f, new_f, True)
 
-        for vh in self.geo.mesh.vertices():
+        for vh in to_remove:
             self.geo.mesh.delete_vertex(vh, True)
 
         self.geo.mesh.garbage_collection()

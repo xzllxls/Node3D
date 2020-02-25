@@ -150,7 +150,7 @@ class Attribute_Create(GeometryNode):
         attrib_name = self.get_property('Attribute Name')
         if len(attrib_name) == 0:
             return
-
+        return
         attrib_type = self.get_property('Attribute Type')
 
         try:

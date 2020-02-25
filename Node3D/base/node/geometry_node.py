@@ -2,6 +2,7 @@ from .auto_node import AutoNode
 from ...opengl import Mesh
 from ...vendor.NodeGraphQt.base.port import Port
 import copy
+import gc
 
 
 class GeometryNode(AutoNode):
@@ -10,12 +11,25 @@ class GeometryNode(AutoNode):
 
     def __init__(self, pre_generate=True):
         super(GeometryNode, self).__init__(defaultInputType=GeometryNode, defaultOutputType=GeometryNode)
-        self.geo = None
+        self._geo = None
         if pre_generate:
             self.add_output("out")
             self.create_property("out", None)
         # else:
         #     self.geo = None
+
+    @property
+    def geo(self):
+        return self._geo
+
+    @geo.setter
+    def geo(self, geo):
+        if self._geo is not None:
+            self._geo.delete()
+            del self._geo
+            self._geo = None
+            gc.collect()
+        self._geo = geo
 
     def get_port(self, port):
         if type(port) is int:
@@ -74,7 +88,6 @@ class GeometryNode(AutoNode):
             return from_port.node()
 
     def copyData(self, index=0):
-        self.geo = None
         self.geo = self.getInputGeometry(index)
         return self.geo is not None
 

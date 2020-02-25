@@ -8,7 +8,7 @@ ATTRIBUTE_DATA_COLOR = {"float": '<font color="yellow">{}</font>({})',
                         "bool": '<font color="Orchid">{}</font>({})',
                         "str": '<font color="lightpink">{}</font>({})',
                         "group": '<font color="DeepSkyBlue">{}</font>({})',
-                        "none": '<font>{0}</font>'}
+                        "none": '<font>{}</font>'}
 
 MESSAGE_COLOR = {"none": '<font color="lime">{}</font>',
                  "warning": '<font color="orange">{}</font>',
@@ -63,7 +63,7 @@ class NodeInfoPanel(QtWidgets.QWidget):
         if clear_all:
             self.ui.nodeNameLabel.setText("")
             self.ui.nodeTypeLabel.setText("")
-        self.ui.cookTimeLabel.setText("")
+            self.ui.cookTimeLabel.setText("")
         self.ui.vertexCntLabel.setText("")
         self.ui.edgeCntLabel.setText("")
         self.ui.faceCntLabel.setText("")

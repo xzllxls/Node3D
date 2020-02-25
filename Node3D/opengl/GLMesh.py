@@ -5,6 +5,7 @@ from .Mesh_utils import MeshFuncs, mesh_signals, bbox
 import openmesh
 import copy
 from .Shader import *
+from Qt import QtCore
 
 orig_set_vertex_property_array = openmesh.PolyMesh.set_vertex_property_array
 
@@ -94,8 +95,9 @@ DATA_TYPE_MAP = {
 }
 
 
-class Mesh(GLGraphicsItem):
+class Mesh(object):
     def __init__(self, mesh=None):
+
         self.opts = {
             'color': (1., 1., 1.),
             'edgeColor': (0.5, 0.5, 0.5),
@@ -105,7 +107,7 @@ class Mesh(GLGraphicsItem):
             'computeNormals': False,
         }
 
-        super(Mesh, self).__init__()
+        # super(Mesh, self).__init__()
 
         self._detailAttribute = {
             "vertex": {
@@ -151,11 +153,13 @@ class Mesh(GLGraphicsItem):
         self._mesh.release_edge_colors()
 
         # self._mesh = openmesh.PolyMesh()
-
-        self.meshFuncs = MeshFuncs(self)
-        self._build_dict()
         self._GLFaces = None
         self._flatColor = 0
+        self.__view = None
+
+    @property
+    def meshFuncs(self):
+        return MeshFuncs(self)
 
     @property
     def mesh(self):
@@ -189,6 +193,21 @@ class Mesh(GLGraphicsItem):
                    (_min[1] + _max[1]) / 2.0,
                    (_min[2] + _max[2]) / 2.0]
         return _min, _max, _center
+
+    def visible(self):
+        return True
+
+    def _setView(self, v):
+        self.__view = v
+
+    def view(self):
+        return self.__view
+
+    def update(self):
+        v = self.view()
+        if v is None:
+            return
+        v.update()
 
     @property
     def detailAttribute(self):
@@ -230,23 +249,6 @@ class Mesh(GLGraphicsItem):
 
         return DATA_TYPE_MAP.get(checkType, 'none')
 
-    def _build_dict(self):
-        self._mapGetData = {
-            # "color": [self._mesh.vertex_colors, self._mesh.face_colors, self._mesh.edge_colors],
-            "pos": [self._mesh.points, None, None],
-            "normal": [self.getNormals, self.getFaceNormals, None],
-        }
-        self._mapGetValue = {
-            # "color": [self._mesh.color, self._mesh.color, self._mesh.color],
-            "pos": [self._mesh.point, None, None],
-            "normal": [self._mesh.normal, self._mesh.normal, None],
-        }
-        self._mapSetValue = {
-            # "color": [self._mesh.set_color, self._mesh.set_color, self._mesh.set_color],
-            "pos": [self._mesh.set_point, None, None],
-            "normal": [self._mesh.set_normal, self._mesh.set_normal, None],
-        }
-
     def update_GLFace(self):
         b = self.getTriangulateMesh()
         self._GLFaces = b.face_vertex_indices()
@@ -263,10 +265,11 @@ class Mesh(GLGraphicsItem):
             self._flatColor = 0
 
     def moveToCenter(self):
-        cent = self.bbox_center
-        self.translate(-1.0 * cent[0],
-                       -1.0 * cent[1],
-                       -1.0 * cent[2])
+        pass
+        # cent = self.bbox_center
+        # self.translate(-1.0 * cent[0],
+        #                -1.0 * cent[1],
+        #                -1.0 * cent[2])
 
     def setSelected(self, sel):
         self._selected = sel
@@ -595,37 +598,11 @@ class Mesh(GLGraphicsItem):
             self.removeEdge(eg, isolate, False)
         self._mesh.garbage_collection()
 
-    def clear(self):
+    def delete(self):
         self._mesh.clear()
         self._detailAttribute = {}
         self.signals.emit_attribChanged()
         self.update()
-
-    def _processBuildinAttrib(self, _dict, idx, name, args=(), emit=False, data=None):
-        if emit and name == "pos":
-            self._GLFaces = None
-        if name in _dict.keys():
-            func = _dict[name][idx]
-            if func is not None:
-                if data is not None:
-                    ori = func()
-                    if ori.shape == data.shape:
-                        ori[..., [0, 1, 2]] = data
-                        self.signals.emit_attribChanged()
-                        return [None, True]
-                    else:
-                        return [None, False]
-                elif emit:
-                    func(*args)
-                    self.signals.emit_attribChanged()
-                    return [None, True]
-                else:
-                    if len(args) == 1:
-                        return [func(args[0]), True]
-                    else:
-                        return [func(), True]
-
-        return [None, False]
 
     def getVertexAttribData(self, name, array=True):
         if self._mesh.has_vertex_property(name):
@@ -635,7 +612,10 @@ class Mesh(GLGraphicsItem):
                 except Exception as e:
                     pass
             return self._mesh.vertex_property(name)
-        return self._processBuildinAttrib(self._mapGetData, 0, name)[0]
+        if name == 'pos':
+            return self._mesh.points()
+        elif name == 'normal':
+            return self.getNormals()
 
     def getFaceAttribData(self, name, array=True):
         if self._mesh.has_face_property(name):
@@ -645,7 +625,8 @@ class Mesh(GLGraphicsItem):
                 except:
                     pass
             return self._mesh.face_property(name)
-        return self._processBuildinAttrib(self._mapGetData, 1, name)[0]
+        if name == 'normal':
+            return self.getFaceNormals()
 
     def getEdgeAttribData(self, name, array=False):
         if self._mesh.has_edge_property(name):
@@ -655,11 +636,15 @@ class Mesh(GLGraphicsItem):
                 except:
                     pass
             return self._mesh.edge_property(name)
-        return self._processBuildinAttrib(self._mapGetData, 2, name)[0]
 
     def setVertexAttribData(self, name, data, array=True):
-        if self._processBuildinAttrib(self._mapGetData, 0, name, emit=True, data=data)[1]:
+        if name == 'pos':
+            self._mesh.points()[..., [0, 1, 2]] = data
             return True
+        elif name == 'normal':
+            self.getNormals()[..., [0, 1, 2]] = data
+            return True
+
         hasAttrib = self._mesh.has_vertex_property(name)
         if array and type(data) is np.ndarray:
             if not hasAttrib:
@@ -690,8 +675,8 @@ class Mesh(GLGraphicsItem):
             return False
 
     def setFaceAttribData(self, name, data, array=True):
-        if self._processBuildinAttrib(self._mapGetData, 1, name, emit=True, data=data)[1]:
-            return True
+        if name == 'normal':
+            self.getFaceNormals()[..., [0, 1, 2]] = data
         hasAttrib = self._mesh.has_face_property(name)
         if array and type(data) is np.ndarray:
             if not hasAttrib:
@@ -722,8 +707,6 @@ class Mesh(GLGraphicsItem):
             return False
 
     def setEdgeAttribData(self, name, data, array=True):
-        if self._processBuildinAttrib(self._mapGetData, 2, name, emit=True, data=data)[1]:
-            return True
         hasAttrib = self._mesh.has_edge_property(name)
         if array and type(data) is np.ndarray:
             if not hasAttrib:
@@ -756,20 +739,23 @@ class Mesh(GLGraphicsItem):
         vh = self._mesh.vertex_handle(index)
         if self._mesh.has_vertex_property(name):
             return self._mesh.vertex_property(name, vh)
-
-        return self._processBuildinAttrib(self._mapGetValue, 0, name, [vh])[0]
+        if name == 'pos':
+            return self._mesh.point(vh)
+        elif name == 'normal':
+            return self._mesh.normal(vh)
 
     def getFaceAttrib(self, name, index):
         fh = self._mesh.face_handle(index)
         if self._mesh.has_face_property(name):
             return self._mesh.face_property(name, fh)
-        return self._processBuildinAttrib(self._mapGetValue, 1, name, [fh])[0]
+        if name == 'normal':
+            return self._mesh.normal(fh)
 
     def getEdgeAttrib(self, name, index):
         eh = self._mesh.edge_handle(index)
         if self._mesh.has_edge_property(name):
             return self._mesh.edge_property(name, eh)
-        return self._processBuildinAttrib(self._mapGetValue, 2, name, [eh])[0]
+        return None
 
     def setVertexAttrib(self, name, index, value):
         vh = self._mesh.vertex_handle(index)
@@ -777,7 +763,13 @@ class Mesh(GLGraphicsItem):
             self._mesh.set_vertex_property(name, vh, value)
             self.signals.emit_attribChanged()
             return True
-        return self._processBuildinAttrib(self._mapSetValue, 0, name, (vh, value), True)[1]
+        if name == 'pos':
+            self._mesh.set_point(vh, value)
+            return True
+        elif name == 'normal':
+            self._mesh.set_normal(vh, value)
+            return True
+        return False
 
     def setFaceAttrib(self, name, index, value):
         fh = self._mesh.face_handle(index)
@@ -785,7 +777,10 @@ class Mesh(GLGraphicsItem):
             self._mesh.set_face_property(name, fh, value)
             self.signals.emit_attribChanged()
             return True
-        return self._processBuildinAttrib(self._mapSetValue, 1, name, (fh, value), True)[1]
+        if name == 'normal':
+            self._mesh.set_normal(fh, value)
+            return True
+        return False
 
     def setEdgeAttrib(self, name, index, value):
         eh = self._mesh.edge_handle(index)
@@ -793,7 +788,7 @@ class Mesh(GLGraphicsItem):
             self._mesh.set_edge_property(name, eh, value)
             self.signals.emit_attribChanged()
             return True
-        return self._processBuildinAttrib(self._mapSetValue, 2, name, (eh, value), True)[1]
+        return False
 
     def getDetailAttrib(self, name):
         if name in self._detailAttribute.keys():
