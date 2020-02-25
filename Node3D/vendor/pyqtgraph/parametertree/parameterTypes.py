@@ -692,4 +692,4 @@ class TextParameter(Parameter):
     itemClass = TextParameterItem
 
 
-registerParameterType('text', TextParameter, override=True)
+# registerParameterType('text', TextParameter, override=True)
