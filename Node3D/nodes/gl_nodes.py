@@ -104,7 +104,7 @@ class Merge(GeometryNode):
         geo_attribs = collections.OrderedDict()
         attrib_data = copy.deepcopy(self.geo.detailAttribute)
         for g in geos:
-            geo_attribs[g] = g.getAttribNames()
+            geo_attribs[g] = g.getAttribNames(with_group=True)
             update_dict(attrib_data, g.detailAttribute)
         attrib_data['vertex'].pop('pos')
 
@@ -112,7 +112,7 @@ class Merge(GeometryNode):
         b = self.geo.getNumFaces()
         c = self.geo.getNumEdges()
         for geo, attrib in geo_attribs.items():
-            m_attrib = self.geo.getAttribNames()
+            m_attrib = self.geo.getAttribNames(with_group=True)
 
             vn = [i for i in attrib['vertex'] if i not in m_attrib['vertex']]
             for v in vn:

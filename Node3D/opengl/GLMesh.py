@@ -194,13 +194,15 @@ class Mesh(GLGraphicsItem):
     def detailAttribute(self):
         return self._detailAttribute
 
-    def getAttribNames(self, allInOne=False):
-        # v = [i for i in self._detailAttribute["vertex"].keys() if ":" not in i]
-        # f = [i for i in self._detailAttribute["face"].keys() if ":" not in i]
-        # e = [i for i in self._detailAttribute["edge"].keys() if ":" not in i]
-        v = [i for i in self._detailAttribute["vertex"].keys()]
-        f = [i for i in self._detailAttribute["face"].keys()]
-        e = [i for i in self._detailAttribute["edge"].keys()]
+    def getAttribNames(self, allInOne=False, with_group=False):
+        if with_group:
+            v = [i for i in self._detailAttribute["vertex"].keys()]
+            f = [i for i in self._detailAttribute["face"].keys()]
+            e = [i for i in self._detailAttribute["edge"].keys()]
+        else:
+            v = [i for i in self._detailAttribute["vertex"].keys() if ":" not in i]
+            f = [i for i in self._detailAttribute["face"].keys() if ":" not in i]
+            e = [i for i in self._detailAttribute["edge"].keys() if ":" not in i]
         d = [i for i in self._detailAttribute.keys() if i not in ["vertex", "face", "edge"]]
         if allInOne:
             result = []
@@ -870,6 +872,15 @@ class Mesh(GLGraphicsItem):
             if self._mesh.has_edge_property(name):
                 eh = self._mesh.edge_handle(index)
                 return self._mesh.edge_property(name, eh)
+
+    def setGroup(self, level, name, index, value):
+        assert type(value) is bool
+        if level == 'vertex':
+            self.setVertexAttrib("v:" + name, index, value)
+        elif level == 'face':
+            self.setFaceAttrib("f:" + name, index, value)
+        elif level == 'edge':
+            self.setEdgeAttrib("e:" + name, index, value)
 
     def getGroupNames(self, allInOne=False):
         v = [i[2:] for i in self._detailAttribute["vertex"].keys() if ":" in i]

@@ -28,10 +28,11 @@ class NodeInfoPanel(QtWidgets.QWidget):
                                 "detail": self.ui.detailAttrText}
 
         self.attribColor = {"float": '<font color="yellow">',
-                            "vector": '<font color="lime">',
-                            "int": '<font color="teal">',
-                            "bool": '<font color="purple">',
+                            "vector": '<font color="MediumSpringGreen">',
+                            "int": '<font color="Orange">',
+                            "bool": '<font color="Orchid">',
                             "str": '<font color="lightpink">',
+                            "group": '<font color="DeepSkyBlue">',
                             "none": '<font>'}
 
         self.messageColor = {"none": '<font color="lime">',
@@ -141,7 +142,7 @@ class NodeInfoPanel(QtWidgets.QWidget):
                 [label.setText('%.3f' % (bboxSize[i])) for i, label in enumerate(bboxSizeLabels)]
 
                 # collect attribute related info
-                attribData = node.geo.getAttribNames()
+                attribData = node.geo.getAttribNames(with_group=True)
 
                 for attrLevel, attrNames in attribData.items():
                     # vertex, edge, face, detail
@@ -153,9 +154,12 @@ class NodeInfoPanel(QtWidgets.QWidget):
                     attrDisplayStr = ""
                     for attr in attrNames:
                         if attrDisplayStr != "":
-                            attrDisplayStr += ","
-
-                        attrType = node.geo.getAttribType(attrLevel, attr)
+                            attrDisplayStr += ", "
+                        if ":" in attr:
+                            attr = attr[2:]
+                            attrType = "group"
+                        else:
+                            attrType = node.geo.getAttribType(attrLevel, attr)
                         attrDisplayStr += self.attribColor[attrType]
                         attrDisplayStr = attrDisplayStr + attr
                         attrDisplayStr += "</font>"
