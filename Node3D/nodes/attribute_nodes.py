@@ -141,7 +141,6 @@ class Attribute_Create(GeometryNode):
         self.add_combo_menu("Attribute Class", "Attribute Class", items=['vertex', 'edge', 'face', 'detail'])
         self.add_text_input("Attribute Name", "Attribute Name", '')
         self.add_input("geo", GeometryNode)
-        self.last_sel = 'No Attribute'
         self.add_combo_menu("Attribute Type", "Attribute Type", items=['float', 'int', 'vector', 'vector2', 'vector4', 'boolean', 'string'])
         self.add_text_input("Attribute Value", "Attribute Value", '0.0')
 
