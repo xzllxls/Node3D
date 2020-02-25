@@ -53,7 +53,7 @@ class MeshFuncs(object):
         if newName is None:
             newName = name
 
-        attr = self.mesh.face_property(name)
+        attr = self.geo.getFaceAttribData(name)
 
         self.geo.detailAttribute["vertex"][newName] = None
 
@@ -93,7 +93,7 @@ class MeshFuncs(object):
         if newName is None:
             newName = name
 
-        attr = self.mesh.vertex_property(name)
+        attr = self.geo.getVertexAttribData(name)
         self.geo.detailAttribute["face"][newName] = None
 
         if not canCal:
@@ -132,7 +132,7 @@ class MeshFuncs(object):
         if newName is None:
             newName = name
 
-        attr = self.mesh.edge_property(name)
+        attr = self.geo.getEdgeAttribData(name)
         self.geo.detailAttribute["vertex"][newName] = None
 
         if not canCal:
@@ -172,7 +172,7 @@ class MeshFuncs(object):
         if newName is None:
             newName = name
 
-        attr = self.mesh.vertex_property(name)
+        attr = self.geo.getVertexAttribData(name)
         evs = self.mesh.ev_indices()
         self.geo.detailAttribute["edge"][newName] = None
 

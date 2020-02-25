@@ -266,7 +266,6 @@ class Moebius(GeometryNode):
         self.geo.addFaces(np.array(tri.triangles))
 
 
-
 class Octahedron(GeometryNode):
     __identifier__ = 'Primitives'
     NODE_NAME = 'Octahedron'
@@ -357,8 +356,8 @@ class Torus(GeometryNode):
         if rad[1] == 0:
             rad[1] = 0.0001
 
-        vertices, faces = generate_torus(rad[0], rad[1],self.get_property("Radial resolution"),
-                                  self.get_property("Tubular resolution"))
+        faces, vertices = generate_torus(rad[0], rad[1], self.get_property("Radial resolution"),
+                                         self.get_property("Tubular resolution"))
         self.geo = Mesh()
         self.geo.addVertices(vertices)
         self.geo.addFaces(faces)

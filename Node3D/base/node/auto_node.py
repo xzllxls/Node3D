@@ -334,5 +334,9 @@ class AutoNode(BaseNode, QtCore.QObject):
                 p['value'] = self.get_property(prop_name)
                 if p['type'] == 'action':
                     p['node'] = self
+                elif p['type'] == 'list':
+                    _prop_name = '_' + p['name'] + "_"
+                    if self.has_property(_prop_name):
+                        p['limits'] = self.get_property(_prop_name)
             else:
                 self.__update_params(p['children'])

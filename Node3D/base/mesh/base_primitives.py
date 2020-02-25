@@ -215,4 +215,3 @@ def generate_torus(torus_radius, tube_radius, radial_resolution, tubular_resolut
                     vert_idx(uidx, vidx)]
 
     return faces, verts
-

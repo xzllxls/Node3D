@@ -64,7 +64,6 @@ class NodeInfoPanel(QtWidgets.QWidget):
             self.ui.nodeNameLabel.setText("")
             self.ui.nodeTypeLabel.setText("")
         self.ui.cookTimeLabel.setText("")
-        # self.nodeErrorText.setText("")
         self.ui.vertexCntLabel.setText("")
         self.ui.edgeCntLabel.setText("")
         self.ui.faceCntLabel.setText("")
@@ -108,6 +107,8 @@ class NodeInfoPanel(QtWidgets.QWidget):
             self.ui.label_9.setVisible(True)
             self.ui.nodeErrorText.setVisible(True)
             self.ui.nodeErrorText.setHtml(errorMessage)
+        else:
+            self.ui.nodeErrorText.setText("")
 
         # collect geo related info
         if isinstance(node, GeometryNode) and node.geo is not None:

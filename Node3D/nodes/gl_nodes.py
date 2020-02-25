@@ -378,3 +378,23 @@ class Visualize(GeometryNode):
 
         if self.get_property("Flat Color"):
             self.geo.setFlatColor(True)
+
+
+class Normal(GeometryNode):
+    __identifier__ = 'OpenGL'
+    NODE_NAME = 'Normal'
+
+    def __init__(self):
+        super(Normal, self).__init__()
+        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'limits': ['vertex', 'face']}])
+
+        self.add_input("geo", GeometryNode)
+
+    def run(self):
+        if not self.copyData():
+            return
+        attrib_class = self.get_property('Attribute Class')
+        if attrib_class == 'vertex':
+            self.geo.mesh.update_vertex_normals()
+        else:
+            self.geo.mesh.update_face_normals()
