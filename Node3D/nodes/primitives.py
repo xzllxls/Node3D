@@ -18,7 +18,7 @@ class Tube(GeometryNode):
                   {'name': 'Top center', 'type': 'vector3', 'value': [0, 1, 0]},
                   {'name': 'Outer radius', 'type': 'vector2', 'value': [0.5, 0.5]},
                   {'name': 'Inner radius', 'type': 'vector2', 'value': [0.3, 0.3]},
-                  {'name': 'Segments', 'type': 'int', 'value': 10, 'limits': (1, 30)},
+                  {'name': 'Segments', 'type': 'int', 'value': 10, 'limits': (3, 30)},
                   {'name': 'Quad', 'type': 'bool', 'value': True}]
         self.set_parameters(params)
 
@@ -27,8 +27,12 @@ class Tube(GeometryNode):
     def run(self):
         outer = self.get_property("Outer radius")
         inner = self.get_property("Inner radius")
+        s = self.get_property("Segments")
+        if s < 3:
+            self.geo = None
+            return
         vertices, faces = generate_tube(self.get_property("Bottom center"), self.get_property("Top center"),
-                                        outer[0], outer[1], inner[0], inner[1], self.get_property("Segments"),
+                                        outer[0], outer[1], inner[0], inner[1], s,
                                         self.get_property("Quad"))
         self.geo = Mesh()
         self.geo.addVertices(vertices)
@@ -87,6 +91,10 @@ class Grid(GeometryNode):
         fx = resolution[0]
         fz = resolution[1]
 
+        if fx < 2 or fz < 2:
+            self.geo = None
+            return
+
         x_range = np.linspace(-x, x, fx)
         z_range = np.linspace(-z, z, fz)
         vertices = np.dstack(np.meshgrid(x_range, z_range, np.array([0.0]))).reshape(-1, 3)
@@ -111,7 +119,7 @@ class Arrow(GeometryNode):
                   {'name': 'Height', 'type': 'vector2', 'value': [2, 4]},
                   {'name': 'Cylinder split', 'type': 'int', 'value': 1, 'limits': (1, 10)},
                   {'name': 'Cone split', 'type': 'int', 'value': 1, 'limits': (1, 10)},
-                  {'name': 'Resolution', 'type': 'int', 'value': 20, 'limits': (2, 30)}]
+                  {'name': 'Resolution', 'type': 'int', 'value': 20, 'limits': (3, 30)}]
         self.set_parameters(params)
 
         self.cook()
@@ -139,16 +147,21 @@ class Cone(GeometryNode):
         params = [{'name': 'Radius', 'type': 'float', 'value': 1.0},
                   {'name': 'Height', 'type': 'float', 'value': 2.0},
                   {'name': 'Split', 'type': 'int', 'value': 1, 'limits': (1, 10)},
-                  {'name': 'Resolution', 'type': 'int', 'value': 20, 'limits': (2, 30)},
+                  {'name': 'Resolution', 'type': 'int', 'value': 20, 'limits': (3, 30)},
                   {'name': 'Cap', 'type': 'bool', 'value': True}]
         self.set_parameters(params)
 
         self.cook()
 
     def run(self):
+        s = self.get_property("Resolution")
+        if s < 3:
+            self.geo = None
+            return
+
         tri, quad, vt = generate_cone(self.get_property("Radius"),
                                       self.get_property("Height"),
-                                      self.get_property("Resolution"),
+                                      s,
                                       self.get_property("Split"))
 
         self.geo = Mesh()
@@ -191,16 +204,21 @@ class Cylinder(GeometryNode):
         params = [{'name': 'Radius', 'type': 'float', 'value': 1.0},
                   {'name': 'Height', 'type': 'float', 'value': 2.0},
                   {'name': 'Split', 'type': 'int', 'value': 4, 'limits': (1, 10)},
-                  {'name': 'Resolution', 'type': 'int', 'value': 20, 'limits': (2, 30)},
+                  {'name': 'Resolution', 'type': 'int', 'value': 20, 'limits': (3, 30)},
                   {'name': 'Cap', 'type': 'bool', 'value': True}]
         self.set_parameters(params)
 
         self.cook()
 
     def run(self):
+        s = self.get_property("Resolution")
+        if s < 3:
+            self.geo = None
+            return
+
         tri, quad, vt = generate_cylinder(self.get_property("Radius"),
                                           self.get_property("Height"),
-                                          self.get_property("Resolution"),
+                                          s,
                                           self.get_property("Split"))
 
         self.geo = Mesh()
@@ -297,7 +315,7 @@ class Sphere(GeometryNode):
     def __init__(self):
         super(Sphere, self).__init__()
         params = [{'name': 'Radius', 'type': 'float', 'value': 1.0},
-                  {'name': 'Resolution', 'type': 'int', 'value': 20, 'limits': (1, 50)}]
+                  {'name': 'Resolution', 'type': 'int', 'value': 20, 'limits': (2, 50)}]
         self.set_parameters(params)
 
         self.cook()
@@ -307,7 +325,12 @@ class Sphere(GeometryNode):
         if rad == 0:
             rad = 0.0001
 
-        tri, quad, vt = generate_sphere(rad, self.get_property("Resolution"))
+        s = self.get_property("Resolution")
+        if s < 2:
+            self.geo = None
+            return
+
+        tri, quad, vt = generate_sphere(rad, s)
         self.geo = Mesh()
         self.geo.addVertices(vt)
         self.geo.addFaces(tri)
@@ -344,8 +367,8 @@ class Torus(GeometryNode):
     def __init__(self):
         super(Torus, self).__init__()
         params = [{'name': 'Radius', 'type': 'vector2', 'value': [1, 0.5]},
-                  {'name': 'Radial resolution', 'type': 'int', 'value': 20, 'limits': (1, 50)},
-                  {'name': 'Tubular resolution', 'type': 'int', 'value': 20, 'limits': (1, 50)}]
+                  {'name': 'Radial resolution', 'type': 'int', 'value': 20, 'limits': (3, 50)},
+                  {'name': 'Tubular resolution', 'type': 'int', 'value': 20, 'limits': (3, 50)}]
         self.set_parameters(params)
 
         self.cook()
@@ -357,8 +380,12 @@ class Torus(GeometryNode):
         if rad[1] == 0:
             rad[1] = 0.0001
 
-        faces, vertices = generate_torus(rad[0], rad[1], self.get_property("Radial resolution"),
-                                         self.get_property("Tubular resolution"))
+        r1 = self.get_property("Radial resolution")
+        r2 = self.get_property("Tubular resolution")
+        if r1 < 3 or r2 < 3:
+            self.geo = None
+            return
+        faces, vertices = generate_torus(rad[0], rad[1], r1, r2)
         self.geo = Mesh()
         self.geo.addVertices(vertices)
         self.geo.addFaces(faces)

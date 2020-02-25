@@ -173,9 +173,9 @@ def generate_cone(radius, height, resolution, split):
     for j in range(resolution):
         j1 = (j + 1) % resolution
         base = 2
-        tri_faces.append([0, base + j, base + j1])
+        tri_faces.append([0, base + j1, base + j])
         base = 2 + resolution * (split - 1)
-        tri_faces.append([1, base + j1, base + j])
+        tri_faces.append([1, base + j, base + j1])
 
     for i in range(split - 1):
         base1 = 2 + resolution * i

@@ -19,11 +19,10 @@ class Point(GeometryNode):
         self.cook()
 
     def run(self):
-        color = list(self.get_property("Color"))
         self.geo = Mesh()
         self.geo.addVertex(self.get_property("Pos"))
         self.geo.mesh.vertex_property_array("color")
-        self.geo.setVertexAttrib("color", 0, color)
+        self.geo.setVertexAttrib("color", 0, list(self.get_property("Color")))
         self.geo.mesh.vertex_property_array("pscale")
         self.geo.setVertexAttrib("pscale", 0, self.get_property("Size"))
 
@@ -65,7 +64,6 @@ def update_dict(a, b):
             a[key] = value
         else:
             a[key].update(value)
-    # return a
 
 
 class Merge(GeometryNode):
