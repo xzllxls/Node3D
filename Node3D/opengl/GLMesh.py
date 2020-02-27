@@ -1,11 +1,9 @@
 import numpy as np
 from OpenGL.arrays import vbo
-from ..vendor.pyqtgraph.opengl.GLGraphicsItem import GLGraphicsItem
 from .Mesh_utils import MeshFuncs, mesh_signals, bbox
 import openmesh
 import copy
 from .Shader import *
-from Qt import QtCore
 
 orig_set_vertex_property_array = openmesh.PolyMesh.set_vertex_property_array
 
@@ -107,8 +105,6 @@ class Mesh(object):
             'computeNormals': False,
         }
 
-        # super(Mesh, self).__init__()
-
         self._detailAttribute = {
             "vertex": {
                 "pos": None,
@@ -136,7 +132,6 @@ class Mesh(object):
 
         if mesh is None:
             self._mesh = openmesh.PolyMesh()
-            self._mesh.is_triangles()
         else:
             self._mesh = mesh
         self._mesh.release_vertex_texcoords1D()
@@ -153,6 +148,7 @@ class Mesh(object):
         self._mesh.release_edge_colors()
 
         # self._mesh = openmesh.PolyMesh()
+
         self._GLFaces = None
         self._flatColor = 0
         self.__view = None

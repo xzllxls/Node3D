@@ -273,30 +273,6 @@ class MeshFuncs(object):
         else:
             return result
 
-    def createSphere(self, rows, cols, radius=1.0, offset=False):
-        verts, faces = sphere(rows, cols, radius, offset)
-        mesh = om.PolyMesh()
-        for face in faces:
-            vts = []
-            for v in face:
-                vts.append(mesh.add_vertex(verts[v]))
-            mesh.add_face(vts)
-
-        self.geo._mesh = mesh
-        self.geo._GLFaces = mesh.face_vertex_indices()
-        return mesh
-
-    def createCylinder(self, rows, cols, radius=[1.0, 1.0], length=1.0, offset=False):
-        verts, faces = cylinder(rows, cols, radius, length, offset)
-        mesh = om.PolyMesh()
-        for face in faces:
-            vts = []
-            for v in face:
-                vts.append(mesh.add_vertex(verts[v]))
-            mesh.add_face(vts)
-        self.geo._mesh = mesh
-        self.geo._GLFaces = mesh.face_vertex_indices()
-
     @staticmethod
     def applyMatrix(data, mat, offset=None):
         sp = data.shape[1]

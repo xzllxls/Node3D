@@ -51,13 +51,15 @@ class File(GeometryNode):
             offset = self.geo.getNumVertexes()
             self.geo.addVertices(mesh.vertices)
             for vts in mesh.faces:
-                self.geo.mesh.add_face([self.geo.mesh.vertex_handle(i + offset) for i in vts])
+                self.geo.mesh.add_face([self.geo.mesh.vertex_handle(i + offset) for i in vts if i >= 0])
             normals = mesh.normals
             if normals.shape[0] > 0:
                 if norms is None:
                     norms = [normals]
                 else:
                     norms.append(normals)
+            elif norms is not None:
+                norms.append(np.zeros((len(mesh.vertices), 3)))
 
             texcoords = mesh.texturecoords
             if texcoords.shape[0] > 0:
@@ -65,14 +67,13 @@ class File(GeometryNode):
                     uvs = [texcoords[0]]
                 else:
                     uvs.append(texcoords[0])
+            elif uvs is not None:
+                uvs.append(np.zeros((len(mesh.vertices), 3)))
 
         if norms is not None:
             self.geo.setVertexAttribData('normal', np.vstack(norms), True)
         if uvs is not None:
-            try:
-                self.geo.setVertexAttribData('uv', np.vstack(uvs), True)
-            except:
-                self.geo.removeAttribute('vertex', 'uv')
+            self.geo.setVertexAttribData('uv', np.vstack(uvs), True)
 
         pyassimp.release(scene)
 

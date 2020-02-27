@@ -194,7 +194,7 @@ class Merge(GeometryNode):
         for g in geo_attribs.keys():
             offset = self.geo.getNumVertexes()
             self.geo.addVertices(g.getVertexes())
-            self.geo.addFaces(g.getFaces() + offset)
+            [self.geo.addFace(face[face >= 0]+offset) for face in g.getFaces()]
 
         for l, attribs in attrib_data.items():
             for name, data in attribs.items():
