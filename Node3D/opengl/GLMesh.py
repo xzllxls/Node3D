@@ -276,17 +276,12 @@ class Mesh(object):
         return self._selected
 
     def drawBBox(self):
-        _min = self.bbox_min
-        _max = self.bbox_max
-        center = [(_min[0] + _max[0]) / 2.0,
-                  (_min[1] + _max[1]) / 2.0,
-                  (_min[2] + _max[2]) / 2.0]
-
+        _min, _max, _center = self.get_bbox_info()
         size = [abs(_min[0] - _max[0]),
                 abs(_min[1] - _max[1]),
                 abs(_min[2] - _max[2])]
 
-        tr = self.bbox.set(center, size)
+        tr = self.bbox.set(_center, size)
         glMatrixMode(GL_MODELVIEW)
         glPushMatrix()
         try:
