@@ -10,6 +10,12 @@ class NodeDataTreeWidget(pg.DataTreeWidget):
         self.setAlternatingRowColors(False)
 
     def set_node(self, node):
+        if not self.isVisible():
+            if self.node:
+                self.node.cooked.disconnect(self.update_date)
+                self.node = None
+            return
+
         if self.node:
             if node.id != self.node.id and isinstance(node, AutoNode):
                 self.node.cooked.disconnect(self.update_date)

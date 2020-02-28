@@ -7,7 +7,7 @@ from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import *
 from .styles import mainStyle
-from ..base.node.auto_node import AutoNode
+from ..base.node import AutoNode, GeometryNode
 from .glScene import glScene
 from .timeLine import TimeLine
 from .scriptEditor import nodeScriptEditor
@@ -28,6 +28,14 @@ def print_functions(graph, node):
 
 def toggle_auto_cook(graph, node):
     node.autoCook = not node.autoCook
+
+
+def show_parameter(graph, node):
+    graph.master.propertiesBin.add_node(node)
+
+
+def draw_geometry(graph, node):
+    graph.master.glWidget.set_node(node)
 
 
 def add_command(menu, name, func=None, parent=None, shortcut=None):
@@ -97,8 +105,10 @@ def setup_menubar(graph, window, root_menu):
     # node menu
     node_menu = graph.context_nodes_menu()
     # node_menu.add_command('Print Functions', print_functions, node_class=ModuleNode)
+    node_menu.add_command('Draw Geometry', draw_geometry, node_class=GeometryNode)
     node_menu.add_command('Cook Node', cook_node, node_class=AutoNode)
     node_menu.add_command('Toggle Auto Cook', toggle_auto_cook, node_class=AutoNode)
+    node_menu.add_command('Show Parameter', show_parameter, node_class=AutoNode)
 
 
 class mainWindow(QMainWindow):
@@ -106,7 +116,7 @@ class mainWindow(QMainWindow):
 
     def __init__(self):
         super(mainWindow, self).__init__()
-        self.windowTitle = 'ANRO Node Framework'
+        self.windowTitle = 'Node3D'
         self.setWindowTitle(self.windowTitle)
         self.init_ui()
         self.init_stylesheet()
