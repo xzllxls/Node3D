@@ -18,22 +18,19 @@ class Group_Delete(GeometryNode):
 
     def __init__(self):
         super(Group_Delete, self).__init__()
-        self.add_combo_menu("Group Class", "Group Class", items=['vertex', 'edge', 'face'])
-        self.add_combo_menu("Group Name", "Group Name", items=['No Group'])
         self.add_input("geo", GeometryNode)
+        self.set_parameters(
+            [{'name': 'Group Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face']},
+             {'name': 'Group Name', 'type': 'listText'}])
 
     def run(self):
         if not self.copyData():
             return
 
         group_class = self.get_property('Group Class')
-
-        items = ['No Group']
-        items.extend(self.geo.getGroupNames()[group_class])
-        self.update_combo_menu('Group Name', items)
-
+        self.update_attribute_param('Group Name', self.geo.getGroupNames()[group_class])
         group_name = self.get_property('Group Name')
-        if group_name == 'No Group':
+        if not self.geo.hasGroup(group_class, group_name):
             return
 
         self.geo.removeGroup(group_class, group_name)
@@ -45,22 +42,23 @@ class Group_Create(GeometryNode):
 
     def __init__(self):
         super(Group_Create, self).__init__()
-        self.add_combo_menu("Group Class", "Group Class", items=['vertex', 'edge', 'face'])
-        self.add_text_input("Group Name", "Group Name", '')
         self.add_input("geo", GeometryNode)
-        self.add_checkbox("Group Value", "Group Value", state=False)
+        self.set_parameters(
+            [{'name': 'Group Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face']},
+             {'name': 'Group Name', 'type': 'str'},
+             {'name': 'Group Value', 'type': 'bool', 'value': False}])
 
     def run(self):
         if not self.copyData():
             return
         group_name = self.get_property('Group Name')
-        if len(group_name) == 0:
+        if not group_name:
             return
 
         value = self.get_property('Group Value')
         group_class = self.get_property('Group Class')
 
-        self.geo.createGroup(group_class,group_name,value)
+        self.geo.createGroup(group_class, group_name, value)
 
 
 class Group_Promote(GeometryNode):
@@ -69,12 +67,13 @@ class Group_Promote(GeometryNode):
 
     def __init__(self):
         super(Group_Promote, self).__init__()
-        self.add_combo_menu("From", "From", items=['vertex', 'edge', 'face'])
-        self.add_combo_menu("To", "To", items=['vertex', 'edge', 'face'])
-        self.add_combo_menu("Group Name", "Group Name", items=['No Group'])
-        self.add_text_input("New Group Name", "New Group Name", "")
-        self.add_checkbox("Delete Origin", "Delete Origin", state=False)
         self.add_input("geo", GeometryNode)
+        self.set_parameters(
+            [{'name': 'From', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face']},
+             {'name': 'To', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face']},
+             {'name': 'Group Name', 'type': 'listText'},
+             {'name': 'New Group Name', 'type': 'str'},
+             {'name': 'Delete Origin', 'type': 'bool', 'value': True}])
 
     def run(self):
         if not self.copyData():
@@ -83,11 +82,9 @@ class Group_Promote(GeometryNode):
         from_class = self.get_property('From')
         to_class = self.get_property('To')
 
-        items = ['No Group']
-        items.extend(self.geo.getGroupNames()[from_class])
-        self.update_combo_menu('Group Name', items)
+        self.update_attribute_param('Group Name', self.geo.getGroupNames()[from_class])
         group_name = self.get_property('Group Name')
-        if group_name == 'No Group':
+        if not self.geo.hasGroup(from_class, group_name):
             return
 
         new_name = get_group_name(to_class, self.get_property('New Group Name'))
@@ -127,10 +124,11 @@ class Group_Rename(GeometryNode):
 
     def __init__(self):
         super(Group_Rename, self).__init__()
-        self.add_combo_menu("Group Class", "Group Class", items=['vertex', 'edge', 'face'])
-        self.add_combo_menu("Group Name", "Group Name", items=['No Group'])
-        self.add_text_input("New Group Name", "New Group Name", "")
         self.add_input("geo", GeometryNode)
+        self.set_parameters(
+            [{'name': 'Group Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face']},
+             {'name': 'Group Name', 'type': 'listText'},
+             {'name': 'New Group Name', 'type': 'str'}])
 
     def run(self):
         if not self.copyData():
@@ -138,12 +136,9 @@ class Group_Rename(GeometryNode):
 
         group_class = self.get_property('Group Class')
 
-        items = ['No Group']
-        items.extend(self.geo.getGroupNames()[group_class])
-        self.update_combo_menu('Group Name', items)
-
+        self.update_attribute_param('Group Name', self.geo.getGroupNames()[group_class])
         group_name = self.get_property('Group Name')
-        if group_name == 'No Group':
+        if not self.geo.hasGroup(group_class, group_name):
             return
 
         new_name = self.get_property('New Group Name')

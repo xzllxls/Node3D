@@ -891,3 +891,14 @@ class Mesh(object):
 
         if ":" in name:
             self.removeAttribute(level, name)
+
+    def hasGroup(self, level, name):
+        if level == 'vertex':
+            name = "v:" + name
+        elif level == 'face':
+            name = "f:" + name
+        elif level == 'edge':
+            name = "e:" + name
+
+        if ":" in name:
+            return self.hasAttribute(level, name)

@@ -468,3 +468,63 @@ class TextParameter(Parameter):
 
 
 registerParameterType('text', TextParameter, override=True)
+
+
+class ComboBox(QtWidgets.QComboBox):
+    show_popup = QtCore.Signal()
+
+    def __init__(self):
+        super(ComboBox, self).__init__()
+
+    def showPopup(self):
+        self.show_popup.emit()
+        super(ComboBox, self).showPopup()
+
+
+class ListTextParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        super(ListTextParameterItem, self).__init__(param, depth)
+
+    def makeWidget(self):
+        opts = self.param.opts
+        w = ComboBox()
+        w.setEditable(True)
+        w.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        w.setStyleSheet(""" QComboBox{background-color: rgb(20,20,20)}
+                            QComboBox::drop-down{
+                            background-color: rgb(55,55,55); 
+                            }""")
+        w.sigChanged = w.editTextChanged
+        w.value = self.value
+        w.setValue = self.setValue
+        self.widget = w
+        limits = opts.get('limits', None)
+        if limits:
+            self.limitsChanged(limits)
+
+        return w
+
+    def value(self):
+        return self.widget.currentText()
+
+    def setValue(self, val):
+        if type(val) is list:
+            self.limitsChanged(val)
+            return
+        if type(val) is int:
+            self.widget.setCurrentIndex(val)
+            return
+        self.widget.setCurrentText(val)
+
+    def limitsChanged(self, limits):
+        old = self.value()
+        self.widget.clear()
+        self.widget.addItems(limits)
+        self.widget.setCurrentText(old)
+
+
+class ListTextParameter(Parameter):
+    itemClass = ListTextParameterItem
+
+
+registerParameterType('listText', ListTextParameter, override=True)

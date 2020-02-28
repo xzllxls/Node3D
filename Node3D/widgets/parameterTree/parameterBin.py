@@ -89,10 +89,10 @@ class PropWidget(QtWidgets.QWidget):
                 print(node.name())
 
         # process parameters
-        if node.has_property("node_parameters"):
+        params = node.get_params()
+        if params:
             node.update_parameters()
-            pms = node.get_property("node_parameters")
-            for tab, params in pms.items():
+            for tab, params in params.items():
                 if tab not in self.get_tab_names():
                     self.add_tab(tab)
                 prop_window = self.get_tab_window(tab)

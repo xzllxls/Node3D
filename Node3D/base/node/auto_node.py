@@ -34,7 +34,8 @@ class CryptoColors(object):
 
 class AutoNode(BaseNode, QtCore.QObject):
     cooked = QtCore.Signal()
-    paramChanged = QtCore.Signal()
+    param_changed = QtCore.Signal()
+    input_changed = QtCore.Signal()
 
     def __init__(self, defaultInputType=None, defaultOutputType=None):
         super(AutoNode, self).__init__()
@@ -55,6 +56,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         self._cookTime = 0.0
         self._message = ""
         self._message_level = NODE_NONE
+        self._params = {}
 
     @property
     def autoCook(self):
@@ -99,7 +101,6 @@ class AutoNode(BaseNode, QtCore.QObject):
         elif type(port) is Port:
             to_port = port
         else:
-            print(self.inputs().keys())
             return self.defaultValue
 
         from_ports = to_port.connected_ports()
@@ -117,6 +118,8 @@ class AutoNode(BaseNode, QtCore.QObject):
 
     def cook(self, forceCook=False):
         if not self._autoCook and forceCook is not True:
+            if self.get_property('disabled'):
+                self.cookNextNode()
             return
 
         if not self.needCook:
@@ -153,12 +156,14 @@ class AutoNode(BaseNode, QtCore.QObject):
         else:
             self.needCook = False
             to_port.disconnect_from(from_port)
+        self.input_changed.emit()
 
     def on_input_disconnected(self, to_port, from_port):
         if not self.needCook:
             self.needCook = True
             return
         self.cook()
+        self.input_changed.emit()
 
     def checkPortType(self, to_port, from_port):
         # None type port can connect with any other type port
@@ -268,16 +273,15 @@ class AutoNode(BaseNode, QtCore.QObject):
         super(AutoNode, self).update_model()
 
     def set_parameters(self, params, tab='Parameters'):
-        if not self.has_property("node_parameters"):
-            self.create_property("node_parameters", {tab: params})
-        else:
-            self.get_property("node_parameters").update({tab: params})
+        self._params.update({tab: params})
         self.__create_props(params)
-        self.paramChanged.emit()
+        self.param_changed.emit()
 
     def __create_props(self, params: list):
         for p in params:
             if 'children' not in p.keys():
+                if p['type'] == 'action':
+                    continue
                 prop_name = p['name']
                 if 'value' in p.keys():
                     value = p['value']
@@ -323,20 +327,55 @@ class AutoNode(BaseNode, QtCore.QObject):
         return get_ramp_color(p[0], p[1], p[2], key)
 
     def update_parameters(self):
-        params = self.get_property("node_parameters")
-        [self.__update_params(p) for p in params.values()]
-        self.paramChanged.emit()
+        [self.__update_params(p) for p in self._params.values()]
+        self.param_changed.emit()
 
     def __update_params(self, params: list):
         for p in params:
             if 'children' not in p.keys():
                 prop_name = p['name']
                 p['value'] = self.get_property(prop_name)
-                if p['type'] == 'action':
+                tp = p['type']
+
+                if tp == 'button':
                     p['node'] = self
-                elif p['type'] == 'list':
+
+                elif tp == 'list' or tp == 'listText':
                     _prop_name = '_' + p['name'] + "_"
                     if self.has_property(_prop_name):
                         p['limits'] = self.get_property(_prop_name)
             else:
                 self.__update_params(p['children'])
+
+    def _update_list_param(self, name, items, reload=True):
+        if not self.has_property(name):
+            return
+        old_value = self.get_property(name)
+        self.set_property(name, items)
+        _name = '_' + name + "_"
+        if not self.has_property(_name):
+            self.create_property(_name, items)
+        else:
+            self.set_property(_name, items)
+
+        if reload:
+            if old_value in items:
+                self.set_property(name, old_value)
+            else:
+                self.set_property(name, items[0])
+        else:
+            self.set_property(name, old_value)
+
+    def update_combo_menu(self, name, items):
+        self._update_list_param(name, items)
+
+    def update_attribute_param(self, name, attribute_class):
+        if type(attribute_class) is not list:
+            attribute_class = [attribute_class]
+        self._update_list_param(name, attribute_class, False)
+
+    def update_group_param(self, name, group_class):
+        self.update_attribute_param(name, group_class)
+
+    def get_params(self):
+        return self._params

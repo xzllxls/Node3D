@@ -1,4 +1,4 @@
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtGui, QtWidgets
 from ..python2_3 import asUnicode
 from .Parameter import Parameter, registerParameterType
 from .ParameterItem import ParameterItem
@@ -492,13 +492,13 @@ class ListParameterItem(WidgetParameterItem):
 
     def makeWidget(self):
         opts = self.param.opts
-        t = opts['type']
         w = QtGui.QComboBox()
+        w.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
         w.sigChanged = w.currentIndexChanged
         w.value = self.value
         w.setValue = self.setValue
         self.widget = w  # needs to be set before limits are changed
-        self.limitsChanged(self.param, self.param.opts['limits'])
+        self.limitsChanged(self.param, opts['limits'])
         if len(self.forward) > 0:
             self.setValue(self.param.value())
         return w
@@ -514,6 +514,7 @@ class ListParameterItem(WidgetParameterItem):
             return
         if type(val) is int:
             self.widget.setCurrentIndex(val)
+            return
         self.targetValue = val
         if val not in self.reverse[0]:
             self.widget.setCurrentIndex(0)
@@ -656,7 +657,7 @@ class ActionParameter(Parameter):
         self.emitStateChanged('activated', None)
 
 
-registerParameterType('action', ActionParameter, override=True)
+registerParameterType('button', ActionParameter, override=True)
 
 
 class TextParameterItem(WidgetParameterItem):

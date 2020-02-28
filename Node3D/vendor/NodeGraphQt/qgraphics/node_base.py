@@ -134,7 +134,7 @@ class NodeItem(AbstractNodeItem):
         self._output_items = {}
         self._widgets = {}
         self._proxy_mode = False
-        self._porxy_mode_threshold = 70
+        self._proxy_mode_threshold = 70
 
     def paint(self, painter, option, widget):
         """
@@ -319,7 +319,7 @@ class NodeItem(AbstractNodeItem):
             for port, text in self._input_items.items():
                 input_width = port.boundingRect().width() - PORT_FALLOFF
                 if text.isVisible():
-                    input_width += text.boundingRect().width() / 1.5
+                    input_width += text.boundingRect().width() / 4.0
                 input_widths.append(input_width)
             width += max(input_widths)
             port_height = port.boundingRect().height()
@@ -329,7 +329,7 @@ class NodeItem(AbstractNodeItem):
             for port, text in self._output_items.items():
                 output_width = port.boundingRect().width()
                 if text.isVisible():
-                    output_width += text.boundingRect().width() / 1.5
+                    output_width += text.boundingRect().width() / 4.0
                 output_widths.append(output_width)
             width += max(output_widths)
             port_height = port.boundingRect().height()
@@ -501,7 +501,7 @@ class NodeItem(AbstractNodeItem):
         # with is the node with in screen
         width = r.x() - l.x()
 
-        self.set_proxy_mode(width < self._porxy_mode_threshold)
+        self.set_proxy_mode(width < self._proxy_mode_threshold)
 
     def set_proxy_mode(self, mode):
         if mode is self._proxy_mode:
@@ -516,14 +516,14 @@ class NodeItem(AbstractNodeItem):
         for port, text in self._input_items.items():
             port.setVisible(visible)
             text.setVisible(visible)
-            for pipe in port.connected_pipes:
-                pipe.setVisible(visible)
+            # for pipe in port.connected_pipes:
+            #     pipe.setVisible(visible)
 
         for port, text in self._output_items.items():
             port.setVisible(visible)
             text.setVisible(visible)
-            for pipe in port.connected_pipes:
-                pipe.setVisible(visible)
+            # for pipe in port.connected_pipes:
+            #     pipe.setVisible(visible)
 
         self._text_item.setVisible(visible)
         self._icon_item.setVisible(visible)
