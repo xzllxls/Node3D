@@ -219,12 +219,12 @@ def moveToOrigin(node):
         node.set_property("Translate", [-c[0], -c[1], -c[2]])
 
 
-class Transfrom(GeometryNode):
+class Transform(GeometryNode):
     __identifier__ = 'OpenGL'
-    NODE_NAME = 'Transfrom'
+    NODE_NAME = 'Transform'
 
     def __init__(self):
-        super(Transfrom, self).__init__()
+        super(Transform, self).__init__()
         self.create_property(
             "Translate", [0.0, 0.0, 0.0], widget_type=NODE_PROP_VECTOR3)
         self.create_property(
@@ -234,7 +234,7 @@ class Transfrom(GeometryNode):
         self.create_property(
             "Shear", [0.0, 0.0, 0.0], widget_type=NODE_PROP_VECTOR3)
         self.create_property(
-            "Unifrom Scale", 1.0, widget_type=NODE_PROP_FLOAT)
+            "Uniform Scale", 1.0, widget_type=NODE_PROP_FLOAT)
         self.create_property(
             "Invert", False, widget_type=NODE_PROP_QCHECKBOX)
         self.create_property(
@@ -256,7 +256,7 @@ class Transfrom(GeometryNode):
             if mat is None:
                 return
         else:
-            us = self.get_property("Unifrom Scale")
+            us = self.get_property("Uniform Scale")
             trans = np.array(self.get_property("Translate"))
             scale = np.array(self.get_property("Scale")) * us
             rot = np.radians(self.get_property("Rotate"))
@@ -296,8 +296,7 @@ class Color(GeometryNode):
             cols = np.random.random((self.geo.getNumVertexes(), 3))
         else:
             cols = np.ones((self.geo.getNumVertexes(), 3), dtype=np.float64)
-            cd = list(self.get_property("Color"))
-            cols[...] = cd
+            cols[...] = list(self.get_property("Color"))
 
         self.geo.setVertexAttribData("color", cols, True)
 
@@ -336,15 +335,15 @@ class Visualize(GeometryNode):
             return
 
         shape = data.shape
-        typematch = False
+        type_match = False
 
         d = None
         if len(shape) == 2:
             for nm in ["int", "float"]:
                 if nm in type(data[0][0]).__name__:
-                    typematch = True
+                    type_match = True
                     break
-            if not typematch:
+            if not type_match:
                 return
             if shape[1] >= 3:
                 d = data[..., [0, 1, 2]]

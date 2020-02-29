@@ -248,7 +248,7 @@ class Attribute_Promote(GeometryNode):
 
         new_name = self.get_property('New Attribute Name')
 
-        if new_name == "":
+        if not new_name:
             return
 
         if from_class == 'vertex':
@@ -300,7 +300,7 @@ class Attribute_Rename(GeometryNode):
 
         new_name = self.get_property('New Attribute Name')
 
-        if new_name == "":
+        if not new_name:
             return
 
         self.geo.renameAttribute(attrib_class, attrib_name, new_name)

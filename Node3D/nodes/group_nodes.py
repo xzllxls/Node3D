@@ -90,7 +90,7 @@ class Group_Promote(GeometryNode):
         new_name = get_group_name(to_class, self.get_property('New Group Name'))
         group_name = get_group_name(from_class, group_name)
 
-        if new_name == "":
+        if not new_name:
             return
 
         if from_class == 'vertex':
@@ -143,7 +143,7 @@ class Group_Rename(GeometryNode):
 
         new_name = self.get_property('New Group Name')
 
-        if new_name == "":
+        if not new_name:
             return
 
         self.geo.renameAttribute(group_class, get_group_name(group_class, group_name),
