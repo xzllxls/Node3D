@@ -366,16 +366,13 @@ class AutoNode(BaseNode, QtCore.QObject):
         else:
             self.set_property(name, old_value)
 
-    def update_combo_menu(self, name, items):
+    def update_list_param(self, name, items):
         self._update_list_param(name, items)
 
-    def update_attribute_param(self, name, attribute_class):
-        if type(attribute_class) is not list:
+    def update_list_text_param(self, name, attribute_class):
+        if type(attribute_class) is str:
             attribute_class = [attribute_class]
         self._update_list_param(name, attribute_class, False)
-
-    def update_group_param(self, name, group_class):
-        self.update_attribute_param(name, group_class)
 
     def get_params(self):
         return self._params

@@ -28,7 +28,7 @@ class Group_Delete(GeometryNode):
             return
 
         group_class = self.get_property('Group Class')
-        self.update_attribute_param('Group Name', self.geo.getGroupNames()[group_class])
+        self.update_list_text_param('Group Name', self.geo.getGroupNames()[group_class])
         group_name = self.get_property('Group Name')
         if not self.geo.hasGroup(group_class, group_name):
             return
@@ -82,7 +82,7 @@ class Group_Promote(GeometryNode):
         from_class = self.get_property('From')
         to_class = self.get_property('To')
 
-        self.update_attribute_param('Group Name', self.geo.getGroupNames()[from_class])
+        self.update_list_text_param('Group Name', self.geo.getGroupNames()[from_class])
         group_name = self.get_property('Group Name')
         if not self.geo.hasGroup(from_class, group_name):
             return
@@ -136,7 +136,7 @@ class Group_Rename(GeometryNode):
 
         group_class = self.get_property('Group Class')
 
-        self.update_attribute_param('Group Name', self.geo.getGroupNames()[group_class])
+        self.update_list_text_param('Group Name', self.geo.getGroupNames()[group_class])
         group_name = self.get_property('Group Name')
         if not self.geo.hasGroup(group_class, group_name):
             return

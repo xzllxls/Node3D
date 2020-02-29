@@ -11,7 +11,8 @@ class Get_Attribute_Data(GeometryNode):
         self.create_property("out data", None)
         self.add_input("geo", GeometryNode)
         self.add_output("out data", np.ndarray)
-        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
+        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
+                              'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'}])
 
     def getData(self, port):
@@ -28,7 +29,7 @@ class Get_Attribute_Data(GeometryNode):
             return
 
         attrib_class = self.get_property('Attribute Class')
-        self.update_attribute_param('Attribute Name', geo.getAttribNames()[attrib_class])
+        self.update_list_text_param('Attribute Name', geo.getAttribNames()[attrib_class])
 
         attrib_name = self.get_property('Attribute Name')
         if not geo.hasAttribute(attrib_class, attrib_name):
@@ -57,7 +58,8 @@ class Set_Attribute_Data(GeometryNode):
         self.add_input("geo", GeometryNode)
         self.add_input("in data", np.ndarray)
 
-        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
+        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
+                              'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'}])
 
     def run(self):
@@ -65,7 +67,7 @@ class Set_Attribute_Data(GeometryNode):
             return
 
         attrib_class = self.get_property('Attribute Class')
-        self.update_attribute_param('Attribute Name', self.geo.getAttribNames()[attrib_class])
+        self.update_list_text_param('Attribute Name', self.geo.getAttribNames()[attrib_class])
 
         attrib_name = self.get_property('Attribute Name')
         if not self.geo.hasAttribute(attrib_class, attrib_name):
@@ -106,7 +108,8 @@ class Attribute_Delete(GeometryNode):
 
     def __init__(self):
         super(Attribute_Delete, self).__init__()
-        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
+        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
+                              'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'}])
         self.add_input("geo", GeometryNode)
 
@@ -115,7 +118,7 @@ class Attribute_Delete(GeometryNode):
             return
 
         attrib_class = self.get_property('Attribute Class')
-        self.update_attribute_param('Attribute Name', self.geo.getAttribNames()[attrib_class])
+        self.update_list_text_param('Attribute Name', self.geo.getAttribNames()[attrib_class])
         attrib_name = self.get_property('Attribute Name')
         if not self.geo.hasAttribute(attrib_class, attrib_name):
             return
@@ -128,9 +131,11 @@ class Attribute_Create(GeometryNode):
 
     def __init__(self):
         super(Attribute_Create, self).__init__()
-        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
+        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
+                              'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'str'},
-                             {'name': 'Attribute Type', 'type': 'list', 'value': 'float', 'limits': ['float', 'int', 'vector2', 'vector3', 'vector4', 'boolean', 'string']},
+                             {'name': 'Attribute Type', 'type': 'list', 'value': 'float',
+                              'limits': ['float', 'int', 'vector2', 'vector3', 'vector4', 'boolean', 'string']},
                              {'name': 'Attribute Value', 'type': 'str', 'value': '0.0'}])
         self.add_input("geo", GeometryNode)
 
@@ -220,11 +225,12 @@ class Attribute_Promote(GeometryNode):
 
     def __init__(self):
         super(Attribute_Promote, self).__init__()
-        self.set_parameters([{'name': 'From', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
-                             {'name': 'To', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
-                             {'name': 'Attribute Name', 'type': 'listText'},
-                             {'name': 'New Attribute Name', 'type': 'str'},
-                             {'name': 'Delete Origin', 'type': 'bool', 'value': True}])
+        self.set_parameters(
+            [{'name': 'From', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
+             {'name': 'To', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
+             {'name': 'Attribute Name', 'type': 'listText'},
+             {'name': 'New Attribute Name', 'type': 'str'},
+             {'name': 'Delete Origin', 'type': 'bool', 'value': True}])
 
         self.add_input("geo", GeometryNode)
 
@@ -235,7 +241,7 @@ class Attribute_Promote(GeometryNode):
         from_class = self.get_property('From')
         to_class = self.get_property('To')
 
-        self.update_attribute_param('Attribute Name', self.geo.getAttribNames()[from_class])
+        self.update_list_text_param('Attribute Name', self.geo.getAttribNames()[from_class])
         attrib_name = self.get_property('Attribute Name')
         if not self.geo.hasAttribute(from_class, attrib_name):
             return
@@ -276,7 +282,8 @@ class Attribute_Rename(GeometryNode):
 
     def __init__(self):
         super(Attribute_Rename, self).__init__()
-        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
+        self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
+                              'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'},
                              {'name': 'New Attribute Name', 'type': 'str'}])
         self.add_input("geo", GeometryNode)
@@ -286,7 +293,7 @@ class Attribute_Rename(GeometryNode):
             return
 
         attrib_class = self.get_property('Attribute Class')
-        self.update_attribute_param('Attribute Name', self.geo.getAttribNames()[attrib_class])
+        self.update_list_text_param('Attribute Name', self.geo.getAttribNames()[attrib_class])
         attrib_name = self.get_property('Attribute Name')
         if not self.geo.hasAttribute(attrib_class, attrib_name):
             return

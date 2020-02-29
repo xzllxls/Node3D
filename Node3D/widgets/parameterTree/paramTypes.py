@@ -472,13 +472,22 @@ registerParameterType('text', TextParameter, override=True)
 
 class ComboBox(QtWidgets.QComboBox):
     show_popup = QtCore.Signal()
+    editing_finished = QtCore.Signal(object)
 
     def __init__(self):
         super(ComboBox, self).__init__()
+        self.currentIndexChanged.connect(self.on_value_changed)
 
     def showPopup(self):
         self.show_popup.emit()
         super(ComboBox, self).showPopup()
+
+    def on_value_changed(self):
+        self.editing_finished.emit(self.currentText())
+
+    def focusOutEvent(self, event):
+        super(ComboBox, self).focusOutEvent(event)
+        self.editing_finished.emit(self.currentText())
 
 
 class ListTextParameterItem(pTypes.WidgetParameterItem):
@@ -494,7 +503,7 @@ class ListTextParameterItem(pTypes.WidgetParameterItem):
                             QComboBox::drop-down{
                             background-color: rgb(55,55,55); 
                             }""")
-        w.sigChanged = w.editTextChanged
+        w.sigChanged = w.editing_finished
         w.value = self.value
         w.setValue = self.setValue
         self.widget = w

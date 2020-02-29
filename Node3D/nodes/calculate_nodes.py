@@ -45,7 +45,7 @@ class Attribute_Blur(GeometryNode):
 
         items = ['No Attribute']
         items.extend(self.geo.getAttribNames()['vertex'])
-        self.update_combo_menu('Attribute', items)
+        self.update_list_param('Attribute', items)
 
         name = self.get_property('Attribute')
         try:
