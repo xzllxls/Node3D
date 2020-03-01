@@ -69,13 +69,15 @@ class Vertex_Wrangle(ScriptNode):
         return self.preCode.format(lts)
 
     def updateCode(self):
+        if self.geo is None:
+            return
         preCode = self.getPreCode()
         lines = self.get_property('Script').strip()
         lines = preCode + '\n'.join('        ' + line for line in lines.splitlines())
         if self.namespace['gp'] is None:
             self.namespace['gp'] = self.graph
         exec(lines, self.namespace)
-        self.func= numba.jit(nopython=True, nogil=True, parallel=True)(self.namespace['run_per_vertex'])
+        self.func = numba.jit(nopython=True, nogil=True, parallel=True)(self.namespace['run_per_vertex'])
 
     def set_property(self, name, value):
         super().set_property(name, value)
