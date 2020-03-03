@@ -89,14 +89,49 @@ class OptixWindow(QtWidgets.QWidget):
 
     def setup_menus(self):
         self.menu = QtWidgets.QMenu(self)
-        self.addCheckedAction('Show Grid', 'drawGrid')
-        self.addCheckedAction('Points', 'drawPoints')
-        self.addCheckedAction('Faces', 'drawFaces')
-        self.addCheckedAction('Edges', 'drawEdges')
+        # self.addCheckedAction('Show Grid', 'drawGrid')
+        # self.addCheckedAction('Points', 'drawPoints')
+        # self.addCheckedAction('Faces', 'drawFaces')
+        # self.addCheckedAction('Edges', 'drawEdges')
 
         act = QtWidgets.QAction('Reset Camera', self)
         act.triggered.connect(self.resetCamera)
         self.menu.addAction(act)
+
+        act = QtWidgets.QAction('Start', self)
+        act.triggered.connect(self.start)
+        self.menu.addAction(act)
+
+        act = QtWidgets.QAction('Stop', self)
+        act.triggered.connect(self.stop)
+        self.menu.addAction(act)
+
+        act = QtWidgets.QAction('Pause', self)
+        act.triggered.connect(self.pause)
+        self.menu.addAction(act)
+
+        act = QtWidgets.QAction('Resume', self)
+        act.triggered.connect(self.resume)
+        self.menu.addAction(act)
+
+        act = QtWidgets.QAction('Refresh', self)
+        act.triggered.connect(self.refresh)
+        self.menu.addAction(act)
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def pause(self):
+        pass
+
+    def resume(self):
+        pass
+
+    def refresh(self):
+        pass
 
     def setOpts(self, name, state):
         pass
@@ -340,6 +375,17 @@ class QtOptiX(OptixWindow):
     def on_render_finished(self, result):
         print('finished')
 
+    def pasue(self):
+        self.optix.pause_compute()
+
+    def resume(self):
+        self.optix.resume_compute()
+
+    def stop(self):
+        self.optix.close()
+
+    def refresh(self):
+        self.optix.refresh_scene()
 
 if __name__ == '__main__':
     import openmesh
