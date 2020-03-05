@@ -42,14 +42,11 @@ class Vertex_Wrangle(ScriptNode):
 
     def getAllVertexAttributes(self):
         dt = self.get_property('Depend Time')
-        names = list(self.geo.detailAttribute["vertex"].keys())
+        names = list(self.geo.attributeMap["vertex"].keys())
 
         data = []
         for attrib_name in names:
-            try:
-                d = self.geo.getVertexAttribData(attrib_name, True)
-            except:
-                d = self.geo.getVertexAttribData(attrib_name)
+            d = self.geo.getVertexAttribData(attrib_name)
             data.append(d)
         if dt:
             data.append(self.getFrame())
@@ -58,7 +55,7 @@ class Vertex_Wrangle(ScriptNode):
 
     def getPreCode(self):
         dt = self.get_property('Depend Time')
-        names = list(self.geo.detailAttribute["vertex"].keys())
+        names = list(self.geo.attributeMap["vertex"].keys())
         if dt:
             names.append('Frame')
         lts = ','.join(names)

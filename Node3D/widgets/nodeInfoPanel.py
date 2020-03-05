@@ -3,11 +3,18 @@ from ..base.node.geometry_node import GeometryNode
 import os
 
 ATTRIBUTE_DATA_COLOR = {"float": '<font color="yellow">{}</font>({})',
-                        "vector": '<font color="MediumSpringGreen">{}</font>({})',
+                        "vector2": '<font color="MediumSpringGreen">{}</font>({})',
+                        "vector3": '<font color="MediumSpringGreen">{}</font>({})',
+                        "vector4": '<font color="MediumSpringGreen">{}</font>({})',
+                        "list": '<font color="MediumSpringGreen">{}</font>({})',
+                        "tuple": '<font color="MediumSpringGreen">{}</font>({})',
+                        "matrix3": '<font color="MediumSpringGreen">{}</font>({})',
+                        "matrix4": '<font color="MediumSpringGreen">{}</font>({})',
                         "int": '<font color="Orange">{}</font>({})',
                         "bool": '<font color="Orchid">{}</font>({})',
                         "str": '<font color="lightpink">{}</font>({})',
                         "group": '<font color="DeepSkyBlue">{}</font>({})',
+                        "custom": '<font>{}</font>',
                         "none": '<font>{}</font>'}
 
 MESSAGE_COLOR = {"none": '<font color="lime">{}</font>',
@@ -159,6 +166,8 @@ class NodeInfoPanel(QtWidgets.QWidget):
                             attrType = "group"
                         else:
                             attrType = node.geo.getAttribType(attribClass, attr)
+                        if attrType not in ATTRIBUTE_DATA_COLOR.keys():
+                            attrType = "none"
                         attrDisplay.append(ATTRIBUTE_DATA_COLOR[attrType].format(attr, attrType))
 
                     self.attribTextEdits[attribClass].setHtml("; ".join(attrDisplay))

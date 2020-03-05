@@ -71,9 +71,9 @@ class File(GeometryNode):
                 uvs.append(np.zeros((len(mesh.vertices), 3)))
 
         if norms is not None:
-            self.geo.setVertexAttribData('normal', np.vstack(norms), True)
+            self.geo.setVertexAttribData('normal', np.vstack(norms), attribType='vector3', defaultValue=[0, 0, 0])
         if uvs is not None:
-            self.geo.setVertexAttribData('uv', np.vstack(uvs), True)
+            self.geo.setVertexAttribData('uv', np.vstack(uvs), attribType='vector3', defaultValue=[0, 0, 0])
 
         pyassimp.release(scene)
 
@@ -112,16 +112,17 @@ class Subdivide(GeometryNode):
         self.add_input("geo")
 
     def run(self):
-        if not self.copyData():
+        geo = self.getInputGeometryRef(0)
+        if geo is None:
             return
 
-        if self.geo.getNumFaces() == 0 or self.geo.getNumVertexes() == 0:
+        if geo.getNumFaces() == 0 or geo.getNumVertexes() == 0:
             return
         itera = self.get_property("Iteration")
         if itera == 0:
             return
 
-        mesh = self.geo.getTriangulateMesh()
+        mesh = geo.getTriangulateMesh()
         v = mesh.points()
         f = mesh.face_vertex_indices()
 
@@ -133,7 +134,7 @@ class Subdivide(GeometryNode):
             for i in range(itera):
                 v, f = igl.loop(v, f)
 
-        self.geo._mesh = openmesh.PolyMesh()
+        self.geo = Mesh()
         self.geo.addVertices(v)
         self.geo.addFaces(f)
 

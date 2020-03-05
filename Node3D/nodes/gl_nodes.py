@@ -22,9 +22,9 @@ class Point(GeometryNode):
         self.geo = Mesh()
         self.geo.addVertex(self.get_property("Pos"))
         self.geo.mesh.vertex_property_array("color")
-        self.geo.setVertexAttrib("color", 0, list(self.get_property("Color")))
+        self.geo.setVertexAttrib("color", 0, list(self.get_property("Color")), attribType='vector3', defaultValue=[1, 1, 1])
         self.geo.mesh.vertex_property_array("pscale")
-        self.geo.setVertexAttrib("pscale", 0, self.get_property("Size"))
+        self.geo.setVertexAttrib("pscale", 0, self.get_property("Size"), attribType='float', defaultValue=1.0)
 
 
 def create_data(element_num, data, attrib_name):
@@ -102,7 +102,7 @@ class Merge(GeometryNode):
             return
 
         geo_attribs = collections.OrderedDict()
-        attrib_data = copy.deepcopy(self.geo.detailAttribute)
+        attrib_data = copy.deepcopy(self.geo.attributeMap)
         for g in geos:
             geo_attribs[g] = g.getAttribNames(with_group=True)
             update_dict(attrib_data, g.detailAttribute)
@@ -129,7 +129,7 @@ class Merge(GeometryNode):
                 data = create_data(c, geo.getEdgeAttribData(e), e)
                 self.geo.setVertexAttribData(e, data)
 
-        self.geo.detailAttribute.update(copy.deepcopy(attrib_data))
+        self.geo.attributeMap.update(copy.deepcopy(attrib_data))
         to_remove = [i for i in attrib_data.keys() if i not in ['vertex', 'face', 'edge']]
         [attrib_data.pop(i) for i in to_remove]
 
@@ -298,7 +298,7 @@ class Color(GeometryNode):
             cols = np.ones((self.geo.getNumVertexes(), 3), dtype=np.float64)
             cols[...] = list(self.get_property("Color"))
 
-        self.geo.setVertexAttribData("color", cols, True)
+        self.geo.setVertexAttribData("color", cols, attribType='vector3', defaultValue=[1, 1, 1])
 
 
 class Visualize(GeometryNode):
@@ -326,8 +326,11 @@ class Visualize(GeometryNode):
         items.extend(self.geo.getAttribNames()['vertex'])
         self.update_list_param('Attribute', items)
 
+        attrib_name = self.get_property('Attribute')
+        if not self.geo.hasAttribute('vertex', attrib_name):
+            return
         try:
-            data = self.geo.getVertexAttribData(self.get_property('Attribute'), True)
+            data = self.geo.getVertexAttribData(attrib_name)
             if data is None:
                 return
         except:
@@ -370,7 +373,7 @@ class Visualize(GeometryNode):
                     d0 = np.clip(d0, _range[0], _range[1])
                     d0 = (d0 - _range[0]) / (_range[1] - _range[0])
                 d = self.get_ramp_colors('ColorRamp', d0)
-            self.geo.setVertexAttribData("color", d, True)
+            self.geo.setVertexAttribData("color", d, attribType='vector3', defaultValue=[1, 1, 1])
 
         if self.get_property("Flat Color"):
             self.geo.setFlatColor(True)
@@ -390,7 +393,11 @@ class Normal(GeometryNode):
         if not self.copyData():
             return
         attrib_class = self.get_property('Attribute Class')
+        if not self.geo.hasAttribute(attrib_class, 'normal'):
+            self.geo.createAttribute(attrib_class, 'normal', attribType='vector3', defaultValue=[0, 0, 0], applyValue=False)
+
         if attrib_class == 'vertex':
             self.geo.mesh.update_vertex_normals()
         else:
             self.geo.mesh.update_face_normals()
+

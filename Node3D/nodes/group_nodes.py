@@ -100,19 +100,19 @@ class Group_Promote(GeometryNode):
                 self.geo.meshFuncs.VertexToEdge(group_name, new_name)
             elif to_class == 'vertex':
                 if group_name != new_name:
-                    self.geo.meshFuncs.attribCopy('vertex', group_name, new_name)
+                    self.geo.copyAttribute('vertex', group_name, new_name)
         elif from_class == 'face':
             if to_class == 'vertex':
                 self.geo.meshFuncs.FaceToVertex(group_name, new_name)
             elif to_class == 'face':
                 if group_name != new_name:
-                    self.geo.meshFuncs.attribCopy('face', group_name, new_name)
+                    self.geo.copyAttribute('face', group_name, new_name)
         elif from_class == 'edge':
             if to_class == 'vertex':
                 self.geo.meshFuncs.EdgeToVertex(group_name, new_name)
             elif to_class == 'edge':
                 if group_name != new_name:
-                    self.geo.meshFuncs.attribCopy('edge', group_name, new_name)
+                    self.geo.copyAttribute('edge', group_name, new_name)
 
         if self.get_property("Delete Origin"):
             self.geo.removeAttribute(from_class, group_name)

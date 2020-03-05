@@ -106,7 +106,7 @@ class Grid(GeometryNode):
         self.geo = Mesh()
         self.geo.addVertices(vertices[:, [0, 2, 1]])
         self.geo.addFaces(faces)
-        self.geo.setVertexAttribData('normal', nms, True)
+        self.geo.setVertexAttribData('normal', nms, attribType='vector3', defaultValue=[0, 0, 0])
 
 
 class Arrow(GeometryNode):

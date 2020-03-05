@@ -52,7 +52,7 @@ class GeometryNode(AutoNode):
             return None
         mesh = Mesh(copy.deepcopy(geo.mesh))
         mesh.opts = copy.deepcopy(geo.opts)
-        mesh._detailAttribute = copy.deepcopy(geo.detailAttribute)
+        mesh._attributeMap = copy.deepcopy(geo.attributeMap)
         return mesh
 
     def getInputGeometry(self, port, ref=False):

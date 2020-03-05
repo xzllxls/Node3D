@@ -286,7 +286,10 @@ class AutoNode(BaseNode, QtCore.QObject):
                 if 'value' in p.keys():
                     value = p['value']
                 else:
-                    value = DEFAULT_VALUE_MAP.get(p['type'], None)
+                    if 'limits' in p.keys():
+                        value = p['limits'][0]
+                    else:
+                        value = DEFAULT_VALUE_MAP.get(p['type'], None)
                 if not self.has_property(prop_name):
                     self.create_property(prop_name, value)
                 else:

@@ -8,9 +8,9 @@ class Get_Attribute_Data(GeometryNode):
 
     def __init__(self):
         super(Get_Attribute_Data, self).__init__(False)
-        self.create_property("out data", None)
-        self.add_input("geo", GeometryNode)
-        self.add_output("out data", np.ndarray)
+        self.create_property('out data', None)
+        self.add_input('geo', GeometryNode)
+        self.add_output('out data', np.ndarray)
         self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
                               'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'}])
@@ -24,8 +24,8 @@ class Get_Attribute_Data(GeometryNode):
     def run(self):
         geo = self.getInputGeometryRef(0)
         if geo is None:
-            self.set_property("out data", None)
-            self.error("Please input a geometry")
+            self.set_property('out data', None)
+            self.error('Please input a geometry')
             return
 
         attrib_class = self.get_property('Attribute Class')
@@ -33,7 +33,7 @@ class Get_Attribute_Data(GeometryNode):
 
         attrib_name = self.get_property('Attribute Name')
         if not geo.hasAttribute(attrib_class, attrib_name):
-            self.set_property("out data", None)
+            self.set_property('out data', None)
             return
 
         if attrib_class == 'vertex':
@@ -45,7 +45,7 @@ class Get_Attribute_Data(GeometryNode):
         elif attrib_class == 'detail':
             data = geo.getDetailAttrib(attrib_name)
 
-        self.set_property("out data", data)
+        self.set_property('out data', data)
 
 
 class Set_Attribute_Data(GeometryNode):
@@ -54,9 +54,9 @@ class Set_Attribute_Data(GeometryNode):
 
     def __init__(self):
         super(Set_Attribute_Data, self).__init__()
-        self.create_property("out data", None)
-        self.add_input("geo", GeometryNode)
-        self.add_input("in data", np.ndarray)
+        self.create_property('out data', None)
+        self.add_input('geo', GeometryNode)
+        self.add_input('in data', np.ndarray)
 
         self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
                               'limits': ['vertex', 'edge', 'face', 'detail']},
@@ -81,23 +81,19 @@ class Set_Attribute_Data(GeometryNode):
             self.geo.setDetailAttrib(attrib_name, data)
             return
 
-        if not isinstance(data, np.ndarray):
-            self.error("data type not match")
-            return
-
         if attrib_class == 'vertex':
-            if data.shape[0] != self.geo.getNumVertexes():
-                self.error("data size not match")
+            if len(data) != self.geo.getNumVertexes():
+                self.error('data size not match')
                 return
             self.geo.setVertexAttribData(attrib_name, data)
         elif attrib_class == 'edge':
-            if data.shape[0] != self.geo.getNumEdges():
-                self.error("data size not match")
+            if len(data) != self.geo.getNumEdges():
+                self.error('data size not match')
                 return
             self.geo.setEdgeAttribData(attrib_name, data)
         elif attrib_class == 'face':
-            if data.shape[0] != self.geo.getNumFaces():
-                self.error("data size not match")
+            if len(data) != self.geo.getNumFaces():
+                self.error('data size not match')
                 return
             self.geo.setFaceAttribData(attrib_name, data)
 
@@ -111,7 +107,7 @@ class Attribute_Delete(GeometryNode):
         self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
                               'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'}])
-        self.add_input("geo", GeometryNode)
+        self.add_input('geo', GeometryNode)
 
     def run(self):
         if not self.copyData():
@@ -120,8 +116,6 @@ class Attribute_Delete(GeometryNode):
         attrib_class = self.get_property('Attribute Class')
         self.update_list_text_param('Attribute Name', self.geo.getAttribNames()[attrib_class])
         attrib_name = self.get_property('Attribute Name')
-        if not self.geo.hasAttribute(attrib_class, attrib_name):
-            return
         self.geo.removeAttribute(attrib_class, attrib_name)
 
 
@@ -135,9 +129,10 @@ class Attribute_Create(GeometryNode):
                               'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'str'},
                              {'name': 'Attribute Type', 'type': 'list', 'value': 'float',
-                              'limits': ['float', 'int', 'vector2', 'vector3', 'vector4', 'boolean', 'string']},
+                              'limits': ['float', 'int', 'vector2', 'vector3', 'vector4', 'matrix3', 'matrix4', 'bool',
+                                         'list', 'tuple', 'custom', 'str']},
                              {'name': 'Attribute Value', 'type': 'str', 'value': '0.0'}])
-        self.add_input("geo", GeometryNode)
+        self.add_input('geo', GeometryNode)
 
     def run(self):
         if not self.copyData():
@@ -156,24 +151,19 @@ class Attribute_Create(GeometryNode):
             self.error('please input a valid value')
             return
 
-        dtype = np.float64
-        dim = 1
-        array = True
         if attrib_type == 'float':
             value = float(value)
         elif attrib_type == 'int':
-            array = False
-            dtype = np.int32
             value = int(value)
-        elif attrib_type == 'boolean':
-            array = False
-            dtype = np.bool_
+        elif attrib_type == 'bool':
             value = bool(value)
-        elif attrib_type == 'string':
-            array = False
-            dtype = np.str_
+        elif attrib_type == 'str':
             value = str(value)
-        else:
+        elif attrib_type == 'tuple':
+            value = tuple(value)
+        elif attrib_type == 'list':
+            value = list(value)
+        elif 'vector' in attrib_type:
             if type(value) is not list:
                 self.error('please input a list value')
                 return
@@ -181,42 +171,41 @@ class Attribute_Create(GeometryNode):
                 if len(value) != 3:
                     self.error('please input a list with 3 values')
                     return
-                dim = 3
             elif attrib_type == 'vector2':
                 if len(value) != 2:
                     self.error('please input a list with 2 values')
                     return
-                dim = 2
             elif attrib_type == 'vector4':
                 if len(value) != 4:
                     self.error('please input a list with 4 values')
                     return
-                dim = 4
             else:
                 return
-
+        elif attrib_type == 'matrix3':
+            if type(value) is list:
+                if len(value) != 9:
+                    self.error('please input a list with 9 values or input 0/1')
+                    return
+                value = np.array(value).reshape(3, 3)
+            else:
+                if value == 0:
+                    value = np.zeros((3, 3))
+                else:
+                    value = np.identity(3)
+        elif attrib_type == 'matrix4':
+            if type(value) is list:
+                if len(value) != 16:
+                    self.error('please input a list with 16 values or input 0/1')
+                    return
+                value = np.array(value).reshape(4, 4)
+            else:
+                if value == 0:
+                    value = np.zeros((4, 4))
+                else:
+                    value = np.identity(4)
         attrib_class = self.get_property('Attribute Class')
 
-        if attrib_class == 'vertex':
-            if dim == 1:
-                data = np.broadcast_to(value, (self.geo.getNumVertexes(),)).astype(dtype)
-            else:
-                data = np.broadcast_to(value, (self.geo.getNumVertexes(), dim)).astype(dtype)
-            self.geo.setVertexAttribData(attrib_name, data, array)
-        elif attrib_class == 'face':
-            if dim == 1:
-                data = np.broadcast_to(value, (self.geo.getNumFaces(),)).astype(dtype)
-            else:
-                data = np.broadcast_to(value, (self.geo.getNumFaces(), dim)).astype(dtype)
-            self.geo.setFaceAttribData(attrib_name, data, array)
-        elif attrib_class == 'edge':
-            if dim == 1:
-                data = np.broadcast_to(value, (self.geo.getNumEdges(),)).astype(dtype)
-            else:
-                data = np.broadcast_to(value, (self.geo.getNumEdges(), dim)).astype(dtype)
-            self.geo.setEdgeAttribData(attrib_name, data, array)
-        elif attrib_class == 'detail':
-            self.geo.detailAttribute[attrib_name] = value
+        self.geo.createAttribute(attrib_class, attrib_name, attribType=attrib_type, defaultValue=value, applyValue=True)
 
 
 class Attribute_Promote(GeometryNode):
@@ -232,7 +221,7 @@ class Attribute_Promote(GeometryNode):
              {'name': 'New Attribute Name', 'type': 'str'},
              {'name': 'Delete Origin', 'type': 'bool', 'value': True}])
 
-        self.add_input("geo", GeometryNode)
+        self.add_input('geo', GeometryNode)
 
     def run(self):
         if not self.copyData():
@@ -258,21 +247,21 @@ class Attribute_Promote(GeometryNode):
                 self.geo.meshFuncs.VertexToEdge(attrib_name, new_name)
             elif to_class == 'vertex':
                 if attrib_name != new_name:
-                    self.geo.meshFuncs.attribCopy('vertex', attrib_name, new_name)
+                    self.geo.copyAttribute('vertex', attrib_name, new_name)
         elif from_class == 'face':
             if to_class == 'vertex':
                 self.geo.meshFuncs.FaceToVertex(attrib_name, new_name)
             elif to_class == 'face':
                 if attrib_name != new_name:
-                    self.geo.meshFuncs.attribCopy('face', attrib_name, new_name)
+                    self.geo.copyAttribute('face', attrib_name, new_name)
         elif from_class == 'edge':
             if to_class == 'vertex':
                 self.geo.meshFuncs.EdgeToVertex(attrib_name, new_name)
             elif to_class == 'edge':
                 if attrib_name != new_name:
-                    self.geo.meshFuncs.attribCopy('edge', attrib_name, new_name)
+                    self.geo.copyAttribute('edge', attrib_name, new_name)
 
-        if self.get_property("Delete Origin"):
+        if self.get_property('Delete Origin'):
             self.geo.removeAttribute(from_class, attrib_name)
 
 
@@ -286,7 +275,7 @@ class Attribute_Rename(GeometryNode):
                               'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'},
                              {'name': 'New Attribute Name', 'type': 'str'}])
-        self.add_input("geo", GeometryNode)
+        self.add_input('geo', GeometryNode)
 
     def run(self):
         if not self.copyData():

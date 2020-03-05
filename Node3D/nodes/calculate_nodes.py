@@ -24,7 +24,7 @@ class Gaussian_Curvature(GeometryNode):
         mesh = self.geo.getTriangulateMesh()
         r = igl.gaussian_curvature(mesh.points(), mesh.face_vertex_indices())
         s = self.get_property("Scale")
-        self.geo.setVertexAttribData(self.get_property("Attribute Name"), r * s, True)
+        self.geo.setVertexAttribData(self.get_property("Attribute Name"), r * s, attribType='float', defaultValue=0.0)
 
 
 class Attribute_Blur(GeometryNode):
@@ -89,7 +89,7 @@ class Distance_Along_Surface(GeometryNode):
 
         if self.get_property("Normalize"):
             d /= np.max(d)
-        self.geo.setVertexAttribData(self.get_property("Attribute Name"), d, True)
+        self.geo.setVertexAttribData(self.get_property("Attribute Name"), d, attribType='float', defaultValue=0.0)
 
 
 class Harmonic(GeometryNode):
@@ -118,9 +118,9 @@ class Harmonic(GeometryNode):
         uv = igl.harmonic_weights(v, f, bnd, bnd_uv, 1)
         uv = np.hstack([uv, np.zeros((uv.shape[0], 1))])
 
-        self.geo.setVertexAttribData(self.get_property("Attribute Name"), uv, True)
+        self.geo.setVertexAttribData(self.get_property("Attribute Name"), uv, attribType='vector3', defaultValue=[0, 0, 0])
         if self.get_property("Show Mode") == "2d":
-            self.geo.mesh.setVertexAttribData("pos", uv, True)
+            self.geo.mesh.setVertexAttribData("pos", uv)
 
 
 class ARAP(GeometryNode):
@@ -156,9 +156,9 @@ class ARAP(GeometryNode):
         arap = igl.ARAP(v, f, 2, np.zeros((0)))
         uv = arap.solve(np.zeros((0, 0)), uv)
 
-        self.geo.setVertexAttribData(self.get_property("Attribute Name"), uv, True)
+        self.geo.setVertexAttribData(self.get_property("Attribute Name"), uv, attribType='vector3', defaultValue=[0, 0, 0])
         if self.get_property("Show Mode") == "2d":
-            self.geo.mesh.setVertexAttribData("pos", uv, True)
+            self.geo.mesh.setVertexAttribData("pos", uv)
 
 
 class Ambient_Occlusion(GeometryNode):
@@ -189,7 +189,7 @@ class Ambient_Occlusion(GeometryNode):
         ao = igl.ambient_occlusion(v, f, v, n, self.get_property("Angle"))
         ao = 1.0 - ao
 
-        self.geo.setVertexAttribData(self.get_property("Attribute Name"), ao, True)
+        self.geo.setVertexAttribData(self.get_property("Attribute Name"), ao, attribType='float', defaultValue=0.0)
 
 
 class Measure(GeometryNode):
@@ -214,13 +214,13 @@ class Measure(GeometryNode):
             self.geo.meshFuncs.facePos(True)
         elif mt == "Area":
             area = igl.doublearea(self.geo.getVertexes(), self.geo.mesh.face_vertex_indices()) / 2.0
-            self.geo.setFaceAttribData("area", area, True)
+            self.geo.setFaceAttribData("area", area, attribType='float', defaultValue=0.0)
         elif mt == "Edge Length":
             self.geo.meshFuncs.edgeLength(True)
         # elif mt == "Gradient":
         #     g = igl.grad(self.geo.getVertexes(), self.geo.getFaces())
         #     print(g)
-        # self.geo.setFaceAttribData("gradient", g, True)
+        # self.geo.setFaceAttribData("gradient", g, attribType='float', defaultValue=0.0)
 
 
 class Winding_Number(GeometryNode):
@@ -247,4 +247,4 @@ class Winding_Number(GeometryNode):
         v = mesh.points()
         f = mesh.face_vertex_indices()
         wn = igl.winding_number(v, f, self.geo.getVertexes())
-        self.geo.setVertexAttribData(self.get_property("Attribute Name"), wn, True)
+        self.geo.setVertexAttribData(self.get_property("Attribute Name"), wn, attribType='float', defaultValue=0.0)

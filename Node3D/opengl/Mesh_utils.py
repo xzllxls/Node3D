@@ -9,17 +9,6 @@ from OpenGL.GL import *
 from ..vendor.pyqtgraph import functions as fn
 import copy
 
-from .GLMesh import Mesh
-
-keys = ["float", "int", 'ndarray', "numpy", "double"]
-
-
-# ms = om.PolyMesh()
-# ms.copy_all_properties()
-# om.
-# ms.update_normals()
-# # ms.svertices()
-# ms.cal
 
 @numba.jit(nopython=True, cache=True, nogil=True)  # parallel=True, nogil=True
 def _calVertexSmooth(data, iter, vv):
@@ -39,7 +28,6 @@ class MeshFuncs(object):
     def __init__(self, geo):
         self.geo = geo
         self.mesh = geo._mesh
-        self.geo = Mesh()
 
     def FaceToVertex(self, name, newName=None):
         if not self.geo.hasAttribute("face", name):
@@ -190,7 +178,6 @@ class MeshFuncs(object):
         he = self.mesh.find_halfedge(fromv, tov)
         if he is not None and he.idx() >= 0:
             self.mesh.collapse(he)
-
             self.geo.signals.emit_attribChanged()
 
     def smoothMesh(self, iter=1):
@@ -198,38 +185,13 @@ class MeshFuncs(object):
         _calVertexSmooth(data, iter, self.mesh.vertex_vertex_indices())
 
     def smoothVertexAttrib(self, name, iter=1):
+        if not self.geo.getAttribIsArray('vertex', name):
+            return
         data = self.geo.getVertexAttribData(name)
         if data is None:
             return
-        val = type(self.geo.getVertexAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
-        if not canCal:
-            return
         _calVertexSmooth(data, iter, self.mesh.vertex_vertex_indices())
         self.geo.setVertexAttribData(name, data, True)
-
-    def attribCopy(self, level, from_name, to_name, remove=False):
-        if not self.geo.hasAttribute(level, from_name):
-            return
-        if level == "vertex":
-            data = self.geo.getVertexAttribData(from_name)
-            self.geo.setVertexAttribData(to_name, copy.deepcopy(data))
-        elif level == "face":
-            data = self.geo.getFaceAttribData(from_name)
-            self.geo.setFaceAttribData(to_name, copy.deepcopy(data))
-        elif level == "edge":
-            data = self.geo.getEdgeAttribData(from_name)
-            self.geo.setEdgeAttribData(to_name, copy.deepcopy(data))
-        else:
-            return
-
-        if remove:
-            self.geo.removeAttribute(level, from_name)
 
     def facePos(self, apply=False):
         result = np.zeros((self.mesh.n_faces(), 3), dtype=np.float64)
@@ -237,7 +199,7 @@ class MeshFuncs(object):
             result[f.idx()] = self.mesh.calc_face_centroid(f)
 
         if apply:
-            self.geo.setFaceAttribData("pos", result, True)
+            self.geo.setFaceAttribData("pos", result, attribType='vector3', defaultValue=[0, 0, 0])
         else:
             return result
 
@@ -247,7 +209,7 @@ class MeshFuncs(object):
             result[e.idx()] = self.mesh.calc_edge_length(e)
 
         if apply:
-            self.geo.setEdgeAttribData("length", result, True)
+            self.geo.setEdgeAttribData("length", result, attribType='float', defaultValue=0.0)
         else:
             return result
 
