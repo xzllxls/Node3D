@@ -84,13 +84,68 @@ def sepa(self, prop_name, array=None, element_shape=None, element_value=None):
 openmesh.PolyMesh.set_edge_property_array = sepa
 
 DATA_TYPE_MAP = {
-    float: "float",
-    int: "int",
-    bool: "bool",
-    str: "str",
-    np.ndarray: "vector",
-    list: "list",
+    float: 'float',
+    int: 'int',
+    bool: 'bool',
+    str: 'str',
+    np.ndarray: 'vector3',
+    list: 'list',
+    tuple: 'tuple',
 }
+
+DEFAULT_VALUE_MAP = {
+    "float": 0.0,
+    "int": 0,
+    "vector2": [0, 0],
+    "vector3": [0, 0, 0],
+    "vector4": [0, 0, 0, 0],
+    "matrix3": np.identity(3, dtype=np.float64),
+    "matrix4": np.identity(4, dtype=np.float64),
+    "bool": False,
+    "list": [],
+    "tuple": {},
+    "custom": None,
+    'str': '',
+}
+
+DATA_MODE_MAP = {
+    "float": True,
+    "int": True,
+    "vector2": True,
+    "vector3": True,
+    "vector4": True,
+    "matrix3": True,
+    "matrix4": True,
+    "bool": False,
+    "list": False,
+    "tuple": False,
+    "custom": False,
+    'str': False,
+}
+
+DATA_SHAPE_MAP = {
+    "float": None,
+    "int": None,
+    "vector2": [0, 2],
+    "vector3": [0, 3],
+    "vector4": [0, 4],
+    "matrix3": [0, 3, 3],
+    "matrix4": [0, 4, 4],
+    "bool": None,
+    "list": None,
+    "tuple": None,
+    "custom": None,
+    'str': None,
+}
+
+
+def get_shape(element_num, base_shape):
+    if base_shape is None:
+        shape = (element_num,)
+    else:
+        base_shape[0] = element_num
+        shape = tuple(base_shape)
+    return shape
 
 
 class Mesh(object):
@@ -107,11 +162,11 @@ class Mesh(object):
 
         self._detailAttribute = {
             "vertex": {
-                "pos": None,
-                "normal": None,
+                "pos": {'default_value': [0, 0, 0], 'type': 'vector3', 'is_array': True},
+                "normal": {'default_value': [0, 0, 0], 'type': 'vector3', 'is_array': True},
             },
             "face": {
-                "normal": None
+                "normal": {'default_value': [0, 0, 0], 'type': 'vector3', 'is_array': True}
             },
             "edge": {},
         }
@@ -153,14 +208,26 @@ class Mesh(object):
 
     @property
     def meshFuncs(self):
+        """
+        get a object which contains some utility mesh functions
+        @return: MeshFuncs object
+        """
         return MeshFuncs(self)
 
     @property
     def mesh(self):
+        """
+        get the real mesh object
+        @return: openmesh.PolyMesh
+        """
         return self._mesh
 
     @property
     def bbox_min(self):
+        """
+        get bounding box min value
+        @return: list
+        """
         vts = self.getVertexes()
         if vts is None:
             return [0, 0, 0]
@@ -169,6 +236,10 @@ class Mesh(object):
 
     @property
     def bbox_max(self):
+        """
+        get bounding box max value
+        @return: list
+        """
         vts = self.getVertexes()
         if vts is None:
             return [0, 0, 0]
@@ -177,10 +248,18 @@ class Mesh(object):
 
     @property
     def bbox_center(self):
+        """
+        get bounding box center value
+        @return: list
+        """
         _, __, self._bbox_center = self.get_bbox_info()
         return self._bbox_center
 
     def get_bbox_info(self):
+        """
+        get bounding box min, max, center
+        @return: min->list, max->list, center->list
+        """
         _min = self.bbox_min
         _max = self.bbox_max
         _center = [(_min[0] + _max[0]) / 2.0,
@@ -203,67 +282,31 @@ class Mesh(object):
             return
         v.update()
 
-    @property
-    def detailAttribute(self):
-        return self._detailAttribute
-
-    def getAttribNames(self, allInOne=False, with_group=False):
-        if with_group:
-            v = list(self._detailAttribute["vertex"].keys())
-            f = list(self._detailAttribute["face"].keys())
-            e = list(self._detailAttribute["edge"].keys())
-        else:
-            v = [i for i in self._detailAttribute["vertex"].keys() if ":" not in i]
-            f = [i for i in self._detailAttribute["face"].keys() if ":" not in i]
-            e = [i for i in self._detailAttribute["edge"].keys() if ":" not in i]
-        d = [i for i in self._detailAttribute.keys() if i not in ["vertex", "face", "edge"]]
-        if allInOne:
-            result = []
-            result.extend(v)
-            result.extend(f)
-            result.extend(e)
-        else:
-            result = {'vertex': v,
-                      'face': f,
-                      'edge': e,
-                      'detail': d}
-        return result
-
-    def getAttribType(self, attrLevel, attribName):
-        # get the type of a given attribute
-        checkType = None
-        if attrLevel == "vertex":
-            checkType = type(self.getVertexAttrib(attribName, 0))
-        elif attrLevel == "edge":
-            checkType = type(self.getEdgeAttrib(attribName, 0))
-        elif attrLevel == "face":
-            checkType = type(self.getFaceAttrib(attribName, 0))
-        elif attrLevel == "detail":
-            checkType = type(self.getDetailAttrib(attribName))
-
-        return DATA_TYPE_MAP.get(checkType, 'none')
-
     def update_GLFace(self):
+        """
+        prepare the mesh data for OpenGL
+        """
         b = self.getTriangulateMesh()
         self._GLFaces = b.face_vertex_indices()
 
     def getTriangulateMesh(self):
+        """
+        triangulate all faces and return a new mesh
+        @return: openmesh.PolyMesh
+        """
         b = copy.deepcopy(self._mesh)
         b.triangulate()
         return b
 
     def setFlatColor(self, mode):
+        """
+        set if use flat color for render
+        @param mode: True means use flat color
+        """
         if mode is True:
             self._flatColor = 1
         else:
             self._flatColor = 0
-
-    def moveToCenter(self):
-        pass
-        # cent = self.bbox_center
-        # self.translate(-1.0 * cent[0],
-        #                -1.0 * cent[1],
-        #                -1.0 * cent[2])
 
     def setSelected(self, sel):
         self._selected = sel
@@ -417,24 +460,44 @@ class Mesh(object):
             self.drawBBox()
 
     def getVertexes(self):
+        """
+        get mesh vertex positions
+        @return: np.ndarray, shape = (nv,3)
+        """
         p = self._mesh.points()
         if p.shape[0] == 0:
             return None
         return p
 
     def getFaces(self):
+        """
+        get mesh faces-vertex indices
+        @return: list of np.ndarray or None
+        """
         f = self._mesh.face_vertex_indices()
         if f.shape[0] == 0:
             return None
-        return f
+        return [face[face >= 0] for face in f]
 
     def getColors(self):
+        """
+        get mesh vertex colors
+        @return: np.ndarray, shape = (nv,3) or None
+        """
         return self.getVertexAttribData("color", True)
 
     def getUVs(self):
+        """
+        get mesh vertex texcoords
+        @return: np.ndarray, shape = (nv,3) or None
+        """
         return self.getVertexAttribData('uv', True)
 
     def getNormals(self):
+        """
+        get mesh vertex normals
+        @return: np.ndarray, shape = (nv,3) or None
+        """
         if not self._mesh.has_vertex_normals():
             if self.getNumFaces() == 0:
                 return None
@@ -442,6 +505,10 @@ class Mesh(object):
         return self._mesh.vertex_normals()
 
     def getFaceNormals(self):
+        """
+        get mesh face normals
+        @return: np.ndarray, shape = (nf,3) or None
+        """
         if not self._mesh.has_face_normals():
             if self.getNumFaces() == 0:
                 return None
@@ -449,80 +516,285 @@ class Mesh(object):
         return self._mesh.face_normals()
 
     def getVertexFaces(self):
-        return self._mesh.vertex_face_indices()
+        """
+        get mesh vertex-face indices
+        @return: list of np.ndarray
+        """
+        vf = self._mesh.vertex_face_indices()
+        return [face[face >= 0] for face in vf]
 
     def getEdges(self):
+        """
+        get mesh edge-vertex indices
+        @return: np.ndarray or None
+        """
         e = self._mesh.edge_vertex_indices()
         if e.shape[0] == 0:
             return None
         return e
 
     def getNumVertexes(self):
+        """
+        get mesh vertices count
+        @return: int
+        """
         return self._mesh.n_vertices()
 
     def getNumFaces(self):
+        """
+        get mesh faces count
+        @return: int
+        """
         return self._mesh.n_faces()
 
     def getNumEdges(self):
+        """
+        get mesh edges count
+        @return: int
+        """
         return self._mesh.n_edges()
 
-    def removeAttribute(self, level, name):
-        if level == "vertex":
+    @property
+    def detailAttribute(self):
+        """
+        @return: dict
+        """
+        return self._detailAttribute
+
+    def getAttribNames(self, allInOne=False, with_group=False):
+        """
+        get attribute names of the mesh
+        @param allInOne: return all names in one list
+        @param with_group: return names with group names
+        @return:  dict or list
+        """
+        if with_group:
+            v = list(self._detailAttribute["vertex"].keys())
+            f = list(self._detailAttribute["face"].keys())
+            e = list(self._detailAttribute["edge"].keys())
+        else:
+            v = [i for i in self._detailAttribute["vertex"].keys() if ":" not in i]
+            f = [i for i in self._detailAttribute["face"].keys() if ":" not in i]
+            e = [i for i in self._detailAttribute["edge"].keys() if ":" not in i]
+        d = [i for i in self._detailAttribute.keys() if i not in ["vertex", "face", "edge"]]
+        if allInOne:
+            result = []
+            result.extend(v)
+            result.extend(f)
+            result.extend(e)
+        else:
+            result = {'vertex': v,
+                      'face': f,
+                      'edge': e,
+                      'detail': d}
+        return result
+
+    def _getAttribType(self, attribClass, name):
+        """
+        get attribute type
+        @param attribClass: one of ['vertex', 'edge', 'face', 'detail']
+        @param name: specific attribute name
+        @return: str
+        """
+        # get the type of a given attribute
+        checkType = None
+        if attribClass == "vertex":
+            checkType = type(self.getVertexAttrib(name, 0))
+        elif attribClass == "edge":
+            checkType = type(self.getEdgeAttrib(name, 0))
+        elif attribClass == "face":
+            checkType = type(self.getFaceAttrib(name, 0))
+        elif attribClass == "detail":
+            checkType = type(self.getDetailAttrib(name))
+
+        return DATA_TYPE_MAP.get(checkType, 'none')
+
+    def getAttribType(self, attribClass, name):
+        """
+        get attribute type
+        @param attribClass: one of ['vertex', 'edge', 'face', 'detail']
+        @param name: specific attribute name
+        @return: attribute type -> str
+        """
+        if not self.hasAttribute(attribClass, name):
+            raise ValueError("the attribute does't exist!")
+        if attribClass == 'detail':
+            return self._getAttribType(attribClass, name)
+        return self._detailAttribute[attribClass][name]['type']
+
+    def getAttribDefaultValue(self, attribClass, name):
+        """
+        get attribute default value
+        @param attribClass: one of ['vertex', 'edge', 'face', 'detail']
+        @param name: specific attribute name
+        @return: default attribute value
+        """
+        if not self.hasAttribute(attribClass, name):
+            raise ValueError("the attribute does't exist!")
+        if attribClass == 'detail':
+            return self._detailAttribute[name]
+        return self._detailAttribute[attribClass][name]['default_value']
+
+    def getAttribIsArray(self, attribClass, name):
+        """
+        get if attribute is array
+        @param attribClass: one of ['vertex', 'edge', 'face', 'detail']
+        @param name: specific attribute name
+        @return: bool
+        """
+        if not self.hasAttribute(attribClass, name):
+            raise ValueError("the attribute does't exist!")
+        if attribClass == 'detail':
+            return False
+        return self._detailAttribute[attribClass][name]['is_array']
+
+    def getAttribInfo(self, attribClass, name):
+        return self._detailAttribute[attribClass][name]
+
+    def setAttribInfo(self, attribClass, name, info):
+        self._detailAttribute[attribClass][name] = info
+
+    def createAttribute(self, attribClass, name, attribType=None, defaultValue=None, applyValue=True):
+        """
+        create a new attribute
+        @param attribClass: one of ['vertex', 'edge', 'face', 'detail']
+        @param name: specific attribute name
+        @param attribType: type of the attribute value->[float, int, vector2, vector3, vector4, matrix3, matrix4 , bool, list, tuple, custom]
+        @defaultValue: default value of the attribute
+        @applyValue: apply the default value
+        """
+        if attribType is None:
+            attribType = self._getAttribType(attribClass, name)
+        if defaultValue is None:
+            defaultValue = DEFAULT_VALUE_MAP.get(attribType, None)
+
+        array_mode = DATA_MODE_MAP.get(attribType, False)
+        shape = DATA_SHAPE_MAP.get(attribType, None)
+
+        if attribClass == "vertex":
+            if name == 'pos':
+                return
+            if array_mode:
+                self._mesh.vertex_property_array(name)
+            else:
+                self._mesh.vertex_property(name)
+            if applyValue:
+                data = np.broadcast_to(defaultValue, get_shape(self.getNumVertexes(), shape))
+                if array_mode:
+                    self._mesh.set_vertex_property_array(name, data)
+                else:
+                    self._mesh.set_vertex_property(name, data)
+        elif attribClass == "face":
+            if array_mode:
+                self._mesh.face_property_array(name)
+            else:
+                self._mesh.face_property(name)
+            if applyValue:
+                data = np.broadcast_to(defaultValue, get_shape(self.getNumFaces(), shape))
+                if array_mode:
+                    self._mesh.set_face_property_array(name, data)
+                else:
+                    self._mesh.set_face_property(name, data)
+        elif attribClass == "edge":
+            if array_mode:
+                self._mesh.edge_property_array(name)
+            else:
+                self._mesh.edge_property(name)
+            if applyValue:
+                data = np.broadcast_to(defaultValue, get_shape(self.getNumEdges(), shape))
+                if array_mode:
+                    self._mesh.set_edge_property_array(name, data)
+                else:
+                    self._mesh.set_edge_property(name, data)
+        elif attribClass == "detail":
+            self._detailAttribute[name] = defaultValue
+
+        if attribClass != 'detail':
+            self._detailAttribute[attribClass][name] = {'default_value': defaultValue, 'type': attribType,
+                                                        'is_array': array_mode}
+
+    def removeAttribute(self, attribClass, name):
+        """
+        remove a attribute
+        @param attribClass: one of ['vertex', 'edge', 'face', 'detail']
+        @param name: specific attribute name
+        """
+        if attribClass == "vertex":
             if name == 'pos':
                 return
             if self._mesh.has_vertex_property(name):
                 self._mesh.remove_vertex_property(name)
                 self._detailAttribute["vertex"].pop(name)
-        elif level == "face":
+        elif attribClass == "face":
             if self._mesh.has_face_property(name):
                 self._mesh.remove_face_property(name)
                 self._detailAttribute["face"].pop(name)
-        elif level == "edge":
+        elif attribClass == "edge":
             if self._mesh.has_edge_property(name):
                 self._mesh.remove_edge_property(name)
                 self._detailAttribute["edge"].pop(name)
-        elif level == "detail":
+        elif attribClass == "detail":
             if name in self._detailAttribute.keys():
                 self._detailAttribute.pop(name)
 
-    def renameAttribute(self, level, name, new_name):
-        if level == "vertex":
+    def renameAttribute(self, attribClass, name, new_name):
+        """
+        rename a attribute
+        @param attribClass: one of ['vertex', 'edge', 'face', 'detail']
+        @param name: specific attribute name
+        @param new_name: new attribute name
+        """
+        attrib_type = self.getAttribType(attribClass, name)
+        attrib_default = self.getAttribDefaultValue(attribClass, name)
+
+        if attribClass == "vertex":
             if name == 'pos':
                 return
             if self._mesh.has_vertex_property(name):
                 a = self.getVertexAttribData(name)
-                self.setVertexAttribData(new_name, a)
-                self.removeAttribute(level, name)
-        elif level == "face":
+                self.setVertexAttribData(new_name, a, attrib_type, attrib_default)
+                self.removeAttribute(attribClass, name)
+        elif attribClass == "face":
             if self._mesh.has_face_property(name):
                 a = self.getFaceAttribData(name)
-                self.setFaceAttribData(new_name, a)
-                self.removeAttribute(level, name)
-        elif level == "edge":
+                self.setFaceAttribData(new_name, a, attrib_type, attrib_default)
+                self.removeAttribute(attribClass, name)
+        elif attribClass == "edge":
             if self._mesh.has_edge_property(name):
                 a = self.getEdgeAttribData(name)
-                self.setEdgeAttribData(new_name, a)
-                self.removeAttribute(level, name)
-        elif level == "detail":
+                self.setEdgeAttribData(new_name, a, attrib_type, attrib_default)
+                self.removeAttribute(attribClass, name)
+        elif attribClass == "detail":
             if name in self._detailAttribute.keys():
                 self._detailAttribute[new_name] = self._detailAttribute.pop(name)
 
-    def hasAttribute(self, level, name):
-        if level == "vertex":
+    def hasAttribute(self, attribClass, name):
+        """
+        if the mesh contains a specific attribute
+        @param attribClass: one of ['vertex', 'edge', 'face', 'detail']
+        @param name: specific attribute name
+        @return: True or False
+        """
+        if attribClass == "vertex":
             if self._mesh.has_vertex_property(name):
                 return True
-        elif level == "face":
+        elif attribClass == "face":
             if self._mesh.has_face_property(name):
                 return True
-        elif level == "edge":
+        elif attribClass == "edge":
             if self._mesh.has_edge_property(name):
                 return True
-        if level in self.detailAttribute.keys():
-            if name in self.detailAttribute[level].keys():
+        if attribClass in self.detailAttribute.keys():
+            if name in self.detailAttribute[attribClass].keys():
                 return True
         return False
 
     def addVertex(self, pos):
+        """
+        add a vertex to the mesh
+        @param pos: position of the new vertex, type can be: [list,ndarray,tuple]
+        @return: openmesh.VertexHandle
+        """
         if type(pos) is list:
             return self._mesh.add_vertex(np.array(pos))
         elif type(pos) is np.ndarray:
@@ -531,6 +803,11 @@ class Mesh(object):
             return self._mesh.add_vertex(np.array([pos[0], pos[1], pos[2]]))
 
     def addFace(self, vts):
+        """
+        add a face to the mesh
+        @param vts: vertices of the new face, type can be: list of [openmesh.VertexHandle, int]
+        @return: openmesh.FaceHandle
+        """
         self._GLFaces = None
         if type(vts[0]) is openmesh.VertexHandle:
             return self._mesh.add_face(vts)
@@ -538,14 +815,28 @@ class Mesh(object):
             return self._mesh.add_face([self._mesh.vertex_handle(i) for i in vts])
 
     def addVertices(self, vts):
+        """
+        add vertices to the mesh
+        @param vts: new vertices , np.ndarray or list, shape = (n,3)
+        """
         self._GLFaces = None
-        return self._mesh.add_vertices(vts)
+        self._mesh.add_vertices(vts)
 
     def addFaces(self, fcs):
+        """
+        add faces to the mesh
+        @param fcs: new faces , np.ndarray or list of ndarray
+        """
         self._GLFaces = None
-        return self._mesh.add_faces(fcs)
+        self._mesh.add_faces(fcs)
 
     def removeVertex(self, vt, isolate=False, clean=True):
+        """
+        remove a vertex
+        @param vt: vertex index or vertex handle
+        @param isolate: if True, delete the connected elements
+        @param clean: if True, garbage collection after delete
+        """
         if type(vt) is not openmesh.VertexHandle:
             vt = self._mesh.vertex_handle(vt)
         if vt.idx() < self.getNumVertexes():
@@ -555,6 +846,12 @@ class Mesh(object):
             self._GLFaces = None
 
     def removeFace(self, fc, isolate=False, clean=True):
+        """
+        remove a face
+        @param fc: face index or face handle
+        @param isolate: if True, delete the connected elements
+        @param clean: if True, garbage collection after delete
+        """
         if type(fc) is not openmesh.FaceHandle:
             fc = self._mesh.face_handle(fc)
         if fc.idx() < self.getNumFaces():
@@ -564,6 +861,12 @@ class Mesh(object):
             self._GLFaces = None
 
     def removeEdge(self, eg, isolate=False, clean=True):
+        """
+        remove a edge
+        @param eg: edge index or edge handle
+        @param isolate: if True, delete the connected elements
+        @param clean: if True, garbage collection after delete
+        """
         if type(eg) is not openmesh.EdgeHandle:
             eg = self._mesh.edge_handle(eg)
         if eg.idx() < self.getNumEdges():
@@ -573,158 +876,163 @@ class Mesh(object):
             self._GLFaces = None
 
     def removeVertices(self, vts, isolate=False):
+        """
+        remove vertices
+        @param vts: list of vertex index or list of vertex handle
+        @param isolate: if True, delete the connected elements
+        """
         for vt in vts:
             self.removeVertex(vt, isolate, False)
         self._mesh.garbage_collection()
 
     def removeFaces(self, fcs, isolate=False):
+        """
+        remove faces
+        @param fcs: list of face index or list of face handle
+        @param isolate: if True, delete the connected elements
+        """
         for fc in fcs:
             self.removeFace(fc, isolate, False)
         self._mesh.garbage_collection()
 
     def removeEdges(self, egs, isolate=False):
+        """
+        remove edges
+        @param egs: list of edge index or list of edge handle
+        @param isolate: if True, delete the connected elements
+        """
         for eg in egs:
             self.removeEdge(eg, isolate, False)
         self._mesh.garbage_collection()
 
-    def delete(self):
+    def clear(self):
+        """
+        clear all mesh data
+        """
         self._mesh.clear()
         self._detailAttribute = {}
         self.signals.emit_attribChanged()
         self.update()
 
-    def getVertexAttribData(self, name, array=True):
-        if self._mesh.has_vertex_property(name):
-            if array:
-                try:
-                    return self._mesh.vertex_property_array(name)
-                except Exception as e:
-                    pass
-            return self._mesh.vertex_property(name)
+    def getVertexAttribData(self, name):
+        """
+        get vertex attribute data
+        @param name: specific attribute name
+        """
         if name == 'pos':
             return self._mesh.points()
         elif name == 'normal':
             return self.getNormals()
+        else:
+            if not self._mesh.has_vertex_property(name):
+                raise ValueError("Attribute {} does't exist!".format(name))
+            if self.getAttribIsArray('vertex', name):
+                return self._mesh.vertex_property_array(name)
+            else:
+                return self._mesh.vertex_property(name)
 
-    def getFaceAttribData(self, name, array=True):
-        if self._mesh.has_face_property(name):
-            if array:
-                try:
-                    return self._mesh.face_property_array(name)
-                except:
-                    pass
-            return self._mesh.face_property(name)
+    def getFaceAttribData(self, name):
+        """
+        get face attribute data
+        @param name: specific attribute name
+        """
         if name == 'normal':
             return self.getFaceNormals()
+        else:
+            if not self._mesh.has_face_property(name):
+                raise ValueError("Attribute {} does't exist!".format(name))
+            if self.getAttribIsArray('face', name):
+                return self._mesh.face_property_array(name)
+            else:
+                return self._mesh.face_property(name)
 
-    def getEdgeAttribData(self, name, array=False):
-        if self._mesh.has_edge_property(name):
-            if array:
-                try:
-                    return self._mesh.edge_property_array(name)
-                except:
-                    pass
+    def getEdgeAttribData(self, name):
+        """
+        get edge attribute data
+        @param name: specific attribute name
+        """
+        if not self._mesh.has_edge_property(name):
+            raise ValueError("Attribute {} does't exist!".format(name))
+        if self.getAttribIsArray('edge', name):
+            return self._mesh.edge_property_array(name)
+        else:
             return self._mesh.edge_property(name)
 
-    def setVertexAttribData(self, name, data, array=True):
+    def setVertexAttribData(self, name, data, attribType=None, defaultValue=None):
+        """
+        set vertex attribute data , if the attribute not exist, create and set it
+        @param name: specific attribute name
+        @param data: attribute data
+        @param attribType: if the attribute is not exist, we need attribType to create the attribute
+        @param defaultValue: if the attribute is not exist, we need defaultValue to create the attribute
+        """
         if name == 'pos':
             self._mesh.points()[..., [0, 1, 2]] = data
-            return True
         elif name == 'normal':
             self.getNormals()[..., [0, 1, 2]] = data
-            return True
+        else:
+            if not self._mesh.has_vertex_property(name):
+                if defaultValue is None:
+                    defaultValue = data[0]
+                self.createAttribute('vertex', name, attribType, defaultValue=defaultValue, applyValue=False)
+            is_array = self.getAttribIsArray('vertex', name)
 
-        hasAttrib = self._mesh.has_vertex_property(name)
-        if array and type(data) is np.ndarray:
-            if not hasAttrib:
-                self._mesh.vertex_property_array(name)
-                self._detailAttribute["vertex"][name] = None
-            try:
-                if len(data.shape) == 2 and data.shape[1] == 1:
-                    data = data.reshape((data.shape[0],))
+            if is_array:
                 self._mesh.set_vertex_property_array(name, data)
-                self.signals.emit_attribChanged()
-                return True
-            except:
-                self._mesh.remove_vertex_property(name)
-                self._detailAttribute["vertex"].pop(name)
+            else:
+                self._mesh.set_vertex_property(name, data)
+        self.signals.emit_attribChanged()
 
-        try:
-            if not hasAttrib:
-                self._mesh.vertex_property(name)
-                self._detailAttribute["vertex"][name] = None
-            if type(data) is np.ndarray:
-                data = data.tolist()
-            self._mesh.set_vertex_property(name, data)
-            self.signals.emit_attribChanged()
-            return True
-        except:
-            self._mesh.remove_vertex_property(name)
-            self._detailAttribute["vertex"].pop(name)
-            return False
-
-    def setFaceAttribData(self, name, data, array=True):
+    def setFaceAttribData(self, name, data, attribType=None, defaultValue=None):
+        """
+        set face attribute data , if the attribute not exist, create and set it
+        @param name: specific attribute name
+        @param data: attribute data
+        @param attribType: if the attribute is not exist, we need attribType to create the attribute
+        @param defaultValue: if the attribute is not exist, we need defaultValue to create the attribute
+        """
         if name == 'normal':
             self.getFaceNormals()[..., [0, 1, 2]] = data
-        hasAttrib = self._mesh.has_face_property(name)
-        if array and type(data) is np.ndarray:
-            if not hasAttrib:
-                self._mesh.face_property_array(name)
-                self._detailAttribute["face"][name] = None
-            try:
-                if len(data.shape) == 2 and data.shape[1] == 1:
-                    data = data.reshape((data.shape[0],))
+        else:
+            if not self._mesh.has_face_property(name):
+                if defaultValue is None:
+                    defaultValue = data[0]
+                self.createAttribute('face', name, attribType, defaultValue=defaultValue, applyValue=False)
+            is_array = self.getAttribIsArray('face', name)
+
+            if is_array:
                 self._mesh.set_face_property_array(name, data)
-                self.signals.emit_attribChanged()
-                return True
-            except:
-                self._mesh.remove_face_property(name)
-                self._detailAttribute["face"].pop(name)
+            else:
+                self._mesh.set_face_property(name, data)
+        self.signals.emit_attribChanged()
 
-        try:
-            if not hasAttrib:
-                self._mesh.face_property(name)
-                self._detailAttribute["face"][name] = None
-            if type(data) is np.ndarray:
-                data = data.tolist()
-            self._mesh.set_face_property(name, data)
-            self.signals.emit_attribChanged()
-            return True
-        except:
-            self._mesh.remove_face_property(name)
-            self._detailAttribute["face"].pop(name)
-            return False
+    def setEdgeAttribData(self, name, data, attribType=None, defaultValue=None):
+        """
+        set edge attribute data , if the attribute not exist, create and set it
+        @param name: specific attribute name
+        @param data: attribute data
+        @param attribType: if the attribute is not exist, we need attribType to create the attribute
+        @param defaultValue: if the attribute is not exist, we need defaultValue to create the attribute
+        """
+        if not self._mesh.has_edge_property(name):
+            if defaultValue is None:
+                defaultValue = data[0]
+            self.createAttribute('edge', name, attribType, defaultValue=defaultValue, applyValue=False)
+        is_array = self.getAttribIsArray('edge', name)
 
-    def setEdgeAttribData(self, name, data, array=True):
-        hasAttrib = self._mesh.has_edge_property(name)
-        if array and type(data) is np.ndarray:
-            if not hasAttrib:
-                self._mesh.edge_property_array(name)
-                self._detailAttribute["edge"][name] = None
-            try:
-                if len(data.shape) == 2 and data.shape[1] == 1:
-                    data = data.reshape((data.shape[0],))
-                self._mesh.set_edge_property_array(name, data)
-                self.signals.emit_attribChanged()
-                return True
-            except:
-                self._mesh.remove_edge_property(name)
-                self._detailAttribute["edge"].pop(name)
-        try:
-            if not hasAttrib:
-                self._mesh.edge_property(name)
-                self._detailAttribute["edge"][name] = None
-            if type(data) is np.ndarray:
-                data = data.tolist()
+        if is_array:
+            self._mesh.set_edge_property_array(name, data)
+        else:
             self._mesh.set_edge_property(name, data)
-            self.signals.emit_attribChanged()
-            return True
-        except:
-            self._mesh.remove_edge_property(name)
-            self._detailAttribute["edge"].pop(name)
-            return False
+
+        self.signals.emit_attribChanged()
 
     def getVertexAttrib(self, name, index):
+        """
+        get a vertex attribute value
+        @param name: specific attribute name
+        @param index: vertex index
+        """
         vh = self._mesh.vertex_handle(index)
         if self._mesh.has_vertex_property(name):
             return self._mesh.vertex_property(name, vh)
@@ -734,6 +1042,11 @@ class Mesh(object):
             return self._mesh.normal(vh)
 
     def getFaceAttrib(self, name, index):
+        """
+        get a face attribute value
+        @param name: specific attribute name
+        @param index: face index
+        """
         fh = self._mesh.face_handle(index)
         if self._mesh.has_face_property(name):
             return self._mesh.face_property(name, fh)
@@ -741,12 +1054,23 @@ class Mesh(object):
             return self._mesh.normal(fh)
 
     def getEdgeAttrib(self, name, index):
+        """
+        get a edge attribute value
+        @param name: specific attribute name
+        @param index: edge index
+        """
         eh = self._mesh.edge_handle(index)
         if self._mesh.has_edge_property(name):
             return self._mesh.edge_property(name, eh)
         return None
 
     def setVertexAttrib(self, name, index, value):
+        """
+        set a vertex attribute value
+        @param name: specific attribute name
+        @param index: vertex index
+        @param value: attribute value
+        """
         vh = self._mesh.vertex_handle(index)
         if self._mesh.has_vertex_property(name):
             self._mesh.set_vertex_property(name, vh, value)
@@ -761,6 +1085,12 @@ class Mesh(object):
         return False
 
     def setFaceAttrib(self, name, index, value):
+        """
+        set a face attribute value
+        @param name: specific attribute name
+        @param index: face index
+        @param value: attribute value
+        """
         fh = self._mesh.face_handle(index)
         if self._mesh.has_face_property(name):
             self._mesh.set_face_property(name, fh, value)
@@ -772,6 +1102,12 @@ class Mesh(object):
         return False
 
     def setEdgeAttrib(self, name, index, value):
+        """
+        set a edge attribute value
+        @param name: specific attribute name
+        @param index: edge index
+        @param value: attribute value
+        """
         eh = self._mesh.edge_handle(index)
         if self._mesh.has_edge_property(name):
             self._mesh.set_edge_property(name, eh, value)
@@ -780,15 +1116,28 @@ class Mesh(object):
         return False
 
     def getDetailAttrib(self, name):
+        """
+        get a detail attribute value
+        @param name: specific attribute name
+        """
         if name in self._detailAttribute.keys():
             return self._detailAttribute[name]
         return None
 
     def setDetailAttrib(self, name, value):
+        """
+        set a detail attribute value
+        @param name: specific attribute name
+        @param value: attribute value
+        """
         self._detailAttribute[name] = value
         self.signals.emit_attribChanged()
 
     def getAllVertexAttributes(self):
+        """
+        get all vertex attribute data
+        @return: dict {attribute name: attribute data}
+        """
         data = {}
         for attrib_name in self._detailAttribute["vertex"].keys():
             try:
@@ -798,75 +1147,109 @@ class Mesh(object):
             data[attrib_name] = d
         return data
 
-    def createGroup(self, level, name, default=False):
-        if level == 'vertex':
+    def createGroup(self, attribClass, name, default=False):
+        """
+        create a group
+        @param attribClass: one of ['vertex', 'edge', 'face']
+        @param name: specific group name
+        @param default: if True, all elements will in the group
+        """
+        if attribClass == 'vertex':
             name = "v:" + name
-            self._mesh.vertex_property(name)
-            self._mesh.set_vertex_property(name, np.broadcast_to(default, (self.getNumVertexes(),)).tolist())
-            self._detailAttribute['vertex'][name] = None
-        elif level == 'face':
+        elif attribClass == 'face':
             name = "f:" + name
-            self._mesh.face_property(name)
-            self._mesh.set_face_property(name, np.broadcast_to(default, (self.getNumFaces(),)).tolist())
-            self._detailAttribute['face'][name] = None
-        elif level == 'edge':
+        elif attribClass == 'edge':
             name = "e:" + name
-            self._mesh.edge_property(name)
-            self._mesh.set_edge_property(name, np.broadcast_to(default, (self.getNumEdges(),)).tolist())
-            self._detailAttribute['edge'][name] = None
 
-    def getGroupData(self, level, name):
-        if level == 'vertex':
+        self.createAttribute(attribClass, name, 'bool', default)
+
+    def getGroupData(self, attribClass, name):
+        """
+        get group data
+        @param attribClass: one of ['vertex', 'edge', 'face']
+        @param name: specific group name
+        @return: list of bool
+        """
+        if attribClass == 'vertex':
             name = "v:" + name
             if self._mesh.has_vertex_property(name):
-                return self._mesh.vertex_property(name)
-        elif level == 'face':
+                return self._mesh.vertex_property_array(name).astype(np.bool)
+        elif attribClass == 'face':
             name = "f:" + name
             if self._mesh.has_face_property(name):
-                return self._mesh.face_property(name)
-        elif level == 'edge':
+                return self._mesh.face_property_array(name).astype(np.bool)
+        elif attribClass == 'edge':
             name = "e:" + name
             if self._mesh.has_edge_property(name):
-                return self._mesh.edge_property(name)
+                return self._mesh.edge_property_array(name).astype(np.bool)
+        else:
+            raise ValueError("class {} does not support group".format(attribClass))
 
-    def setGroupData(self, level, name, data):
-        if level == 'vertex':
+        raise ValueError("Group {} does not exist".format(name))
+
+    def setGroupData(self, attribClass, name, data):
+        """
+        set group data
+        @param attribClass: one of ['vertex', 'edge', 'face']
+        @param name: specific group name
+        @data: list of bool
+        """
+        if attribClass == 'vertex':
             name = "v:" + name
-            self.setVertexAttribData(name, data, False)
-        elif level == 'face':
+            self.setVertexAttribData(name, data, 'bool', False)
+        elif attribClass == 'face':
             name = "f:" + name
-            self.setFaceAttribData(name, data, False)
-        elif level == 'edge':
+            self.setFaceAttribData(name, data, 'bool', False)
+        elif attribClass == 'edge':
             name = "e:" + name
-            self.setEdgeAttribData(name, data, False)
+            self.setEdgeAttribData(name, data, 'bool', False)
 
-    def getGroup(self, level, name, index):
-        if level == 'vertex':
+    def getGroup(self, attribClass, name, index):
+        """
+        get if a specific element is in the group
+        @param attribClass: one of ['vertex', 'edge', 'face']
+        @param name: specific group name
+        @index: element index
+        @return: bool
+        """
+        if attribClass == 'vertex':
             name = "v:" + name
             if self._mesh.has_vertex_property(name):
                 vh = self._mesh.vertex_handle(index)
-                return self._mesh.vertex_property(name, vh)
-        elif level == 'face':
+                return bool(self._mesh.vertex_property(name, vh))
+        elif attribClass == 'face':
             name = "f:" + name
             if self._mesh.has_face_property(name):
                 fh = self._mesh.face_handle(index)
-                return self._mesh.face_property(name, fh)
-        elif level == 'edge':
+                return bool(self._mesh.face_property(name, fh))
+        elif attribClass == 'edge':
             name = "e:" + name
             if self._mesh.has_edge_property(name):
                 eh = self._mesh.edge_handle(index)
-                return self._mesh.edge_property(name, eh)
+                return bool(self._mesh.edge_property(name, eh))
 
-    def setGroup(self, level, name, index, value):
+    def setGroup(self, attribClass, name, index, value):
+        """
+        set if a specific element is in the group
+        @param attribClass: one of ['vertex', 'edge', 'face']
+        @param name: specific group name
+        @index: element index
+        @value: bool
+        """
         assert type(value) is bool
-        if level == 'vertex':
+        if attribClass == 'vertex':
             self.setVertexAttrib("v:" + name, index, value)
-        elif level == 'face':
+        elif attribClass == 'face':
             self.setFaceAttrib("f:" + name, index, value)
-        elif level == 'edge':
+        elif attribClass == 'edge':
             self.setEdgeAttrib("e:" + name, index, value)
 
     def getGroupNames(self, allInOne=False):
+        """
+        get all group names of the mesh
+        @param allInOne: put all names in one list
+        @return: dict or list
+        """
         v = [i[2:] for i in self._detailAttribute["vertex"].keys() if ":" in i]
         f = [i[2:] for i in self._detailAttribute["face"].keys() if ":" in i]
         e = [i[2:] for i in self._detailAttribute["edge"].keys() if ":" in i]
@@ -881,24 +1264,36 @@ class Mesh(object):
                       'edge': e}
         return result
 
-    def removeGroup(self, level, name):
-        if level == 'vertex':
+    def removeGroup(self, attribClass, name):
+        """
+        remove a group
+        @param attribClass: one of ['vertex', 'edge', 'face']
+        @param name: specific group name
+        """
+        if attribClass == 'vertex':
             name = "v:" + name
-        elif level == 'face':
+        elif attribClass == 'face':
             name = "f:" + name
-        elif level == 'edge':
+        elif attribClass == 'edge':
             name = "e:" + name
 
         if ":" in name:
-            self.removeAttribute(level, name)
+            self.removeAttribute(attribClass, name)
 
-    def hasGroup(self, level, name):
-        if level == 'vertex':
+    def hasGroup(self, attribClass, name):
+        """
+        get if the mesh have a specific group
+        @param attribClass: one of ['vertex', 'edge', 'face']
+        @param name: specific group name
+        """
+        if attribClass == 'vertex':
             name = "v:" + name
-        elif level == 'face':
+        elif attribClass == 'face':
             name = "f:" + name
-        elif level == 'edge':
+        elif attribClass == 'edge':
             name = "e:" + name
 
         if ":" in name:
-            return self.hasAttribute(level, name)
+            return self.hasAttribute(attribClass, name)
+        else:
+            return False

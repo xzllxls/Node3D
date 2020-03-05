@@ -4,6 +4,7 @@ from ctypes import byref, c_float, c_uint
 from typing import Tuple, Any
 from plotoptix._load_lib import PLATFORM
 from plotoptix.npoptix import NpOptiX
+from plotoptix.enums import Camera
 
 from Node3D.opengl.Camera import camera
 import sys
@@ -75,6 +76,7 @@ class OptixWindow(QtWidgets.QWidget):
         }
 
         self.cam = camera()
+        self.cam.aperture_radius = 0.0
         self._canShowMenu = True
         self.setup_menus()
         self.mousePos = None
@@ -181,6 +183,9 @@ class OptixWindow(QtWidgets.QWidget):
             delta = ev.angleDelta().y()
         if ev.modifiers() & QtCore.Qt.ControlModifier:
             self.cam.fov *= 0.999 ** delta
+        elif ev.modifiers() & QtCore.Qt.ShiftModifier:
+            self.cam.aperture_radius += 0.0005 * delta
+            # self.cam.aperture_radius = max(self.cam.aperture_radius, 0.0)
         else:
             self.cam.zoom(delta * 3)
         self.camera_changed.emit()
@@ -264,6 +269,7 @@ class QtOptiX(OptixWindow):
     def start(self):
         if not self.optix._is_started:
             self.optix.start()
+
         self._run_event_loop()
 
     def _run_event_loop(self):
@@ -280,7 +286,7 @@ class QtOptiX(OptixWindow):
         self.resized.connect(lambda: self.on_resized())
         self.camera_changed.connect(lambda: self.update_cam())
 
-        self.optix.setup_camera("camera")
+        self.optix.setup_camera("camera", cam_type=Camera.DoF, aperture_radius=0.0)
         self.update_cam()
 
         with self.optix._padlock:
@@ -293,7 +299,10 @@ class QtOptiX(OptixWindow):
 
     def update_cam(self):
         cam = self.cam
-        self.optix.update_camera("camera", cam.pos, cam.forwardPos, cam.getUp(), fov=cam.fov)
+        # focal_scale
+        self.optix.update_camera("camera", cam.pos, cam.forwardPos,
+                                 cam.getUp(), fov=cam.fov,
+                                 aperture_radius=cam.aperture_radius)
         self.internal_image_update()
 
     def get_image_xy(self, wnd_x, wnd_y):
@@ -386,6 +395,7 @@ class QtOptiX(OptixWindow):
 
     def refresh(self):
         self.optix.refresh_scene()
+
 
 if __name__ == '__main__':
     import openmesh

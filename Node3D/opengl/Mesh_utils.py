@@ -9,6 +9,8 @@ from OpenGL.GL import *
 from ..vendor.pyqtgraph import functions as fn
 import copy
 
+from .GLMesh import Mesh
+
 keys = ["float", "int", 'ndarray', "numpy", "double"]
 
 
@@ -37,27 +39,21 @@ class MeshFuncs(object):
     def __init__(self, geo):
         self.geo = geo
         self.mesh = geo._mesh
+        self.geo = Mesh()
 
     def FaceToVertex(self, name, newName=None):
         if not self.geo.hasAttribute("face", name):
             return
 
-        val = type(self.geo.getFaceAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
+        is_array = self.geo.getAttribIsArray('face', name)
 
         if newName is None:
             newName = name
 
         attr = self.geo.getFaceAttribData(name)
+        self.geo.setAttribInfo('vertex', newName, self.geo.getAttribInfo('face', name))
 
-        self.geo.detailAttribute["vertex"][newName] = None
-
-        if not canCal:
+        if not is_array:
             for v in self.mesh.vertices():
                 for f in self.mesh.vf(v):
                     self.mesh.set_vertex_property(newName, v, attr[f.idx()])
@@ -82,21 +78,15 @@ class MeshFuncs(object):
         if not self.geo.hasAttribute("vertex", name):
             return
 
-        val = type(self.geo.getVertexAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
+        is_array = self.geo.getAttribIsArray('vertex', name)
 
         if newName is None:
             newName = name
 
         attr = self.geo.getVertexAttribData(name)
-        self.geo.detailAttribute["face"][newName] = None
+        self.geo.setAttribInfo('face', newName, self.geo.getAttribInfo('vertex', name))
 
-        if not canCal:
+        if not is_array:
             for f in self.mesh.faces():
                 for v in self.mesh.fv(f):
                     self.mesh.set_face_property(newName, f, attr[v.idx()])
@@ -121,21 +111,15 @@ class MeshFuncs(object):
         if not self.geo.hasAttribute("edge", name):
             return
 
-        val = type(self.geo.getEdgeAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
+        is_array = self.geo.getAttribIsArray('edge', name)
 
         if newName is None:
             newName = name
 
         attr = self.geo.getEdgeAttribData(name)
-        self.geo.detailAttribute["vertex"][newName] = None
+        self.geo.setAttribInfo('vertex', newName, self.geo.getAttribInfo('edge', name))
 
-        if not canCal:
+        if not is_array:
             for v in self.mesh.vertices():
                 for e in self.mesh.ve(v):
                     self.mesh.set_vertex_property(newName, v, attr[e.idx()])
@@ -161,22 +145,16 @@ class MeshFuncs(object):
         if not self.geo.hasAttribute("vertex", name):
             return
 
-        val = type(self.geo.getVertexAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
+        is_array = self.geo.getAttribIsArray('vertex', name)
 
         if newName is None:
             newName = name
 
         attr = self.geo.getVertexAttribData(name)
         evs = self.mesh.ev_indices()
-        self.geo.detailAttribute["edge"][newName] = None
+        self.geo.setAttribInfo('edge', newName, self.geo.getAttribInfo('vertex', name))
 
-        if not canCal:
+        if not is_array:
             for _e, _vts in enumerate(evs):
                 e = self.mesh.edge_handle(_e)
                 v = self.mesh.vertex_handle(_vts[0])
@@ -220,7 +198,7 @@ class MeshFuncs(object):
         _calVertexSmooth(data, iter, self.mesh.vertex_vertex_indices())
 
     def smoothVertexAttrib(self, name, iter=1):
-        data = self.geo.getVertexAttribData(name, True)
+        data = self.geo.getVertexAttribData(name)
         if data is None:
             return
         val = type(self.geo.getVertexAttrib(name, 0)).__name__

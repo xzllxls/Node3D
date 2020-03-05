@@ -213,7 +213,7 @@ class Measure(GeometryNode):
         if mt == "FaceCent":
             self.geo.meshFuncs.facePos(True)
         elif mt == "Area":
-            area = igl.doublearea(self.geo.getVertexes(), self.geo.getFaces()) / 2.0
+            area = igl.doublearea(self.geo.getVertexes(), self.geo.mesh.face_vertex_indices()) / 2.0
             self.geo.setFaceAttribData("area", area, True)
         elif mt == "Edge Length":
             self.geo.meshFuncs.edgeLength(True)

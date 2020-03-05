@@ -144,13 +144,13 @@ class NodeInfoPanel(QtWidgets.QWidget):
                 # collect attribute related info
                 attribData = node.geo.getAttribNames(with_group=True)
 
-                for attrLevel, attrNames in attribData.items():
+                for attribClass, attrNames in attribData.items():
                     # vertex, edge, face, detail
                     if not attrNames:
                         continue
                     else:
-                        self.attribLabels[attrLevel].setVisible(True)
-                        self.attribTextEdits[attrLevel].setVisible(True)
+                        self.attribLabels[attribClass].setVisible(True)
+                        self.attribTextEdits[attribClass].setVisible(True)
 
                     attrDisplay = []
                     for attr in attrNames:
@@ -158,10 +158,10 @@ class NodeInfoPanel(QtWidgets.QWidget):
                             attr = attr[2:]
                             attrType = "group"
                         else:
-                            attrType = node.geo.getAttribType(attrLevel, attr)
+                            attrType = node.geo.getAttribType(attribClass, attr)
                         attrDisplay.append(ATTRIBUTE_DATA_COLOR[attrType].format(attr, attrType))
 
-                    self.attribTextEdits[attrLevel].setHtml("; ".join(attrDisplay))
+                    self.attribTextEdits[attribClass].setHtml("; ".join(attrDisplay))
         else:
             self.clear(False)
 

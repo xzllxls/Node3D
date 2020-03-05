@@ -25,7 +25,7 @@ class GeometryNode(AutoNode):
     @geo.setter
     def geo(self, geo):
         if self._geo is not None:
-            self._geo.delete()
+            self._geo.clear()
             del self._geo
             self._geo = None
             gc.collect()
