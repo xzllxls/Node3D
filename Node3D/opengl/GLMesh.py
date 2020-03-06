@@ -195,6 +195,7 @@ class Mesh(object):
         self._mesh.release_face_texture_index()
         self._mesh.release_edge_colors()
 
+        self.bbox = bbox()
         self._GLFaces = None
         self._flatColor = 0
         self.__view = None
