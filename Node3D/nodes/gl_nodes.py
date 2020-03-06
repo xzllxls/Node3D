@@ -1,10 +1,9 @@
 from Node3D.base.node import GeometryNode
-from Node3D.opengl import Mesh
+from Node3D.opengl import Mesh, DATA_SHAPE_MAP, get_shape
 from Node3D.base.data import matrix4x4
 from Node3D.vendor.NodeGraphQt.constants import *
 import numpy as np
 import copy
-import collections
 
 
 class Point(GeometryNode):
@@ -21,49 +20,43 @@ class Point(GeometryNode):
     def run(self):
         self.geo = Mesh()
         self.geo.addVertex(self.get_property("Pos"))
-        self.geo.mesh.vertex_property_array("color")
-        self.geo.setVertexAttrib("color", 0, list(self.get_property("Color")), attribType='vector3', defaultValue=[1, 1, 1])
-        self.geo.mesh.vertex_property_array("pscale")
-        self.geo.setVertexAttrib("pscale", 0, self.get_property("Size"), attribType='float', defaultValue=1.0)
+        self.geo.createAttribute('vertex', 'color', 'vector3', [1,1,1], applyValue=True)
+        self.geo.setVertexAttrib("color", 0, list(self.get_property("Color")))
+        self.geo.createAttribute('vertex', 'pscale', 'float', 1.0, applyValue=True)
+        self.geo.setVertexAttrib("pscale", 0, self.get_property("Size"))
 
 
-def create_data(element_num, data, attrib_name):
-    if type(data) is np.ndarray:
-        shape = data.shape
-        default = 0
-        if len(shape) == 1:
-            shape = (element_num,)
-            if type(data[0]) is str:
-                default = ''
-            elif type(data[0]) is bool:
-                default = False
-        else:
-            shape = list(shape)
-            shape[0] = element_num
-            shape = tuple(shape)
+class Face(GeometryNode):
+    __identifier__ = 'OpenGL'
+    NODE_NAME = 'Face'
 
-        if attrib_name == 'color':
-            default = 1.0
-        data = np.broadcast_to(default, shape)
-        return data
-    else:
-        tp = type(data[0])
-        try:
-            default = tp('')
-        except:
-            default = 0.0
-            if tp is int:
-                default = 0
-        data = [default for i in range(element_num)]
-        return data
+    def __init__(self):
+        super(Face, self).__init__()
+        self.add_input("Points", multi_input=True)
+
+    def run(self):
+        self.geo = Mesh()
+        geos = [port.node().getData(port) for port in self.get_port(0).connected_ports()]
+        points = []
+        pscales = []
+        colors = []
+        for geo in geos:
+            points.append(geo.getVertexAttrib('pos', 0))
+            pscales.append(geo.getVertexAttrib('pscale', 0))
+            colors.append(geo.getVertexAttrib('color', 0))
+        self.geo.addVertices(points)
+        self.geo.setVertexAttribData('color', colors, attribType='vector3', defaultValue=[1, 1, 1])
+        self.geo.setVertexAttribData('pscale', pscales, attribType='float', defaultValue=1.0)
+        if self.geo.getNumVertexes() > 2:
+            self.geo.addFace(list(range(self.geo.getNumVertexes())))
 
 
 def update_dict(a, b):
     for key, value in b.items():
-        if key not in a.keys() or (not isinstance(value, dict)):
-            a[key] = value
+        if isinstance(value, dict) and key in a.keys():
+            update_dict(a[key], value)
         else:
-            a[key].update(value)
+            a[key] = copy.deepcopy(value)
 
 
 class Merge(GeometryNode):
@@ -72,141 +65,97 @@ class Merge(GeometryNode):
 
     def __init__(self):
         super(Merge, self).__init__()
-        self.add_input("geo1", GeometryNode)
+        self.add_input("geos", GeometryNode, multi_input=True)
         self.create_property(
             "Recompute Normals", True, widget_type=NODE_PROP_QCHECKBOX)
-        self.index = 1
+
+    def createAttributeData(self, count, attribType, defaultValue, array_mode):
+        shape = DATA_SHAPE_MAP.get(attribType, None)
+        if attribType == 'list':
+            shape = [0, len(defaultValue)]
+        data = np.broadcast_to(defaultValue, get_shape(count, shape))
+        if not array_mode:
+            data = list(data)
+        return data
 
     def run(self):
         self.geo = None
-
-        num = 0
-        geos = []
-        for i in range(self.index):
-            geo = self.getInputGeometryRef(i)
-            if geo is None:
-                continue
-            if geo.getNumVertexes() == 0:
-                continue
-            num += 1
-            geos.append(geo)
-
-        if num == self.index:
-            self.index += 1
-            self.add_input("geo" + str(self.index), GeometryNode)
-
+        geos = [port.node().getData(port) for port in self.get_port(0).connected_ports()]
         if len(geos) == 0:
             return
-        self.geo = self.copy_geo(geos.pop(0))
-        if len(geos) == 0:
+        self.geo = self.copy_geo(geos[0])
+        if len(geos) == 1:
             return
 
-        geo_attribs = collections.OrderedDict()
-        attrib_data = copy.deepcopy(self.geo.attributeMap)
-        for g in geos:
-            geo_attribs[g] = g.getAttribNames(with_group=True)
-            update_dict(attrib_data, g.detailAttribute)
+        attrib_data = {}
+        [update_dict(attrib_data, g.attributeMap) for g in geos]
+        update_dict(self.geo.attributeMap, attrib_data)
         attrib_data['vertex'].pop('pos')
 
-        a = self.geo.getNumVertexes()
-        b = self.geo.getNumFaces()
-        c = self.geo.getNumEdges()
-        for geo, attrib in geo_attribs.items():
-            m_attrib = self.geo.getAttribNames(with_group=True)
+        for geo in geos:
+            nv = geo.getNumVertexes()
+            nf = geo.getNumFaces()
+            ne = geo.getNumEdges()
 
-            vn = [i for i in attrib['vertex'] if i not in m_attrib['vertex']]
-            for v in vn:
-                data = create_data(a, geo.getVertexAttribData(v), v)
-                self.geo.setVertexAttribData(v, data)
+            # vertex
+            for v_name, v_data in attrib_data['vertex'].items():
+                is_array = v_data['is_array']
 
-            fn = [i for i in attrib['face'] if i not in m_attrib['face']]
-            for f in fn:
-                data = create_data(b, geo.getFaceAttribData(f), f)
-                self.geo.setFaeAttribData(f, data)
-
-            en = [i for i in attrib['edge'] if i not in m_attrib['edge']]
-            for e in en:
-                data = create_data(c, geo.getEdgeAttribData(e), e)
-                self.geo.setVertexAttribData(e, data)
-
-        self.geo.attributeMap.update(copy.deepcopy(attrib_data))
-        to_remove = [i for i in attrib_data.keys() if i not in ['vertex', 'face', 'edge']]
-        [attrib_data.pop(i) for i in to_remove]
-
-        for g, attribs in geo_attribs.items():
-            for vname in attrib_data['vertex'].keys():
-                if vname in attribs['vertex']:
-                    data = g.getVertexAttribData(vname)
+                if geo.hasAttribute('vertex', v_name):
+                    data = geo.getVertexAttribData(v_name)
                 else:
-                    a = g.getNumVertexes()
-                    data = create_data(a, self.geo.getVertexAttribData(vname), vname)
-
-                v = attrib_data['vertex'][vname]
-                if v is None:
-                    attrib_data['vertex'][vname] = self.geo.getVertexAttribData(vname)
-
-                if type(data) is np.ndarray:
-                    if len(data.shape) > 1:
-                        attrib_data['vertex'][vname] = np.append(attrib_data['vertex'][vname], data, axis=0)
+                    data = self.createAttributeData(nv, v_data['type'], v_data['default_value'], is_array)
+                if 'data' in attrib_data['vertex'][v_name].keys():
+                    if is_array:
+                        attrib_data['vertex'][v_name]['data'] = np.append(attrib_data['vertex'][v_name]['data'], data, axis=0)
                     else:
-                        attrib_data['vertex'][vname] = np.append(attrib_data['vertex'][vname], data)
+                        attrib_data['vertex'][v_name]['data'].extend(data)
                 else:
-                    attrib_data['vertex'][vname].extend(data)
+                    attrib_data['vertex'][v_name]['data'] = data
 
-            for fname in attrib_data['face'].keys():
-                if fname in attribs['face']:
-                    data = g.getFaceAttribData(fname)
+            # face
+            for f_name, f_data in attrib_data['face'].items():
+                is_array = f_data['is_array']
+
+                if geo.hasAttribute('face', f_name):
+                    data = geo.getFaceAttribData(f_name)
                 else:
-                    a = g.getNumFaces()
-                    data = create_data(a, self.geo.getFaceAttribData(fname), fname)
-
-                v = attrib_data['face'][fname]
-                if v is None:
-                    attrib_data['face'][fname] = self.geo.getFaceAttribData(fname)
-
-                if type(data) is np.ndarray:
-                    if len(data.shape) > 1:
-                        attrib_data['face'][fname] = np.append(attrib_data['face'][fname], data, axis=0)
+                    data = self.createAttributeData(nf, f_data['type'], f_data['default_value'], is_array)
+                if 'data' in attrib_data['face'][f_name].keys():
+                    if is_array:
+                        attrib_data['face'][f_name]['data'] = np.append(attrib_data['face'][f_name]['data'], data, axis=0)
                     else:
-                        attrib_data['face'][fname] = np.append(attrib_data['face'][fname], data)
+                        attrib_data['face'][f_name]['data'].extend(data)
                 else:
-                    attrib_data['face'][fname].extend(data)
+                    attrib_data['face'][f_name]['data'] = data
 
-            for ename in attrib_data['edge'].keys():
-                if ename in attribs['face']:
-                    data = g.getEdgeAttribData(ename)
+            # edge
+            for e_name, e_data in attrib_data['edge'].items():
+                is_array = e_data['is_array']
+
+                if geo.hasAttribute('edge', e_name):
+                    data = geo.getEdgeAttribData(e_name)
                 else:
-                    a = g.getNumFaces()
-                    data = create_data(a, self.geo.getEdgeAttribData(ename), ename)
-
-                v = attrib_data['edge'][ename]
-                if v is None:
-                    attrib_data['edge'][ename] = self.geo.getEdgeAttribData(ename)
-
-                if type(data) is np.ndarray:
-                    if len(data.shape) > 1:
-                        attrib_data['edge'][ename] = np.append(attrib_data['edge'][ename], data, axis=0)
+                    data = self.createAttributeData(ne, e_data['type'], e_data['default_value'], is_array)
+                if 'data' in attrib_data['edge'][e_name].keys():
+                    if is_array:
+                        attrib_data['edge'][e_name]['data'] = np.append(attrib_data['edge'][e_name]['data'], data, axis=0)
                     else:
-                        attrib_data['edge'][ename] = np.append(attrib_data['edge'][ename], data)
+                        attrib_data['edge'][e_name]['data'].extend(data)
                 else:
-                    attrib_data['edge'][ename].extend(data)
+                    attrib_data['edge'][e_name]['data'] = data
 
-        for g in geo_attribs.keys():
+        for geo in geos[1:]:
             offset = self.geo.getNumVertexes()
-            self.geo.addVertices(g.getVertexes())
-            [self.geo.addFace(face+offset) for face in g.getFaces()]
+            self.geo.addVertices(geo.getVertexes())
+            [self.geo.addFace(face+offset) for face in geo.getFaces()]
 
-        for l, attribs in attrib_data.items():
-            for name, data in attribs.items():
-                if type(data) is np.ndarray:
-                    if len(data.shape) == 1:
-                        data = data.reshape(data.shape[0], 1)
-                if l == 'vertex':
-                    self.geo.setVertexAttribData(name, data)
-                elif l == 'face':
-                    self.geo.setFaceAttribData(name, data)
-                elif l == 'edge':
-                    self.geo.setEdgeAttribData(name, data)
+        for name, data in attrib_data['vertex'].items():
+            self.geo.setVertexAttribData(name, data['data'], attribType=data['type'], defaultValue=data['default_value'])
+        for name, data in attrib_data['face'].items():
+            self.geo.setFaceAttribData(name, data['data'], attribType=data['type'], defaultValue=data['default_value'])
+        for name, data in attrib_data['edge'].items():
+            self.geo.setEdgeAttribData(name, data['data'], attribType=data['type'], defaultValue=data['default_value'])
 
         if self.get_property("Recompute Normals"):
             self.geo.mesh.update_normals()
@@ -270,7 +219,7 @@ class Transform(GeometryNode):
         self.geo.meshFuncs.transformVertex(mat.data())
 
         if self.get_property("Output Matrix"):
-            self.geo.setDetailAttrib("transform", mat)
+            self.geo.setDetailAttrib("transform", mat, attribType='matrix4')
 
         if self.get_property("Recompute Normals"):
             self.geo.mesh.update_normals()

@@ -131,26 +131,11 @@ class Attribute_Create(GeometryNode):
                              {'name': 'Attribute Type', 'type': 'list', 'value': 'float',
                               'limits': ['float', 'int', 'vector2', 'vector3', 'vector4', 'matrix3', 'matrix4', 'bool',
                                          'list', 'tuple', 'custom', 'str']},
+                             {'name': 'Default Value', 'type': 'str', 'value': '0.0'},
                              {'name': 'Attribute Value', 'type': 'str', 'value': '0.0'}])
         self.add_input('geo', GeometryNode)
 
-    def run(self):
-        if not self.copyData():
-            return
-        attrib_name = self.get_property('Attribute Name')
-        if not attrib_name:
-            return
-
-        attrib_type = self.get_property('Attribute Type')
-
-        try:
-            value = self.get_property('Attribute Value')
-            if attrib_type != 'string':
-                value = eval(value)
-        except:
-            self.error('please input a valid value')
-            return
-
+    def get_value(self, value, attrib_type):
         if attrib_type == 'float':
             value = float(value)
         elif attrib_type == 'int':
@@ -203,9 +188,33 @@ class Attribute_Create(GeometryNode):
                     value = np.zeros((4, 4))
                 else:
                     value = np.identity(4)
+        return value
+
+    def run(self):
+        if not self.copyData():
+            return
+        attrib_name = self.get_property('Attribute Name')
+        if not attrib_name:
+            return
+
+        attrib_type = self.get_property('Attribute Type')
+
+        try:
+            value = self.get_property('Attribute Value')
+            default_value = self.get_property('Default Value')
+            if attrib_type != 'string':
+                value = eval(value)
+                default_value = eval(default_value)
+            value = self.get_value(value, attrib_type)
+            default_value = self.get_value(default_value, attrib_type)
+        except:
+            self.error('please input a valid value')
+            return
+
         attrib_class = self.get_property('Attribute Class')
 
         self.geo.createAttribute(attrib_class, attrib_name, attribType=attrib_type, defaultValue=value, applyValue=True)
+        self.geo.attributeMap[attrib_class][attrib_name]['default_value'] = default_value
 
 
 class Attribute_Promote(GeometryNode):

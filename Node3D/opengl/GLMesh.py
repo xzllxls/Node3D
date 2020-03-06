@@ -169,10 +169,6 @@ class Mesh(object):
         }
 
         self.signals = mesh_signals()
-        self.bbox = bbox()
-        self._bbox_min = []
-        self._bbox_max = []
-        self._bbox_center = []
         self._selected = False
 
         self.edge_colors = {
@@ -228,8 +224,11 @@ class Mesh(object):
         vts = self.getVertexes()
         if vts is None:
             return [0, 0, 0]
-        self._bbox_min = list(np.min(vts, axis=0))
-        return self._bbox_min
+        try:
+            _bbox_min = list(np.min(vts, axis=0))
+        except:
+            return [0, 0, 0]
+        return _bbox_min
 
     @property
     def bbox_max(self):
@@ -240,8 +239,11 @@ class Mesh(object):
         vts = self.getVertexes()
         if vts is None:
             return [0, 0, 0]
-        self._bbox_max = list(np.max(vts, axis=0))
-        return self._bbox_max
+        try:
+            _bbox_max = list(np.max(vts, axis=0))
+        except:
+            return [0, 0, 0]
+        return _bbox_max
 
     @property
     def bbox_center(self):
@@ -249,8 +251,8 @@ class Mesh(object):
         get bounding box center value
         @return: list
         """
-        _, __, self._bbox_center = self.get_bbox_info()
-        return self._bbox_center
+        _, __, _bbox_center = self.get_bbox_info()
+        return _bbox_center
 
     def get_bbox_info(self):
         """
