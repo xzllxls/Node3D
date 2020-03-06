@@ -88,7 +88,6 @@ DATA_TYPE_MAP = {
     int: 'int',
     bool: 'bool',
     str: 'str',
-    np.ndarray: 'vector3',
     list: 'list',
     tuple: 'tuple',
 }
@@ -601,22 +600,37 @@ class Mesh(object):
 
     def _getAttribType(self, attribClass, name):
         """
-        get attribute type
+        get attribute value type
         @param attribClass: one of ['vertex', 'edge', 'face', 'detail']
         @param name: specific attribute name
         @return: str
         """
-        # get the type of a given attribute
-        checkType = None
         if attribClass == "vertex":
-            checkType = type(self.getVertexAttrib(name, 0))
+            value = self.getVertexAttrib(name, 0)
         elif attribClass == "edge":
-            checkType = type(self.getEdgeAttrib(name, 0))
+            value = self.getEdgeAttrib(name, 0)
         elif attribClass == "face":
-            checkType = type(self.getFaceAttrib(name, 0))
+            value = self.getFaceAttrib(name, 0)
         elif attribClass == "detail":
-            checkType = type(self.getDetailAttrib(name))
-
+            value = self.getDetailAttrib(name)
+        else:
+            return 'none'
+        checkType = type(value)
+        if checkType is np.ndarray or checkType is list:
+            if checkType is np.ndarray:
+                size = value.size
+            else:
+                size = len(value)
+            if size == 2:
+                return 'vector2'
+            elif size == 3:
+                return 'vector3'
+            elif size == 4:
+                return 'vector4'
+            elif size == 9:
+                return 'matrix3'
+            elif size == 16:
+                return 'matrix4'
         return DATA_TYPE_MAP.get(checkType, 'none')
 
     def getAttribType(self, attribClass, name):
@@ -627,7 +641,6 @@ class Mesh(object):
         @return: attribute type -> str
         """
         if not self.hasAttribute(attribClass, name):
-            print(attribClass, name)
             raise AttributeError("the attribute does't exist!")
         return self._attributeMap[attribClass][name]['type']
 
