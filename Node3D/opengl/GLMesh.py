@@ -176,8 +176,6 @@ class Mesh(object):
             False: (0.15, 0.15, 0.15, 1.0)
         }
 
-        self.idx = 0
-
         if mesh is None:
             self._mesh = openmesh.PolyMesh()
         else:
@@ -343,32 +341,6 @@ class Mesh(object):
     def setColor(self, c):
         self.opts['color'] = c
         self.update()
-
-    def setID(self, idx):
-        self.idx = idx
-
-    def drawID(self):
-        if self._GLFaces is None:
-            self.update_GLFace()
-        try:
-            with IDColorShader:
-                faces = self._GLFaces
-                verts = self.getVertexes()
-                if verts is None:
-                    return
-                glEnableClientState(GL_VERTEX_ARRAY)
-                try:
-                    glVertexPointerf(verts)
-                    glColor3f(*(self.idx, 0, 0))
-                    if faces is None:
-                        glDrawArrays(GL_TRIANGLES, 0, np.product(verts.shape[:-1]))
-                    else:
-                        faces = faces.astype(np.uint).flatten()
-                        glDrawElements(GL_TRIANGLES, faces.shape[0], GL_UNSIGNED_INT, faces)
-                finally:
-                    glDisableClientState(GL_VERTEX_ARRAY)
-        except:
-            pass
 
     def paint(self):
         # self.setupGLState()

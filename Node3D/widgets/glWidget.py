@@ -6,7 +6,7 @@ from ..vendor.pyqtgraph import functions as fn
 from ..vendor.pyqtgraph import debug
 from ..vendor.pyqtgraph import opengl as gl
 from ..opengl import camera
-from ..base.data import matrix4x4
+from ..base.data import matrix4x4, AABB_Hit, vector
 ShareWidget = None
 
 
@@ -171,10 +171,10 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
         bottom = t * ((region[1] - y0) * (2.0 / h) - 1)
         top = t * ((region[1] + region[3] - y0) * (2.0 / h) - 1)
 
-        return matrix4x4.create_perspective_projection_from_bounds(left, right, bottom, top, nearClip, farClip).data()
+        return matrix4x4.create_perspective_projection_from_bounds(left, right, bottom, top, nearClip, farClip)
 
     def setProjection(self, region=None):
-        m = self.projectionMatrix(region)
+        m = self.projectionMatrix(region).data()
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         glMultMatrixf(m)
@@ -308,7 +308,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
 
         return output
 
-    def paintGL(self, region=None, viewport=None, drawID=False):
+    def paintGL(self, region=None, viewport=None):
         """
         viewport specifies the arguments to glViewport. If None, then we use self.opts['viewport']
         region specifies the sub-region of self.opts['viewport'] that should be rendered.
@@ -323,14 +323,11 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
         bgcolor = self.opts['bgcolor']
         glClearColor(*bgcolor)
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT)
-        self.drawItemTree(drawID=drawID)
+        self.drawItemTree()
 
-    def drawItemTree(self, item=None, drawID=False):
+    def drawItemTree(self, item=None):
         if item is None:
-            if drawID:
-                items = self.MeshItems
-            else:
-                items = self.MeshItems + self.items
+            items = self.MeshItems + self.items
             # items.sort(key=lambda a: a.depthValue())
             for i in items:
                 if not i.visible():
@@ -342,7 +339,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
                         tr = i.transform()
                         a = np.array(tr.copyDataTo()).reshape((4, 4))
                         glMultMatrixf(a.transpose())
-                    self.drawItemTree(i, drawID=drawID)
+                    self.drawItemTree(i)
                 finally:
                     glMatrixMode(GL_MODELVIEW)
                     glPopMatrix()
@@ -351,25 +348,26 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
         # item is not None
         try:
             glPushAttrib(GL_ALL_ATTRIB_BITS)
-            if drawID:
-                item.drawID()
-            else:
-                item.paint()
+            item.paint()
         except:
             showError(item)
         finally:
             glPopAttrib()
 
-    def itemsAt(self, x=None, y=None):
-        return None
-        # num = len(self.MeshItems)
-        # [item.setID((idx + 1)/num) for idx, item in enumerate(self.MeshItems)]
-        # self.paintGL(drawID=True)
-        # a = glReadPixels(x, y, 1, 1, GL_RED, type=GL_FLOAT)
-        # idx = int(a[0][0]*num)-1
-        # if 0 <= idx < num:
-        #     return self.MeshItems[idx]
-        # return None
+    def itemsAt(self, x, y):
+        # get ray form mouse pos
+        ray_ndc = vector(2.0*x/self.width() - 1.0, 2.0*y/self.height() - 1.0, -1)
+        ray_eye = self.projectionMatrix().inverted().transformVector(ray_ndc)
+        ray_eye.setZ(-1)
+        ray_world = self.viewMatrix().inverted().transformVector(ray_eye, fill=0.0).normalized()
+
+        # calculate hit
+        meshes = [m for m in self.MeshItems if AABB_Hit(m.bbox_min, m.bbox_max, self.cam.getPos(), ray_world)]
+
+        if meshes:
+            return meshes[0]
+        else:
+            return None
 
     def mousePressEvent(self, ev):
         self.mousePos = ev.pos()
