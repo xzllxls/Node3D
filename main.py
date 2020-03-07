@@ -47,18 +47,18 @@ def run(nodes=[]):
     sys.exit(app.exec_())
 
 
-def GetNodesFromFolder(FolderPath):
-    path, FolderName = os.path.split(FolderPath)
+def getNodesFromFolder(folderPath):
+    path, folderName = os.path.split(folderPath)
     if path not in sys.path:
         sys.path.append(path)
 
     nodes = []
-    for i in os.listdir(FolderPath):
+    for i in os.listdir(folderPath):
         if not i.endswith(".py") or i.startswith("_"):
             continue
 
         filename = i[:-3]
-        module_name = FolderName + "." + filename
+        module_name = folderName + "." + filename
 
         for name, obj in inspect.getmembers(importlib.import_module(module_name)):
             if inspect.isclass(obj) and filename in str(obj):
@@ -70,5 +70,5 @@ def GetNodesFromFolder(FolderPath):
 if __name__ == '__main__':
     gl_path = os.getcwd() + "/Node3D/nodes"
     register_nodes = []
-    register_nodes.extend(GetNodesFromFolder(gl_path))
+    register_nodes.extend(getNodesFromFolder(gl_path))
     run(register_nodes)
