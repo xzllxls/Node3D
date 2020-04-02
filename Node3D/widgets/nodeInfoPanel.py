@@ -29,6 +29,7 @@ class NodeInfoPanel(QtWidgets.QWidget):
         super().__init__()
         self.workingPath = os.path.dirname(__file__).replace("\\", "/")
         self.ui = QtCompat.loadUi(self.workingPath + "/uiFiles/nodeInfoPanel.ui", self)
+        self.setWindowTitle("Node Information")
 
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.width = 400

@@ -145,6 +145,7 @@ class PropertiesBinWidget(QtWidgets.QWidget):
             return
 
         property_window = properties_widget.get_widget(prop_name)
+
         if property_window and prop_value != property_window.get_value():
             self._block_signal = True
             property_window.set_value(prop_value)

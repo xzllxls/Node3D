@@ -13,6 +13,7 @@ class TimeLine(QtWidgets.QWidget):
         self.setStyleSheet(STYLE_BUTTON)
         hbox = QtWidgets.QHBoxLayout()
         hbox.setContentsMargins(0, 0, 0, 0)
+        # hbox.setSpacing(0)
         self.setLayout(hbox)
 
         btn1 = QtWidgets.QPushButton("<<")
