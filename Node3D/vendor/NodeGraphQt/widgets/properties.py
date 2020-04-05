@@ -11,6 +11,7 @@ from ..constants import (NODE_PROP_QLABEL,
                          NODE_PROP_COLORPICKER,
                          NODE_PROP_SLIDER,
                          NODE_PROP_FILE,
+                         NODE_PROP_FILE_SAVE,
                          NODE_PROP_VECTOR2,
                          NODE_PROP_VECTOR3,
                          NODE_PROP_VECTOR4,
@@ -97,9 +98,9 @@ class PropSlider(BaseProperty):
                                    QtWidgets.QSizePolicy.Preferred)
         self._spnbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
         layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._spnbox)
         layout.addWidget(self._slider)
-        layout.setContentsMargins(0, 0, 0, 0)
         self._spnbox.valueChanged.connect(self._on_spnbox_changed)
         self._slider.valueChanged.connect(self._on_slider_changed)
         # store the original press event.
@@ -284,21 +285,25 @@ class PropFilePath(BaseProperty):
         _button.setIcon(icon)
 
         hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0, 0, 0, 0)
         hbox.addWidget(self._ledit)
         hbox.addWidget(_button)
-        hbox.setContentsMargins(0, 0, 0, 0)
         self.setLayout(hbox)
         _button.clicked.connect(self._on_select_file)
 
         self._ledit.setStyleSheet("QLineEdit{border:1px solid}")
         _button.setStyleSheet("QPushButton{border:1px solid}")
         self._ext = "*"
+        self._file_dir = None
 
     def set_ext(self, ext):
         self._ext = ext
 
+    def set_file_dir(self, dir):
+        self._file_dir = dir
+
     def _on_select_file(self):
-        file_path = file_dialog.getOpenFileName(self, ext_filter=self._ext)
+        file_path = file_dialog.getOpenFileName(self, file_dir=self._file_dir, ext_filter=self._ext)
         file = file_path[0] or None
         if file:
             self.set_value(file)
@@ -316,6 +321,17 @@ class PropFilePath(BaseProperty):
         if _value != self.get_value():
             self._ledit.setText(_value)
             self._on_value_change(_value)
+
+
+class PropFileSavePath(PropFilePath):
+    def __init__(self, parent=None):
+        super(PropFileSavePath, self).__init__(parent)
+
+    def _on_select_file(self):
+        file_path = file_dialog.getSaveFileName(self, file_dir=self._file_dir, ext_filter=self._ext)
+        file = file_path[0] or None
+        if file:
+            self.set_value(file)
 
 
 class _valueMenu(QtWidgets.QMenu):
@@ -683,6 +699,7 @@ WIDGET_MAP = {
     NODE_PROP_COLORPICKER: PropColorPicker,
     NODE_PROP_SLIDER: PropSlider,
     NODE_PROP_FILE: PropFilePath,
+    NODE_PROP_FILE_SAVE: PropFileSavePath,
     NODE_PROP_VECTOR2: PropVector2,
     NODE_PROP_VECTOR3: PropVector3,
     NODE_PROP_VECTOR4: PropVector4,

@@ -42,14 +42,11 @@ class Vertex_Wrangle(ScriptNode):
 
     def getAllVertexAttributes(self):
         dt = self.get_property('Depend Time')
-        names = list(self.geo.detailAttribute["vertex"].keys())
+        names = list(self.geo.attributeMap["vertex"].keys())
 
         data = []
         for attrib_name in names:
-            try:
-                d = self.geo.getVertexAttribData(attrib_name, True)
-            except:
-                d = self.geo.getVertexAttribData(attrib_name)
+            d = self.geo.getVertexAttribData(attrib_name)
             data.append(d)
         if dt:
             data.append(self.getFrame())
@@ -58,7 +55,7 @@ class Vertex_Wrangle(ScriptNode):
 
     def getPreCode(self):
         dt = self.get_property('Depend Time')
-        names = list(self.geo.detailAttribute["vertex"].keys())
+        names = list(self.geo.attributeMap["vertex"].keys())
         if dt:
             names.append('Frame')
         lts = ','.join(names)
@@ -69,13 +66,15 @@ class Vertex_Wrangle(ScriptNode):
         return self.preCode.format(lts)
 
     def updateCode(self):
+        if self.geo is None:
+            return
         preCode = self.getPreCode()
         lines = self.get_property('Script').strip()
         lines = preCode + '\n'.join('        ' + line for line in lines.splitlines())
         if self.namespace['gp'] is None:
             self.namespace['gp'] = self.graph
         exec(lines, self.namespace)
-        self.func= numba.jit(nopython=True, nogil=True, parallel=True)(self.namespace['run_per_vertex'])
+        self.func = numba.jit(nopython=True, nogil=True, parallel=True)(self.namespace['run_per_vertex'])
 
     def set_property(self, name, value):
         super().set_property(name, value)
@@ -89,8 +88,8 @@ class Vertex_Wrangle(ScriptNode):
             self.updateCode()
         try:
             self.func(*data)
-        except Exception as error:
-            self.error(error)
+        except:
+            self.error(traceback.format_exc())
 
     def run(self):
         if not self.copyData():

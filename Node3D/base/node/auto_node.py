@@ -1,7 +1,5 @@
-from ...vendor.NodeGraphQt import BaseNode
-from ...vendor.NodeGraphQt.base.port import Port
+from ...vendor.NodeGraphQt import BaseNode, SubGraph, Port, QtCore
 from ...vendor.NodeGraphQt.constants import NODE_PROP
-from ...vendor.NodeGraphQt import QtCore
 import hashlib
 import copy
 import time
@@ -27,14 +25,15 @@ class CryptoColors(object):
         r = int(Min + (int("0x" + h[:16], 0) / d) * (Max - Min))
         g = int(Min + (int("0x" + h[16:32], 0) / d) * (Max - Min))
         b = int(Min + (int("0x" + h[32:48], 0) / d) * (Max - Min))
-        a = int(Min + (int("0x" + h[48:], 0) / d) * (Max - Min))
+        # a = int(Min + (int("0x" + h[48:], 0) / d) * (Max - Min))
         self.colors[text] = (r, g, b, 255)
         return self.colors[text]
 
 
 class AutoNode(BaseNode, QtCore.QObject):
     cooked = QtCore.Signal()
-    paramChanged = QtCore.Signal()
+    param_changed = QtCore.Signal()
+    input_changed = QtCore.Signal()
 
     def __init__(self, defaultInputType=None, defaultOutputType=None):
         super(AutoNode, self).__init__()
@@ -55,6 +54,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         self._cookTime = 0.0
         self._message = ""
         self._message_level = NODE_NONE
+        self._params = {}
 
     @property
     def autoCook(self):
@@ -76,9 +76,18 @@ class AutoNode(BaseNode, QtCore.QObject):
         return self._cookTime
 
     def cookNextNode(self):
-        for nodeList in self.connected_output_nodes().values():
-            for n in nodeList:
-                n.cook()
+        nodes = []
+        for p in self.output_ports():
+            for cp in p.connected_ports():
+                connected_output_node = cp.node()
+                if connected_output_node is self:
+                    continue
+                if isinstance(connected_output_node, SubGraph):
+                    connected_output_node.add_run_ports(cp)
+                if connected_output_node not in nodes:
+                    nodes.append(connected_output_node)
+
+        [node.cook() for node in nodes]
 
     def getData(self, port):
         # for custom output data
@@ -86,21 +95,17 @@ class AutoNode(BaseNode, QtCore.QObject):
 
     def getInputData(self, port):
         """
-        get input data by input Port,the type of "port" can be :
-        int : Port index
-        str : Port name
-        Port : Port object
-        """
+        Get input data by input port name/index/object.
 
-        if type(port) is int:
-            to_port = self.input(port)
-        elif type(port) is str:
-            to_port = self.inputs()[port]
-        elif type(port) is Port:
-            to_port = port
+        Args:
+            port(str/int/Port): input port name/index/object.
+        """
+        if type(port) is not Port:
+            to_port = self.get_input(port)
         else:
-            print(self.inputs().keys())
-            return self.defaultValue
+            to_port = port
+        if to_port is None:
+            return copy.deepcopy(self.defaultValue)
 
         from_ports = to_port.connected_ports()
         if not from_ports:
@@ -117,6 +122,8 @@ class AutoNode(BaseNode, QtCore.QObject):
 
     def cook(self, forceCook=False):
         if not self._autoCook and forceCook is not True:
+            if self.get_property('disabled'):
+                self.cookNextNode()
             return
 
         if not self.needCook:
@@ -153,33 +160,36 @@ class AutoNode(BaseNode, QtCore.QObject):
         else:
             self.needCook = False
             to_port.disconnect_from(from_port)
+        self.input_changed.emit()
 
     def on_input_disconnected(self, to_port, from_port):
         if not self.needCook:
             self.needCook = True
             return
         self.cook()
+        self.input_changed.emit()
 
     def checkPortType(self, to_port, from_port):
-        # None type port can connect with any other type port
+        # 'None' type port can connect with any other type port
         # types in self.matchTypes can connect with each other
 
-        if hasattr(to_port, "DataType") and hasattr(from_port, "DataType"):
-            if to_port.DataType is not from_port.DataType:
-                for types in self.matchTypes:
-                    if to_port.DataType in types and from_port.DataType in types:
-                        return True
-                return False
+        if to_port.data_type != from_port.data_type:
+            if to_port.data_type == 'None' or from_port.data_type == 'None':
+                return True
+            for types in self.matchTypes:
+                if to_port.data_type in types and from_port.data_type in types:
+                    return True
+            return False
 
         return True
 
     def set_property(self, name, value):
         super(AutoNode, self).set_property(name, value)
-        self.set_port_type(name, type(value))
+        self.set_port_type(name, type(value).__name__)
         if name in self.model.custom_properties.keys():
             self.cook()
 
-    def set_port_type(self, port, value_type):
+    def set_port_type(self, port, data_type: str):
         current_port = None
 
         if type(port) is Port:
@@ -193,41 +203,42 @@ class AutoNode(BaseNode, QtCore.QObject):
                 current_port = outputs[port]
 
         if current_port:
-            if hasattr(current_port, "DataType"):
-                if current_port.DataType is value_type:
-                    return
+            if current_port.data_type == data_type:
+                return
             else:
-                current_port.DataType = value_type
+                current_port.data_type = data_type
 
-            current_port.border_color = self._cryptoColors.get(str(value_type))
-            current_port.color = self._cryptoColors.get(str(value_type))
+            current_port.border_color = current_port.color = self._cryptoColors.get(data_type)
             conn_type = 'multi' if current_port.multi_connection() else 'single'
-            data_type_name = value_type.__name__ if value_type else "all"
-            current_port.view.setToolTip('{}: {} ({}) '.format(current_port.name(), data_type_name, conn_type))
+            current_port.view.setToolTip('{}: {} ({}) '.format(current_port.name(), data_type, conn_type))
 
     def create_property(self, name, value, items=None, range=None,
                         widget_type=NODE_PROP, tab=None, ext=None, funcs=None):
         super(AutoNode, self).create_property(name, value, items, range, widget_type, tab, ext, funcs)
 
         if value is not None:
-            self.set_port_type(name, type(value))
+            self.set_port_type(name, type(value).__name__)
 
-    def add_input(self, name='input', data_type=None, multi_input=False, display_name=True,
+    def add_input(self, name='input', data_type='None', multi_input=False, display_name=True,
                   color=None):
         new_port = super(AutoNode, self).add_input(name, multi_input, display_name, color)
-        if data_type:
-            self.set_port_type(new_port, data_type)
-        elif self.defaultInputType:
-            self.set_port_type(new_port, self.defaultInputType)
+        if data_type == 'None' and self.defaultInputType is not None:
+            data_type = self.defaultInputType
+        if type(data_type) is not str:
+            data_type = data_type.__name__
+        self.set_port_type(new_port, data_type)
+
         return new_port
 
-    def add_output(self, name='output', data_type=None, multi_output=True, display_name=True,
+    def add_output(self, name='output', data_type='None', multi_output=True, display_name=True,
                    color=None):
         new_port = super(AutoNode, self).add_output(name, multi_output, display_name, color)
-        if data_type:
-            self.set_port_type(new_port, data_type)
-        elif self.defaultOutputType:
-            self.set_port_type(new_port, self.defaultOutputType)
+        if data_type == 'None' and self.defaultOutputType is not None:
+            data_type = self.defaultOutputType
+        if type(data_type) is not str:
+            data_type = data_type.__name__
+        self.set_port_type(new_port, data_type)
+
         return new_port
 
     def set_disabled(self, mode=False):
@@ -268,21 +279,23 @@ class AutoNode(BaseNode, QtCore.QObject):
         super(AutoNode, self).update_model()
 
     def set_parameters(self, params, tab='Parameters'):
-        if not self.has_property("node_parameters"):
-            self.create_property("node_parameters", {tab: params})
-        else:
-            self.get_property("node_parameters").update({tab: params})
+        self._params.update({tab: params})
         self.__create_props(params)
-        self.paramChanged.emit()
+        self.param_changed.emit()
 
     def __create_props(self, params: list):
         for p in params:
             if 'children' not in p.keys():
+                if p['type'] == 'action':
+                    continue
                 prop_name = p['name']
                 if 'value' in p.keys():
                     value = p['value']
                 else:
-                    value = DEFAULT_VALUE_MAP.get(p['type'], None)
+                    if 'limits' in p.keys():
+                        value = p['limits'][0]
+                    else:
+                        value = DEFAULT_VALUE_MAP.get(p['type'], None)
                 if not self.has_property(prop_name):
                     self.create_property(prop_name, value)
                 else:
@@ -323,16 +336,52 @@ class AutoNode(BaseNode, QtCore.QObject):
         return get_ramp_color(p[0], p[1], p[2], key)
 
     def update_parameters(self):
-        params = self.get_property("node_parameters")
-        [self.__update_params(p) for p in params.values()]
-        self.paramChanged.emit()
+        [self.__update_params(p) for p in self._params.values()]
+        self.param_changed.emit()
 
     def __update_params(self, params: list):
         for p in params:
             if 'children' not in p.keys():
                 prop_name = p['name']
                 p['value'] = self.get_property(prop_name)
-                if p['type'] == 'action':
+                tp = p['type']
+
+                if tp == 'button':
                     p['node'] = self
+
+                elif tp == 'list' or tp == 'listText':
+                    _prop_name = '_' + p['name'] + "_"
+                    if self.has_property(_prop_name):
+                        p['limits'] = self.get_property(_prop_name)
             else:
                 self.__update_params(p['children'])
+
+    def _update_list_param(self, name, items, reload=True):
+        if not self.has_property(name):
+            return
+        old_value = self.get_property(name)
+        self.set_property(name, items)
+        _name = '_' + name + "_"
+        if not self.has_property(_name):
+            self.create_property(_name, items)
+        else:
+            self.set_property(_name, items)
+
+        if reload:
+            if old_value in items:
+                self.set_property(name, old_value)
+            else:
+                self.set_property(name, items[0])
+        else:
+            self.set_property(name, old_value)
+
+    def update_list_param(self, name, items):
+        self._update_list_param(name, items)
+
+    def update_list_text_param(self, name, attribute_class):
+        if type(attribute_class) is str:
+            attribute_class = [attribute_class]
+        self._update_list_param(name, attribute_class, False)
+
+    def get_params(self):
+        return self._params

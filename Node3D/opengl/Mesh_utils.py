@@ -10,86 +10,7 @@ from ..vendor.pyqtgraph import functions as fn
 import copy
 
 
-def sphere(rows, cols, radius=1.0, offset=True):
-    """
-    Return a MeshData instance with vertexes and faces computed
-    for a spherical surface.
-    """
-    verts = np.empty((rows + 1, cols, 3), dtype=np.float64)
-
-    # compute vertexes
-    phi = (np.arange(rows + 1) * np.pi / rows).reshape(rows + 1, 1)
-    s = radius * np.sin(phi)
-    verts[..., 2] = radius * np.cos(phi)
-    th = ((np.arange(cols) * 2 * np.pi / cols).reshape(1, cols))
-    if offset:
-        th = th + ((np.pi / cols) * np.arange(rows + 1).reshape(rows + 1, 1))  # rotate each row by 1/2 column
-    verts[..., 0] = s * np.cos(th)
-    verts[..., 1] = s * np.sin(th)
-    verts = verts.reshape((rows + 1) * cols, 3)[
-            cols - 1:-(cols - 1)]  # remove redundant vertexes from top and bottom
-
-    # compute faces
-    faces = np.empty((rows * cols * 2, 3), dtype=np.uint32)
-    rowtemplate1 = ((np.arange(cols).reshape(cols, 1) + np.array([[0, 1, 0]])) % cols) + np.array([[0, 0, cols]])
-    rowtemplate2 = ((np.arange(cols).reshape(cols, 1) + np.array([[0, 1, 1]])) % cols) + np.array([[cols, 0, cols]])
-    for row in range(rows):
-        start = row * cols * 2
-        faces[start:start + cols] = rowtemplate1 + row * cols
-        faces[start + cols:start + (cols * 2)] = rowtemplate2 + row * cols
-    faces = faces[cols:-cols]  ## cut off zero-area triangles at top and bottom
-
-    # adjust for redundant vertexes that were removed from top and bottom
-    vmin = cols - 1
-    faces[faces < vmin] = vmin
-    faces -= vmin
-    vmax = verts.shape[0] - 1
-    faces[faces > vmax] = vmax
-
-    return verts, faces
-
-
-def cylinder(rows, cols, radius=[1.0, 1.0], length=1.0, offset=False):
-    """
-    Return a MeshData instance with vertexes and faces computed
-    for a cylindrical surface.
-    The cylinder may be tapered with different radii at each end (truncated cone)
-    """
-    verts = np.empty((rows + 1, cols, 3), dtype=np.float64)
-    if isinstance(radius, int):
-        radius = [radius, radius]  # convert to list
-    # compute vertexes
-    th = np.linspace(2 * np.pi, (2 * np.pi) / cols, cols).reshape(1, cols)
-    r = np.linspace(radius[0], radius[1], num=rows + 1, endpoint=True).reshape(rows + 1,
-                                                                               1)  # radius as a function of z
-    verts[..., 2] = np.linspace(0, length, num=rows + 1, endpoint=True).reshape(rows + 1, 1)  # z
-    if offset:
-        th = th + ((np.pi / cols) * np.arange(rows + 1).reshape(rows + 1, 1))  # rotate each row by 1/2 column
-    verts[..., 0] = r * np.cos(th)  # x = r cos(th)
-    verts[..., 1] = r * np.sin(th)  # y = r sin(th)
-    verts = verts.reshape((rows + 1) * cols, 3)  # just reshape: no redundant vertices...
-    # compute faces
-    faces = np.empty((rows * cols * 2, 3), dtype=np.uint32)
-    rowtemplate1 = ((np.arange(cols).reshape(cols, 1) + np.array([[0, 1, 0]])) % cols) + np.array([[0, 0, cols]])
-    rowtemplate2 = ((np.arange(cols).reshape(cols, 1) + np.array([[0, 1, 1]])) % cols) + np.array([[cols, 0, cols]])
-    for row in range(rows):
-        start = row * cols * 2
-        faces[start:start + cols] = rowtemplate1 + row * cols
-        faces[start + cols:start + (cols * 2)] = rowtemplate2 + row * cols
-
-    return verts, faces
-
-
-keys = ["float", "int", 'ndarray', "numpy", "double"]
-
-# ms = om.PolyMesh()
-# ms.copy_all_properties()
-# om.
-# ms.update_normals()
-# # ms.svertices()
-# ms.cal
-
-@numba.jit(nopython=True, cache=True, nogil=True) #parallel=True, nogil=True
+@numba.jit(nopython=True, cache=True, nogil=True)  # parallel=True, nogil=True
 def _calVertexSmooth(data, iter, vv):
     for i in range(iter):
         for v in range(vv.shape[0]):
@@ -112,22 +33,15 @@ class MeshFuncs(object):
         if not self.geo.hasAttribute("face", name):
             return
 
-        val = type(self.geo.getFaceAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
+        is_array = self.geo.getAttribIsArray('face', name)
 
         if newName is None:
             newName = name
 
-        attr = self.mesh.face_property(name)
+        attr = self.geo.getFaceAttribData(name)
+        self.geo.setAttribInfo('vertex', newName, self.geo.getAttribInfo('face', name))
 
-        self.geo.detailAttribute["vertex"][newName] = None
-
-        if not canCal:
+        if not is_array:
             for v in self.mesh.vertices():
                 for f in self.mesh.vf(v):
                     self.mesh.set_vertex_property(newName, v, attr[f.idx()])
@@ -152,21 +66,15 @@ class MeshFuncs(object):
         if not self.geo.hasAttribute("vertex", name):
             return
 
-        val = type(self.geo.getVertexAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
+        is_array = self.geo.getAttribIsArray('vertex', name)
 
         if newName is None:
             newName = name
 
-        attr = self.mesh.vertex_property(name)
-        self.geo.detailAttribute["face"][newName] = None
+        attr = self.geo.getVertexAttribData(name)
+        self.geo.setAttribInfo('face', newName, self.geo.getAttribInfo('vertex', name))
 
-        if not canCal:
+        if not is_array:
             for f in self.mesh.faces():
                 for v in self.mesh.fv(f):
                     self.mesh.set_face_property(newName, f, attr[v.idx()])
@@ -191,21 +99,15 @@ class MeshFuncs(object):
         if not self.geo.hasAttribute("edge", name):
             return
 
-        val = type(self.geo.getEdgeAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
+        is_array = self.geo.getAttribIsArray('edge', name)
 
         if newName is None:
             newName = name
 
-        attr = self.mesh.edge_property(name)
-        self.geo.detailAttribute["vertex"][newName] = None
+        attr = self.geo.getEdgeAttribData(name)
+        self.geo.setAttribInfo('vertex', newName, self.geo.getAttribInfo('edge', name))
 
-        if not canCal:
+        if not is_array:
             for v in self.mesh.vertices():
                 for e in self.mesh.ve(v):
                     self.mesh.set_vertex_property(newName, v, attr[e.idx()])
@@ -231,22 +133,16 @@ class MeshFuncs(object):
         if not self.geo.hasAttribute("vertex", name):
             return
 
-        val = type(self.geo.getVertexAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
+        is_array = self.geo.getAttribIsArray('vertex', name)
 
         if newName is None:
             newName = name
 
-        attr = self.mesh.vertex_property(name)
+        attr = self.geo.getVertexAttribData(name)
         evs = self.mesh.ev_indices()
-        self.geo.detailAttribute["edge"][newName] = None
+        self.geo.setAttribInfo('edge', newName, self.geo.getAttribInfo('vertex', name))
 
-        if not canCal:
+        if not is_array:
             for _e, _vts in enumerate(evs):
                 e = self.mesh.edge_handle(_e)
                 v = self.mesh.vertex_handle(_vts[0])
@@ -282,7 +178,6 @@ class MeshFuncs(object):
         he = self.mesh.find_halfedge(fromv, tov)
         if he is not None and he.idx() >= 0:
             self.mesh.collapse(he)
-
             self.geo.signals.emit_attribChanged()
 
     def smoothMesh(self, iter=1):
@@ -290,38 +185,13 @@ class MeshFuncs(object):
         _calVertexSmooth(data, iter, self.mesh.vertex_vertex_indices())
 
     def smoothVertexAttrib(self, name, iter=1):
-        data = self.geo.getVertexAttribData(name, True)
-        if data is None:
+        if not self.geo.getAttribIsArray('vertex', name):
             return
-        val = type(self.geo.getVertexAttrib(name, 0)).__name__
-
-        canCal = False
-        for k in keys:
-            if k in val:
-                canCal = True
-                break
-        if not canCal:
+        data = self.geo.getVertexAttribData(name)
+        if data is None:
             return
         _calVertexSmooth(data, iter, self.mesh.vertex_vertex_indices())
         self.geo.setVertexAttribData(name, data, True)
-
-    def attribCopy(self, level, from_name, to_name, remove=False):
-        if not self.geo.hasAttribute(level, from_name):
-            return
-        if level == "vertex":
-            data = self.geo.getVertexAttribData(from_name)
-            self.geo.setVertexAttribData(to_name, copy.deepcopy(data))
-        elif level == "face":
-            data = self.geo.getFaceAttribData(from_name)
-            self.geo.setFaceAttribData(to_name, copy.deepcopy(data))
-        elif level == "edge":
-            data = self.geo.getEdgeAttribData(from_name)
-            self.geo.setEdgeAttribData(to_name, copy.deepcopy(data))
-        else:
-            return
-
-        if remove:
-            self.geo.removeAttribute(level, from_name)
 
     def facePos(self, apply=False):
         result = np.zeros((self.mesh.n_faces(), 3), dtype=np.float64)
@@ -329,7 +199,7 @@ class MeshFuncs(object):
             result[f.idx()] = self.mesh.calc_face_centroid(f)
 
         if apply:
-            self.geo.setFaceAttribData("pos", result, True)
+            self.geo.setFaceAttribData("pos", result, attribType='vector3', defaultValue=[0, 0, 0])
         else:
             return result
 
@@ -339,33 +209,9 @@ class MeshFuncs(object):
             result[e.idx()] = self.mesh.calc_edge_length(e)
 
         if apply:
-            self.geo.setEdgeAttribData("length", result, True)
+            self.geo.setEdgeAttribData("length", result, attribType='float', defaultValue=0.0)
         else:
             return result
-
-    def createSphere(self, rows, cols, radius=1.0, offset=False):
-        verts, faces = sphere(rows, cols, radius, offset)
-        mesh = om.PolyMesh()
-        for face in faces:
-            vts = []
-            for v in face:
-                vts.append(mesh.add_vertex(verts[v]))
-            mesh.add_face(vts)
-
-        self.geo._mesh = mesh
-        self.geo._GLFaces = mesh.face_vertex_indices()
-        return mesh
-
-    def createCylinder(self, rows, cols, radius=[1.0, 1.0], length=1.0, offset=False):
-        verts, faces = cylinder(rows, cols, radius, length, offset)
-        mesh = om.PolyMesh()
-        for face in faces:
-            vts = []
-            for v in face:
-                vts.append(mesh.add_vertex(verts[v]))
-            mesh.add_face(vts)
-        self.geo._mesh = mesh
-        self.geo._GLFaces = mesh.face_vertex_indices()
 
     @staticmethod
     def applyMatrix(data, mat, offset=None):
@@ -487,5 +333,3 @@ class bbox(GLGraphicsItem):
         glVertex3f(x, y, z)
 
         glEnd()
-
-

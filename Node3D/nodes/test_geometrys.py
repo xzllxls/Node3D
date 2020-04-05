@@ -4,7 +4,7 @@ import os
 
 
 class Toy(File):
-    __identifier__ = 'Test Geometry'
+    __identifier__ = 'Test_Geometry'
     NODE_NAME = 'Toy'
 
     def __init__(self, filePath=None):
@@ -22,7 +22,7 @@ class Toy(File):
 
 
 class Pig(Toy):
-    __identifier__ = 'Test Geometry'
+    __identifier__ = 'Test_Geometry'
     NODE_NAME = 'Pig'
 
     def __init__(self):
@@ -30,7 +30,7 @@ class Pig(Toy):
 
 
 class Squab(Toy):
-    __identifier__ = 'Test Geometry'
+    __identifier__ = 'Test_Geometry'
     NODE_NAME = 'Squab'
 
     def __init__(self):
@@ -38,7 +38,7 @@ class Squab(Toy):
 
 
 class Armadillo(Toy):
-    __identifier__ = 'Test Geometry'
+    __identifier__ = 'Test_Geometry'
     NODE_NAME = 'Armadillo'
 
     def __init__(self):
@@ -46,7 +46,7 @@ class Armadillo(Toy):
 
 
 class Bunny(Toy):
-    __identifier__ = 'Test Geometry'
+    __identifier__ = 'Test_Geometry'
     NODE_NAME = 'Bunny'
 
     def __init__(self):
@@ -54,16 +54,15 @@ class Bunny(Toy):
 
 
 class Knot(Toy):
-    __identifier__ = 'Test Geometry'
+    __identifier__ = 'Test_Geometry'
     NODE_NAME = 'Knot'
 
     def __init__(self):
         super().__init__("test_geos/Knot.obj")
 
 
-
 class Nano(Toy):
-    __identifier__ = 'Test Geometry'
+    __identifier__ = 'Test_Geometry'
     NODE_NAME = 'Nano'
 
     def __init__(self):

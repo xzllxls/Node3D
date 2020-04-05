@@ -14,6 +14,7 @@ from ..base.menu import BaseMenu
 from .scene import NodeScene
 from .tab_search import TabSearchMenuWidget
 from .file_dialog import file_dialog, messageBox
+
 ZOOM_MIN = -0.95
 ZOOM_MAX = 2.0
 
@@ -40,7 +41,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
     # node info panel signals
     show_node_info_panel_triggered = QtCore.Signal(str)
-    close_node_info_panel_triggered = QtCore.Signal(str)
+    close_node_info_panel_triggered = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(NodeViewer, self).__init__(parent)
@@ -81,7 +82,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self.scene().addItem(self._SLICER_PIPE)
 
         self._undo_stack = QtWidgets.QUndoStack(self)
-        self._search_widget = TabSearchMenuWidget(self)
+        self._search_widget = TabSearchMenuWidget()
         self._search_widget.search_submitted.connect(self._on_search_submitted)
 
         # workaround fix for shortcuts from the non-native menu actions
@@ -231,6 +232,10 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self._prev_selection_nodes, \
         self._prev_selection_pipes = self.selected_items()
 
+        # close tab search
+        if self._search_widget.isVisible():
+            self.tab_search_toggle()
+
         # cursor pos.
         map_pos = self.mapToScene(event.pos())
 
@@ -260,9 +265,11 @@ class NodeViewer(QtWidgets.QGraphicsView):
             if self.SHIFT_state:
                 for node in nodes:
                     node.selected = not node.selected
+                return
             elif self.CTRL_state:
                 for node in nodes:
                     node.selected = False
+                return
 
         # update the recorded node positions.
         self._node_positions.update(
@@ -291,13 +298,9 @@ class NodeViewer(QtWidgets.QGraphicsView):
         elif event.button() == QtCore.Qt.RightButton:
             self.RMB_state = False
         elif event.button() == QtCore.Qt.MiddleButton:
-            self.MMB_state = True
-
-        if self.MMB_state:
-            # close the node info panel
-            self.close_node_info_panel_triggered.emit("")
-
             self.MMB_state = False
+            # close the node info panel
+            self.close_node_info_panel_triggered.emit()
 
         # hide pipe slicer.
         if self._SLICER_PIPE.isVisible():
@@ -676,6 +679,8 @@ class NodeViewer(QtWidgets.QGraphicsView):
         pipe.draw_path(pipe.input_port, pipe.output_port)
         if start_port.node.selected or end_port.node.selected:
             pipe.highlight()
+        if not start_port.node.visible or not end_port.node.visible:
+            pipe.hide()
 
     def acyclic_check(self, start_port, end_port):
         """
@@ -700,8 +705,30 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
     # --- viewer ---
 
-    def show_tab_search(self, nodes):
-        self._search_widget.show(nodes)
+    def tab_search_set_nodes(self, nodes):
+        self._search_widget.set_nodes(nodes)
+
+    def tab_search_toggle(self):
+        if type(self._search_widget) is TabSearchMenuWidget:
+            return
+
+        pos = self._previous_pos
+        state = not self._search_widget.isVisible()
+        if state:
+            rect = self._search_widget.rect()
+            new_pos = QtCore.QPoint(pos.x() - rect.width() / 2,
+                                    pos.y() - rect.height() / 2)
+            self._search_widget.move(new_pos)
+            self._search_widget.setVisible(state)
+            rect = self.mapToScene(rect).boundingRect()
+            self.scene().update(rect)
+        else:
+            self._search_widget.setVisible(state)
+            self.clearFocus()
+
+    def rebuild_tab_search(self):
+        if type(self._search_widget) is TabSearchMenuWidget:
+            self._search_widget.rebuild = True
 
     def context_menus(self):
         return {'graph': self._ctx_menu,
@@ -872,6 +899,21 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         if self.get_zoom() > 0.1:
             self.reset_zoom(self._scene_range.center())
+
+    def force_update(self):
+        self._update_scene()
+
+    def scene_rect(self):
+        return [self._scene_range.x(), self._scene_range.y(), self._scene_range.width(), self._scene_range.height()]
+
+    def set_scene_rect(self, rect):
+        self._scene_range = QtCore.QRectF(*rect)
+        self._update_scene()
+
+    def clear_key_state(self):
+        self.CTRL_state = False
+        self.SHIFT_state = False
+        self.ALT_state = False
 
     def use_opengl(self):
         format = QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers)

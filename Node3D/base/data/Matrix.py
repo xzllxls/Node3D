@@ -1,5 +1,3 @@
-from PySide2.QtGui import QMatrix3x3, QMatrix4x4
-from .Quaternion import quaternion
 from .Vector import vector, vector4
 import numpy as np
 import quaternion as qt
@@ -33,6 +31,8 @@ class matrix3x3(object):
     def __mul__(self, v):
         if type(v) is matrix3x3:
             return matrix3x3(np.dot(self._data, v.data()))
+        elif type(v) is vector:
+            return vector.fromList(np.dot(self._data, v.to_np()))
         else:
             return matrix3x3(self._data * v)
 
@@ -67,13 +67,16 @@ class matrix3x3(object):
         self._data = np.dot(self._data, m.data())
 
     def invert(self):
-        self._data = self.inverted()
+        self._data = self._inverted()
 
-    def inverted(self):
+    def _inverted(self):
         try:
             return np.linalg.inv(self._data)
         except:
             return np.zeros((3, 3))
+
+    def inverted(self):
+        return matrix3x3(self._inverted())
 
     def rotateVector(self, vec):
         return vector.fromList(np.dot(self._data, vec))
@@ -237,6 +240,12 @@ class matrix4x4(object):
     def __mul__(self, v):
         if type(v) is matrix4x4:
             return matrix4x4(np.dot(self._data, v.data()))
+        elif type(v) is vector:
+            v = v.to_np()
+            v.append(1)
+            return vector.fromList(np.dot(self._data, v))
+        elif type(v) is vector4:
+            return vector4.fromList(np.dot(self._data, v.to_np()))
         else:
             return matrix4x4(self._data * v)
 
@@ -278,16 +287,22 @@ class matrix4x4(object):
         return self._data[3][:3].copy()
 
     def invert(self):
-        self._data = self.inverted()
+        self._data = self._inverted()
 
-    def inverted(self):
+    def _inverted(self):
         try:
             return np.linalg.inv(self._data)
         except:
-            return matrix4x4.from_scale([0, 0, 0])
+            return np.zeros((4, 4))
 
-    def transformVector(self, vec):
-        v = vector4(vec.x(), vec.y(), vec.z(), 1)
+    def inverted(self):
+        return matrix4x4(self._inverted())
+
+    def transformVector(self, vec, fill=1.0):
+        if len(vec) == 3:
+            v = [vec.x(), vec.y(), vec.z(), fill]
+        else:
+            v = vec.to_np()
         return vector.fromList(np.dot(self._data, v))
 
     def toMatrix3x3(self):

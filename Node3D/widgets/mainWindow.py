@@ -7,13 +7,14 @@ from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import *
 from .styles import mainStyle
-from ..base.node.auto_node import AutoNode
+from ..base.node import AutoNode, GeometryNode, SubGraphNode, RootNode
 from .glScene import glScene
 from .timeLine import TimeLine
 from .scriptEditor import nodeScriptEditor
 from .dataTreeWidget import NodeDataTreeWidget
 import numpy
 from .parameterTree import NodePropBin
+from .nodeInfoPanel import NodeInfoPanel
 
 
 def cook_node(graph, node):
@@ -29,6 +30,36 @@ def toggle_auto_cook(graph, node):
     node.autoCook = not node.autoCook
 
 
+def show_parameter(graph, node):
+    graph.master.propertiesBin.add_node(node)
+
+
+def draw_geometry(graph, node):
+    graph.master.glWidget.set_node(node)
+
+
+def enter_node(graph, node):
+    graph.set_node_space(node)
+
+
+def print_path(graph, node):
+    print(node.path())
+
+
+def find_node_by_path(graph, node):
+    print(graph.get_node_by_path(node.path()))
+
+
+def print_children(graph, node):
+    children = node.children()
+    print(len(children), children)
+
+
+def publish_node(graph, node):
+    wid = NodePublishWidget(node=node)
+    wid.show()
+
+
 def add_command(menu, name, func=None, parent=None, shortcut=None):
     action = QtWidgets.QAction(name, parent)
     if shortcut:
@@ -38,7 +69,7 @@ def add_command(menu, name, func=None, parent=None, shortcut=None):
     menu.addAction(action)
 
 
-def setup_menubar(graph, window, root_menu):
+def setup_menu_bar(graph, window, root_menu):
     root_menu.setNativeMenuBar(False)
     view = graph.viewer()
 
@@ -46,7 +77,7 @@ def setup_menubar(graph, window, root_menu):
     edit_menu = root_menu.addMenu(' &Edit')
     graph_menu = root_menu.addMenu(' &Graph')
 
-    # create "File" menu.
+    # File Menu
     add_command(file_menu, 'Open...', lambda: utils._open_session(graph), window, QtGui.QKeySequence.Open)
     add_command(file_menu, 'Import...', lambda: utils._import_session(graph), window)
     add_command(file_menu, 'Save...', lambda: utils._save_session(graph), window, QtGui.QKeySequence.Save)
@@ -54,7 +85,7 @@ def setup_menubar(graph, window, root_menu):
     add_command(file_menu, 'New Session', lambda: utils._new_session(graph), window)
     add_command(file_menu, 'Close', window.close, window)
 
-    # create "Edit" menu.
+    # Edit Menu
     undo_actn = graph.undo_stack().createUndoAction(view, '&Undo')
     undo_actn.setShortcutVisibleInContextMenu(True)
     undo_actn.setShortcuts(QtGui.QKeySequence.Undo)
@@ -70,34 +101,45 @@ def setup_menubar(graph, window, root_menu):
     edit_menu.addSeparator()
 
     add_command(edit_menu, 'Copy', lambda: utils._copy_nodes(graph), view, QtGui.QKeySequence.Copy)
+    add_command(edit_menu, 'Duplicate', lambda: utils._duplicate_nodes(graph), view, 'Alt+C')
+    add_command(edit_menu, 'Cut', lambda: utils._cut_nodes(graph), view, QtGui.QKeySequence.Cut)
     add_command(edit_menu, 'Paste', lambda: utils._paste_nodes(graph), view, QtGui.QKeySequence.Paste)
     add_command(edit_menu, 'Delete', lambda: utils._delete_items(graph), view, QtGui.QKeySequence.Delete)
-
     edit_menu.addSeparator()
 
     add_command(edit_menu, 'Select all', lambda: utils._select_all_nodes(graph), view, 'Ctrl+A')
     add_command(edit_menu, 'Deselect all', lambda: utils._clear_node_selection(graph), view, 'Ctrl+Shift+A')
-    add_command(edit_menu, 'Enable/Disable', lambda: utils._disable_nodes(graph), view, 'd')
+    add_command(edit_menu, 'Enable/Disable', lambda: utils._disable_nodes(graph), view, 'D')
 
-    add_command(edit_menu, 'Duplicate', lambda: utils._duplicate_nodes(graph), view, 'Alt+c')
+    # Graph Menu
+    add_command(graph_menu, 'Jump In', lambda: utils._jump_in(graph), view, 'I')
+    add_command(graph_menu, 'Jump Out', lambda: utils._jump_out(graph), view, 'O')
+    graph_menu.addSeparator()
+
+    add_command(graph_menu, 'Zoom In', lambda: utils._zoom_in(graph), view, '=')
+    add_command(graph_menu, 'Zoom Out', lambda: utils._zoom_out(graph), view, '-')
+    add_command(graph_menu, 'Reset Zoom', lambda: utils._reset_zoom(graph), view, 'H')
+    add_command(edit_menu, 'Center Selection', lambda: utils._fit_to_selection(graph), view, 'F')
+    graph_menu.addSeparator()
 
     pipe_menu = graph_menu.addMenu('&Pipe')
-    add_command(pipe_menu, 'Curve Pipe', lambda: graph.set_pipe_style(PIPE_LAYOUT_CURVED), view)
+    add_command(pipe_menu, 'Curved Pipe', lambda: graph.set_pipe_style(PIPE_LAYOUT_CURVED), view)
     add_command(pipe_menu, 'Straght Pipe', lambda: graph.set_pipe_style(PIPE_LAYOUT_STRAIGHT), view)
     add_command(pipe_menu, 'Angle Pipe', lambda: graph.set_pipe_style(PIPE_LAYOUT_ANGLE), view)
     add_command(graph_menu, 'Toggle Disable Grid', lambda: graph.display_grid(not graph.scene().grid), view)
     graph_menu.addSeparator()
-    add_command(graph_menu, 'Zoom In', lambda: utils._zoom_in(graph), view, '=')
-    add_command(graph_menu, 'Zoom Out', lambda: utils._zoom_out(graph), view, '-')
-    add_command(graph_menu, 'Reset Zoom', lambda: utils._reset_zoom(graph), view, 'h')
-    add_command(edit_menu, 'Center Selection', lambda: utils._fit_to_selection(graph), view, 'f')
-    graph_menu.addSeparator()
 
-    # node menu
+    # Node Menu
     node_menu = graph.context_nodes_menu()
+    node_menu.add_command('Enter Node', enter_node, node_class=SubGraphNode)
+    node_menu.add_command('Publish Node', publish_node, node_class=SubGraphNode)
+    node_menu.add_command('Print Children', print_children, node_class=SubGraphNode)
+
     # node_menu.add_command('Print Functions', print_functions, node_class=ModuleNode)
+    node_menu.add_command('Draw Geometry', draw_geometry, node_class=GeometryNode)
     node_menu.add_command('Cook Node', cook_node, node_class=AutoNode)
     node_menu.add_command('Toggle Auto Cook', toggle_auto_cook, node_class=AutoNode)
+    node_menu.add_command('Show Parameter', show_parameter, node_class=AutoNode)
 
 
 class mainWindow(QMainWindow):
@@ -105,7 +147,7 @@ class mainWindow(QMainWindow):
 
     def __init__(self):
         super(mainWindow, self).__init__()
-        self.windowTitle = 'ANRO Node Framework'
+        self.windowTitle = 'Node3D'
         self.setWindowTitle(self.windowTitle)
         self.init_ui()
         self.init_stylesheet()
@@ -119,6 +161,8 @@ class mainWindow(QMainWindow):
         self.graph.show_node_info_panel_triggerd.connect(self.show_node_info_panel)
         self.graph.close_node_info_panel_triggered.connect(self.close_node_info_panel)
         self.graph.master = self
+        root_node = RootNode()
+        self.graph.add_node(root_node)
 
         self.propertiesBin = NodePropBin(node_graph=self.graph)
         self.propertiesBin.setWindowFlags(QtCore.Qt.Tool)
@@ -161,9 +205,9 @@ class mainWindow(QMainWindow):
         self.setup_scene()
 
     def setup_menus(self):
-        menubar = QtWidgets.QMenuBar()
-        self.setMenuBar(menubar)
-        setup_menubar(self.graph, self, menubar)
+        menu_bar = QtWidgets.QMenuBar()
+        self.setMenuBar(menu_bar)
+        setup_menu_bar(self.graph, self, menu_bar)
         self.setStatusBar(QtWidgets.QStatusBar())
 
     def update_data(self, node):
@@ -257,5 +301,5 @@ class mainWindow(QMainWindow):
     def show_node_info_panel(self, node):
         self.nodeInfoPanel.refresh(node)
 
-    def close_node_info_panel(self, node):
+    def close_node_info_panel(self):
         self.nodeInfoPanel.close()

@@ -51,13 +51,15 @@ class File(GeometryNode):
             offset = self.geo.getNumVertexes()
             self.geo.addVertices(mesh.vertices)
             for vts in mesh.faces:
-                self.geo.mesh.add_face([self.geo.mesh.vertex_handle(i + offset) for i in vts])
+                self.geo.mesh.add_face([self.geo.mesh.vertex_handle(i + offset) for i in vts if i >= 0])
             normals = mesh.normals
             if normals.shape[0] > 0:
                 if norms is None:
                     norms = [normals]
                 else:
                     norms.append(normals)
+            elif norms is not None:
+                norms.append(np.zeros((len(mesh.vertices), 3)))
 
             texcoords = mesh.texturecoords
             if texcoords.shape[0] > 0:
@@ -65,14 +67,13 @@ class File(GeometryNode):
                     uvs = [texcoords[0]]
                 else:
                     uvs.append(texcoords[0])
+            elif uvs is not None:
+                uvs.append(np.zeros((len(mesh.vertices), 3)))
 
         if norms is not None:
-            self.geo.setVertexAttribData('normal', np.vstack(norms), True)
+            self.geo.setVertexAttribData('normal', np.vstack(norms), attribType='vector3', defaultValue=[0, 0, 0])
         if uvs is not None:
-            try:
-                self.geo.setVertexAttribData('uv', np.vstack(uvs), True)
-            except:
-                self.geo.removeAttribute('vertex', 'uv')
+            self.geo.setVertexAttribData('uv', np.vstack(uvs), attribType='vector3', defaultValue=[0, 0, 0])
 
         pyassimp.release(scene)
 
@@ -111,16 +112,17 @@ class Subdivide(GeometryNode):
         self.add_input("geo")
 
     def run(self):
-        if not self.copyData():
+        geo = self.getInputGeometryRef(0)
+        if geo is None:
             return
 
-        if self.geo.getNumFaces() == 0 or self.geo.getNumVertexes() == 0:
+        if geo.getNumFaces() == 0 or geo.getNumVertexes() == 0:
             return
         itera = self.get_property("Iteration")
         if itera == 0:
             return
 
-        mesh = self.geo.getTriangulateMesh()
+        mesh = geo.getTriangulateMesh()
         v = mesh.points()
         f = mesh.face_vertex_indices()
 
@@ -132,7 +134,7 @@ class Subdivide(GeometryNode):
             for i in range(itera):
                 v, f = igl.loop(v, f)
 
-        self.geo._mesh = openmesh.PolyMesh()
+        self.geo = Mesh()
         self.geo.addVertices(v)
         self.geo.addFaces(f)
 
@@ -252,9 +254,9 @@ class EdgeCusp(GeometryNode):
 
         fv = self.geo.mesh.face_vertex_indices()
         pos = self.geo.mesh.points()
-        old_verts = self.geo.mesh.vertices()
+        to_remove = self.geo.mesh.vertices()
 
-        for vs in fv:
+        for f, vs in enumerate(fv):
             new_vhs = []
             for v in vs:
                 if v < 0:
@@ -263,9 +265,11 @@ class EdgeCusp(GeometryNode):
                 old_p = self.geo.mesh.vertex_handle(v)
                 self.geo.mesh.copy_all_properties(old_p, new_p, True)
                 new_vhs.append(new_p)
-            self.geo.mesh.add_face(new_vhs)
+            new_f = self.geo.mesh.add_face(new_vhs)
+            old_f = self.geo.mesh.face_handle(f)
+            self.geo.mesh.copy_all_properties(old_f, new_f, True)
 
-        for vh in old_verts:
+        for vh in to_remove:
             self.geo.mesh.delete_vertex(vh, True)
 
         self.geo.mesh.garbage_collection()

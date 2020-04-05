@@ -2,7 +2,7 @@ from ...vendor.pyqtgraph.parametertree import parameterTypes as pTypes
 from ...vendor.pyqtgraph.parametertree import Parameter, ParameterItem, registerParameterType
 from ...vendor.NodeGraphQt.widgets.properties import PropFilePath, _valueEdit, \
     _valueSliderEdit, PropVector2, PropVector3, PropVector4, PropLabel, \
-    PropColorPicker
+    PropColorPicker, PropTextEdit
 from Qt import QtGui, QtWidgets, QtCore
 from .curveEditor import CurveWidget
 
@@ -183,6 +183,74 @@ class Vector4Parameter(Parameter):
 registerParameterType('vector4', Vector4Parameter, override=True)
 
 
+class Vector3iParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropVector3()
+        w.set_data_type(int)
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class Vector3iParameter(Parameter):
+    itemClass = Vector3iParameterItem
+
+
+registerParameterType('vector3i', Vector3iParameter, override=True)
+
+
+class Vector2iParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropVector2()
+        w.set_data_type(int)
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class Vector2iParameter(Parameter):
+    itemClass = Vector2iParameterItem
+
+
+registerParameterType('vector2i', Vector2iParameter, override=True)
+
+
+class Vector4iParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        w = PropVector4()
+        w.set_data_type(int)
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class Vector4iParameter(Parameter):
+    itemClass = Vector4iParameterItem
+
+
+registerParameterType('vector4i', Vector4iParameter, override=True)
+
+
+
+
 class ColorParameterItem(pTypes.WidgetParameterItem):
     def __init__(self, param, depth):
         self.hideWidget = False
@@ -261,7 +329,7 @@ class ColorRampParameterItem(pTypes.WidgetParameterItem):
         layout.addWidget(self.combox)
         wid.sigChanged = ramp_widget.sigGradientChangeFinished
         wid.sigChanging = ramp_widget.sigGradientChanged
-        wid.value = self.value
+        wid.value = self.ramp.value
         wid.setValue = self.setValue
 
         return wid
@@ -269,15 +337,9 @@ class ColorRampParameterItem(pTypes.WidgetParameterItem):
     def _on_kind_change(self):
         self.ramp.set_kind(self.combox.currentText())
 
-    def value(self):
-        """
-        :return: [ list: colors, list: pos, str:kind ]
-        """
-        return self.ramp.value()
-
     def setValue(self, value):
         """
-        :param value: [ np.ndarray, np.ndarray, str ]
+        :param value: [ np.ndarray: colors, np.ndarray: keys, str:kind ]
         """
         if value is None:
             return
@@ -316,20 +378,21 @@ class CurveRampParameterItem(ColorRampParameterItem):
         layout.addWidget(self.combox)
         wid.sigChanged = self.ramp.valueChangeFinished
         wid.sigChanging = self.ramp.valueChanged
-        wid.value = self.value
+        wid.value = self.ramp.value
         wid.setValue = self.setValue
         wid.setMinimumHeight(200)
         return wid
 
     def setValue(self, value):
         """
-        :param value: [ np.ndarray , str ]
+        :param value: [ np.ndarray: 2d pos , str: kind ]
         """
         if value is None:
             return
         idx = self.combox.findText(value[1], QtCore.Qt.MatchExactly)
         self.combox.setCurrentIndex(idx)
         self.ramp.setValue(value)
+
 
 class CurveRampParameter(Parameter):
     itemClass = CurveRampParameterItem
@@ -371,3 +434,106 @@ class SpacerParameter(Parameter):
 
 
 registerParameterType('spacer', SpacerParameter, override=True)
+
+
+class TextParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        super(TextParameterItem, self).__init__( param, depth)
+        self.hideWidget = False
+        self.subItem = QtWidgets.QTreeWidgetItem()
+        self.addChild(self.subItem)
+
+    def treeWidgetChanged(self):
+        # (WidgetParameter should just natively support this style)
+        # WidgetParameterItem.treeWidgetChanged(self)
+        self.treeWidget().setFirstItemColumnSpanned(self.subItem, True)
+        self.treeWidget().setItemWidget(self.subItem, 0, self.textBox)
+
+        # for now, these are copied from ParameterItem.treeWidgetChanged
+        self.setHidden(not self.param.opts.get('visible', True))
+        self.setExpanded(self.param.opts.get('expanded', True))
+
+    def makeWidget(self):
+        self.textBox = PropTextEdit()
+        self.textBox.setMaximumHeight(500)
+        self.textBox.setReadOnly(self.param.opts.get('readonly', False))
+        self.textBox.value = self.textBox.get_value
+        self.textBox.setValue = self.textBox.set_value
+        self.textBox.sigChanged = self.textBox.value_changed
+        return self.textBox
+
+
+class TextParameter(Parameter):
+    itemClass = TextParameterItem
+
+
+registerParameterType('text', TextParameter, override=True)
+
+
+class ComboBox(QtWidgets.QComboBox):
+    show_popup = QtCore.Signal()
+    editing_finished = QtCore.Signal(object)
+
+    def __init__(self):
+        super(ComboBox, self).__init__()
+        self.currentIndexChanged.connect(self.on_value_changed)
+
+    def showPopup(self):
+        self.show_popup.emit()
+        super(ComboBox, self).showPopup()
+
+    def on_value_changed(self):
+        self.editing_finished.emit(self.currentText())
+
+    def focusOutEvent(self, event):
+        super(ComboBox, self).focusOutEvent(event)
+        self.editing_finished.emit(self.currentText())
+
+
+class ListTextParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        super(ListTextParameterItem, self).__init__(param, depth)
+
+    def makeWidget(self):
+        opts = self.param.opts
+        w = ComboBox()
+        w.setEditable(True)
+        w.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        w.setStyleSheet(""" QComboBox{background-color: rgb(20,20,20)}
+                            QComboBox::drop-down{
+                            background-color: rgb(55,55,55); 
+                            }""")
+        w.sigChanged = w.editing_finished
+        w.value = self.value
+        w.setValue = self.setValue
+        self.widget = w
+        limits = opts.get('limits', None)
+        if limits:
+            self.limitsChanged(limits)
+
+        return w
+
+    def value(self):
+        return self.widget.currentText()
+
+    def setValue(self, val):
+        if type(val) is list:
+            self.limitsChanged(val)
+            return
+        if type(val) is int:
+            self.widget.setCurrentIndex(val)
+            return
+        self.widget.setCurrentText(val)
+
+    def limitsChanged(self, limits):
+        old = self.value()
+        self.widget.clear()
+        self.widget.addItems(limits)
+        self.widget.setCurrentText(old)
+
+
+class ListTextParameter(Parameter):
+    itemClass = ListTextParameterItem
+
+
+registerParameterType('listText', ListTextParameter, override=True)

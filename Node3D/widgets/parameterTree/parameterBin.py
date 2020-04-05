@@ -81,14 +81,18 @@ class PropWidget(QtWidgets.QWidget):
         # sort tabs and properties.
         tab_mapping = defaultdict(list)
         for prop_name, prop_val in model.custom_properties.items():
-            tab_name = model.get_tab_name(prop_name)
-            tab_mapping[tab_name].append((prop_name, prop_val))
+            try:
+                tab_name = model.get_tab_name(prop_name)
+                tab_mapping[tab_name].append((prop_name, prop_val))
+            except Exception as e:
+                print(e)
+                print(node.name())
 
         # process parameters
-        if node.has_property("node_parameters"):
+        params = node.get_params()
+        if params:
             node.update_parameters()
-            pms = node.get_property("node_parameters")
-            for tab, params in pms.items():
+            for tab, params in params.items():
                 if tab not in self.get_tab_names():
                     self.add_tab(tab)
                 prop_window = self.get_tab_window(tab)
