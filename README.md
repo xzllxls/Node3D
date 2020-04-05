@@ -20,10 +20,10 @@ The following libraries can be installed with `pip`.
 * [numpy-quaternion](https://pypi.org/project/numpy-quaternion/)
 * [pyfastnoisesimd](https://github.com/robbmcleod/pyfastnoisesimd)
 
-The following library requires pre-compiled `whl`
+The following library can install by pre-compiled `whl`
 * [openmesh-python](https://www.graphics.rwth-aachen.de:9000/OpenMesh/openmesh-python)
 
-The followings are optional dependencies, and need to be compiled from source code:
+The followings are optional dependencies, and need to install from source code:
 * [pyassimp](https://github.com/assimp/assimp/blob/master/port/PyAssimp/README.md)
 * [open3d](https://github.com/intel-isl/Open3D)
 * [igl](https://github.com/libigl/libigl-python-bindings)

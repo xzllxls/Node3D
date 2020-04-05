@@ -1,5 +1,5 @@
 from .auto_node import AutoNode
-from ...vendor.NodeGraphQt import SubGraph
+from ...vendor.NodeGraphQt import SubGraph, topological_sort_by_down, BackdropNode
 import json
 
 
@@ -29,15 +29,26 @@ class SubGraphNode(AutoNode, SubGraph):
             self.model.dynamic_port = False
             self.create_property('input count', 'input count', 0)
             self.create_property('output count', 'output count', 0)
-        self._run_ports = []
+        self._marked_ports = []
         self.create_property('create_from_select', True)
         self._inited = True
 
-    def add_run_ports(self, port):
-        if port not in self._run_ports and port in self.input_ports():
-            self._run_ports.append(port)
+    def mark_node_to_be_cooked(self, port):
+        """
+        Mark port corresponding SubGraphInputNode to be cooked.
+
+        Args:
+            port(Port)
+        """
+
+        if port not in self._marked_ports and port in self.input_ports():
+            self._marked_ports.append(port)
 
     def enter(self):
+        """
+        Action when enter the sub graph.
+        """
+
         self.hide()
         [n.show() for n in self.children()]
         rect = self.get_property('graph_rect')
@@ -45,22 +56,36 @@ class SubGraphNode(AutoNode, SubGraph):
             self.graph.set_graph_rect(rect)
 
     def exit(self):
+        """
+        Action when exit the sub graph.
+        """
+
         for n in self.children():
             n.hide()
             n.set_selected(False)
-        self.set_property('graph_rect', self.graph.graph_rect())
+        self.model.set_property('graph_rect', self.graph.graph_rect())
 
     def show(self):
         super().show()
         self.update_port()
 
     def update_port(self):
+        """
+        Re layout the node port.
+        """
+
         self.view.draw_node()
 
     def add_child(self, node):
-        if node not in self._children:
-            self._children.append(node)
-            node._parent = self
+        """
+        Add node the the sub graph.
+
+        Args:
+            node(AutoNode).
+        """
+
+        self._children.add(node)
+        node._parent = self
 
         if self.has_property('root'):
             return
@@ -74,6 +99,13 @@ class SubGraphNode(AutoNode, SubGraph):
                 self.sub_graph_output_nodes.append(node)
 
     def remove_child(self, node):
+        """
+        Remove node from the sub graph.
+
+        Args:
+            node(AutoNode).
+        """
+
         if node in self._children:
             self._children.remove(node)
 
@@ -87,6 +119,9 @@ class SubGraphNode(AutoNode, SubGraph):
                 self.sub_graph_output_nodes.remove(node)
 
     def getData(self, port):
+        if self.disabled():
+            return super(SubGraphNode, self).getData(port)
+
         index = int(port.name()[-1])
         for node in self.sub_graph_output_nodes:
             if node.get_property('output index') == index:
@@ -100,17 +135,32 @@ class SubGraphNode(AutoNode, SubGraph):
         for node in self.sub_graph_input_nodes:
             node._parent = self
 
-        if self._run_ports:
-            for port in self._run_ports:
+        start_nodes = []
+        if self._marked_ports:
+            for port in self._marked_ports:
                 index = self.input_ports().index(port)
                 for node in self.sub_graph_input_nodes:
                     if node.get_property('input index') == index:
-                        node.cook()
-            self._run_ports = []
+                        start_nodes.append(node)
+            self._marked_ports = []
         else:
-            [node.cook() for node in self.sub_graph_input_nodes]
+            start_nodes = self.sub_graph_input_nodes
+
+        nodes = topological_sort_by_down(start_nodes=start_nodes)
+
+        for node in nodes:
+            if node.disabled():
+                node.when_disabled()
+            else:
+                node.cook()
+            if node.has_error():
+                break
 
     def delete(self):
+        """
+        Action when the node is deleted from the NodeGraphQt.NodeGraph.
+        """
+
         self._view.delete()
         for child in self._children:
             child._parent = None
@@ -119,16 +169,44 @@ class SubGraphNode(AutoNode, SubGraph):
             self._parent.remove_child(self)
 
     def children(self):
-        return self._children
+        """
+        Get all nodes of the sub graph.
+
+        Returns:
+            list[AutoNode].
+        """
+
+        return list(self._children)
 
     def create_input_node(self, update=True):
-        print(0)
+        """
+        Create a sub graph input node.
+
+        Args:
+            update(bool): whether increase node 'input count' property.
+        """
+
         pass
 
     def create_output_node(self, update=True):
+        """
+        Create a sub graph output node.
+
+        Args:
+            update(bool): whether increase node 'output count' property.
+        """
+
         pass
 
     def create_from_nodes(self, nodes):
+        """
+        Create a SubGraph from the nodes.
+        It will auto create input and output ports and nodes.
+
+        Args:
+            nodes(list[AutoNode]): nodes to create the sub graph.
+        """
+
         if self in nodes:
             nodes.remove(self)
         [n.set_parent(self) for n in nodes]
@@ -141,6 +219,8 @@ class SubGraphNode(AutoNode, SubGraph):
         connected = []
 
         for node in nodes:
+            if isinstance(node, BackdropNode):
+                continue
             for port in node.input_ports():
                 for pipe in port.view.connected_pipes:
                     if pipe.output_port.isVisible():
@@ -195,6 +275,10 @@ class SubGraphNode(AutoNode, SubGraph):
         self.set_property('create_from_select', False)
 
     def update_ports(self):
+        """
+        Auto create/delete input and output ports by node property 'input count' and 'output count'.
+        """
+
         input_count = self.get_property('input count')
         output_count = self.get_property('output count')
         current_input_count = len(self.input_ports())
@@ -223,6 +307,20 @@ class SubGraphNode(AutoNode, SubGraph):
             self.view.draw_node()
 
     def publish(self, file_path, node_name, node_identifier, node_class_name):
+        """
+        Publish the sub graph as a file.
+        It will auto create input and output ports and nodes.
+
+        Args:
+            file_path(str): sub graph node published file path.
+            node_name(str): new sub graph node name.
+            node_identifier(str): new sub graph node identifier.
+            node_class_name(str): new sub graph node class object name.
+        Returns:
+            str: new sub graph node file path.
+            None: publish failed.
+        """
+
         if file_path and node_name and node_identifier and node_class_name:
             serialized_data = self.graph._serialize([self])
             data = {'node': serialized_data['nodes'][self.id]}
@@ -299,6 +397,10 @@ class SubGraphOutputNode(AutoNode):
 
 
 class RootNode(SubGraphNode):
+    """
+    Root node of the NodeGraphQt.NodeGraph.
+    """
+
     __identifier__ = '__None'
 
     # initial default node name.

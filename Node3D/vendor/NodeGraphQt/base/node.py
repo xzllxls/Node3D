@@ -20,6 +20,7 @@ from ..widgets.node_widgets import (NodeComboBox,
                                     NodeIntEdit,
                                     NodeCheckBox,
                                     NodeFilePath)
+from .utils import update_node_down_stream
 
 
 class classproperty(object):
@@ -208,7 +209,7 @@ class NodeObject(object):
 
     def disabled(self):
         """
-        Returns weather the node is enabled or disabled.
+        Returns whether the node is enabled or disabled.
 
         Returns:
             bool: True if the node is disabled.
@@ -1060,35 +1061,21 @@ class BaseNode(NodeObject):
         """
         return
 
-    def update_streams(self, *args):
+    def update_stream(self):
         """
-        Update all nodes joined by pipes to this.
+        Update node down stream.
         """
-        nodes = []
-        trash = []
-
-        for port, nodeList in self.connected_output_nodes().items():
-            nodes.extend(nodeList)
-
-        while nodes:
-            node = nodes.pop()
-            if node.disabled():
-                continue
-            if node not in trash:
-                trash.append(node)
-
-            for port, nodeList in node.connected_output_nodes().items():
-                nodes.extend(nodeList)
-
-            if not node.connected_output_nodes():
-                try:
-                    node.run()
-                except Exception as error:
-                    print("Error Update Streams: %s" % str(error))
+        update_node_down_stream(self)
 
     def run(self):
         """
-        Node evaluation logics.
+        Node evaluation logic.
+        """
+        return
+
+    def when_disabled(self):
+        """
+        Node evaluation logic when node has been disabled.
         """
         return
 
@@ -1183,13 +1170,13 @@ class SubGraph(object):
     """
 
     def __init__(self):
-        self._children = []
+        self._children = set()
 
     def children(self):
         """
         Returns the children of the sub graph.
         """
-        return self._children
+        return list(self._children)
 
     def create_from_nodes(self, nodes):
         """
@@ -1208,7 +1195,7 @@ class SubGraph(object):
             node(NodeGraphQt.BaseNode).
         """
         if node not in self._children:
-            self._children.append(node)
+            self._children.add(node)
 
     def remove_child(self, node):
         """

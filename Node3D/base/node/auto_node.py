@@ -1,5 +1,6 @@
 from ...vendor.NodeGraphQt import BaseNode, SubGraph, Port, QtCore
 from ...vendor.NodeGraphQt.constants import NODE_PROP
+from . utils import update_node_down_stream
 import hashlib
 import copy
 import time
@@ -12,8 +13,11 @@ NODE_WARNING = 1
 NODE_ERROR = 2
 
 
-# Generate random color based on strings
 class CryptoColors(object):
+    """
+    Generate random color based on strings
+    """
+
     def __init__(self):
         self.colors = {}
 
@@ -40,8 +44,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.needCook = True
         self._autoCook = True
-        self._error = False
-        self.matchTypes = [[float, int]]
+        self.matchTypes = [['float', 'int']]
         self.errorColor = (0.784, 0.196, 0.196)
         self.stopCookColor = (0.784, 0.784, 0.784)
         self._cryptoColors = CryptoColors()
@@ -58,10 +61,21 @@ class AutoNode(BaseNode, QtCore.QObject):
 
     @property
     def autoCook(self):
+        """
+        Returns whether the node can update stream automatically.
+        """
+
         return self._autoCook
 
     @autoCook.setter
     def autoCook(self, mode):
+        """
+        Set whether the node can update stream automatically.
+
+        Args:
+            mode(bool).
+        """
+
         if mode is self._autoCook:
             return
 
@@ -72,25 +86,47 @@ class AutoNode(BaseNode, QtCore.QObject):
             self.defaultColor = self.get_property("color")
             self.set_property('color', self.stopCookColor)
 
+    def has_error(self):
+        """
+        Returns whether the node has error.
+        """
+
+        return self._message_level is NODE_ERROR
+
     def getCookTime(self):
+        """
+        Get the last cooked time of the node.
+        """
+
         return self._cookTime
 
-    def cookNextNode(self):
-        nodes = []
-        for p in self.output_ports():
-            for cp in p.connected_ports():
-                connected_output_node = cp.node()
-                if connected_output_node is self:
-                    continue
-                if isinstance(connected_output_node, SubGraph):
-                    connected_output_node.add_run_ports(cp)
-                if connected_output_node not in nodes:
-                    nodes.append(connected_output_node)
+    def update_stream(self, forceCook=False):
+        """
+        Update all down stream nodes.
 
-        [node.cook() for node in nodes]
+        Args:
+            forceCook(bool): if True, it will ignore the autoCook and so on.
+        """
+
+        if not forceCook:
+            if not self._autoCook or not self.needCook:
+                return
+            if self.graph is not None and not self.graph.auto_update:
+                return
+        update_node_down_stream(self)
 
     def getData(self, port):
-        # for custom output data
+        """
+        Get node data by port.
+        Most time it will called by output nodes of the node.
+
+        Args:
+            port(Port).
+
+        Returns:
+            node data.
+        """
+
         return self.get_property(port.name())
 
     def getInputData(self, port):
@@ -100,6 +136,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         Args:
             port(str/int/Port): input port name/index/object.
         """
+
         if type(port) is not Port:
             to_port = self.get_input(port)
         else:
@@ -116,18 +153,19 @@ class AutoNode(BaseNode, QtCore.QObject):
             return copy.deepcopy(data)
 
     def when_disabled(self):
-        num = len(self.input_ports())
+        """
+        Node evaluation logic when node has been disabled.
+        """
+
+        num = max(0, len(self.input_ports())-1)
         for index, out_port in enumerate(self.output_ports()):
-            self.set_property(out_port.name(), self.getInputData(index % num))
+            self.set_property(out_port.name(), self.getInputData(min(index, num)))
 
-    def cook(self, forceCook=False):
-        if not self._autoCook and forceCook is not True:
-            if self.get_property('disabled'):
-                self.cookNextNode()
-            return
-
-        if not self.needCook:
-            return
+    def cook(self):
+        """
+        The entry of the node evaluation.
+        Most time we need to call this method instead of AutoNode.run'.
+        """
 
         _tmp = self._autoCook
         self._autoCook = False
@@ -149,14 +187,17 @@ class AutoNode(BaseNode, QtCore.QObject):
         self._cookTime = time.time() - _start_time
 
         self.cooked.emit()
-        self.cookNextNode()
 
     def run(self):
+        """
+        Node evaluation logic.
+        """
+
         pass
 
     def on_input_connected(self, to_port, from_port):
         if self.checkPortType(to_port, from_port):
-            self.cook()
+            self.update_stream()
         else:
             self.needCook = False
             to_port.disconnect_from(from_port)
@@ -166,12 +207,20 @@ class AutoNode(BaseNode, QtCore.QObject):
         if not self.needCook:
             self.needCook = True
             return
-        self.cook()
+        self.update_stream()
         self.input_changed.emit()
 
     def checkPortType(self, to_port, from_port):
-        # 'None' type port can connect with any other type port
-        # types in self.matchTypes can connect with each other
+        """
+        Check whether the port_type of the to_port and from_type is matched.
+
+        Args:
+            to_port(Port).
+            from_port(Port).
+
+        Returns:
+            bool.
+        """
 
         if to_port.data_type != from_port.data_type:
             if to_port.data_type == 'None' or from_port.data_type == 'None':
@@ -187,9 +236,17 @@ class AutoNode(BaseNode, QtCore.QObject):
         super(AutoNode, self).set_property(name, value)
         self.set_port_type(name, type(value).__name__)
         if name in self.model.custom_properties.keys():
-            self.cook()
+            self.update_stream()
 
     def set_port_type(self, port, data_type: str):
+        """
+        Set the data_type of the port.
+
+        Args:
+            port(Port): the port to set the data_type.
+            data_type(str): port new data_type.
+        """
+
         current_port = None
 
         if type(port) is Port:
@@ -225,7 +282,13 @@ class AutoNode(BaseNode, QtCore.QObject):
         if data_type == 'None' and self.defaultInputType is not None:
             data_type = self.defaultInputType
         if type(data_type) is not str:
-            data_type = data_type.__name__
+            if data_type is None:
+                data_type = 'None'
+            else:
+                try:
+                    data_type = data_type.__name__
+                except:
+                    data_type = type(data_type).__name__
         self.set_port_type(new_port, data_type)
 
         return new_port
@@ -244,22 +307,39 @@ class AutoNode(BaseNode, QtCore.QObject):
     def set_disabled(self, mode=False):
         super(AutoNode, self).set_disabled(mode)
         self._autoCook = not mode
-        if mode is True:
+        if mode:
             self.when_disabled()
-            self.cookNextNode()
+            if self.graph is None or self.graph.auto_update:
+                self.update_stream()
         else:
-            self.cook()
+            self.update_stream()
 
     def get_message(self):
+        """
+        Returns the node warning/error message.
+        """
         return self._message, self._message_level
 
     def _close_message(self):
+        """
+        Set node to normal mode and clear the node warning/error message.
+        """
+
         if self._message_level is not NODE_NONE:
             self.set_property('color', self.defaultColor)
             self._message = ""
             self._message_level = NODE_NONE
 
     def _set_message(self, message, message_level):
+        """
+        Set node message.
+        It will change the node color.
+
+        Args:
+            message(str): the describe of the error.
+            message_level(int): NODE_NONE/NODE_WARNING/NODE_ERROR.
+        """
+
         if self._message_level is NODE_NONE:
             self.defaultColor = self.get_property("color")
         self._message = str(message)
@@ -268,9 +348,22 @@ class AutoNode(BaseNode, QtCore.QObject):
             self.set_property('color', self.errorColor)
 
     def error(self, message):
+        """
+        Set message_level to NODE_ERROR and change the node color.
+
+        Args:
+            message(str): the describe of the error.
+        """
+
         self._set_message(message, NODE_ERROR)
 
     def warning(self, message):
+        """
+        Set message_level to NODE_WARNING.
+
+        Args:
+            message(str): the describe of the warning.
+        """
         self._set_message(message, NODE_WARNING)
 
     def update_model(self):
@@ -279,11 +372,26 @@ class AutoNode(BaseNode, QtCore.QObject):
         super(AutoNode, self).update_model()
 
     def set_parameters(self, params, tab='Parameters'):
+        """
+        Update the node parameters.
+
+        Args:
+            params(dict): node parameters data.
+            tab(str): the tab name of parameters.
+        """
+
         self._params.update({tab: params})
         self.__create_props(params)
         self.param_changed.emit()
 
     def __create_props(self, params: list):
+        """
+        Update the node properties by parameter data.
+
+        Args:
+            params(list): node parameters data.
+        """
+
         for p in params:
             if 'children' not in p.keys():
                 if p['type'] == 'action':
@@ -304,6 +412,13 @@ class AutoNode(BaseNode, QtCore.QObject):
                 self.__create_props(p['children'])
 
     def get_ramp_values(self, name, keys):
+        """
+        Get the curve ramp parameter data by keys.
+
+        Returns:
+            numpy.ndarray, size:(len(keys),).
+        """
+
         p = self.get_property(name)
         if type(p) is not list:
             raise Exception("please input a ramp parameter name")
@@ -318,6 +433,13 @@ class AutoNode(BaseNode, QtCore.QObject):
         return f(keys)
 
     def get_ramp_colors(self, name, keys):
+        """
+        Get the color ramp parameter data by keys.
+
+        Returns:
+            numpy.ndarray, size:(len(keys),3).
+        """
+
         p = self.get_property(name)
         if type(p) is not list:
             raise Exception("please input a color ramp parameter name")
@@ -329,6 +451,13 @@ class AutoNode(BaseNode, QtCore.QObject):
         return get_ramp_colors(p[0], p[1], p[2], keys)
 
     def get_ramp_color(self, name, key):
+        """
+        Get the ramp color parameter data by key.
+
+        Returns:
+            r, g, b.
+        """
+
         p = self.get_property(name)
         if type(p) is not list:
             raise Exception("please input a color ramp parameter name")
@@ -336,10 +465,21 @@ class AutoNode(BaseNode, QtCore.QObject):
         return get_ramp_color(p[0], p[1], p[2], key)
 
     def update_parameters(self):
+        """
+        Update parameters by properties.
+        """
+
         [self.__update_params(p) for p in self._params.values()]
         self.param_changed.emit()
 
     def __update_params(self, params: list):
+        """
+        Update parameters by properties.
+
+        Args:
+            params(list): parameters to be updated.
+        """
+
         for p in params:
             if 'children' not in p.keys():
                 prop_name = p['name']
@@ -357,6 +497,15 @@ class AutoNode(BaseNode, QtCore.QObject):
                 self.__update_params(p['children'])
 
     def _update_list_param(self, name, items, reload=True):
+        """
+        Update list type parameter widget.
+
+        Args:
+            name(str): parameter name.
+            items(list): parameter widget new items.
+            reload(bool) if true the parameter value will forced be one of the items.
+        """
+
         if not self.has_property(name):
             return
         old_value = self.get_property(name)
@@ -376,12 +525,37 @@ class AutoNode(BaseNode, QtCore.QObject):
             self.set_property(name, old_value)
 
     def update_list_param(self, name, items):
+        """
+        Update list type parameter widget.
+
+        Args:
+            name(str): parameter name.
+            items(list): parameter widget new items.
+        """
+
         self._update_list_param(name, items)
 
-    def update_list_text_param(self, name, attribute_class):
-        if type(attribute_class) is str:
-            attribute_class = [attribute_class]
-        self._update_list_param(name, attribute_class, False)
+    def update_list_text_param(self, name, items):
+        """
+        Update list text type parameter widget.
+
+        Args:
+            name(str): parameter name.
+            items(str/list[str]).
+        """
+
+        if type(items) is str:
+            items = [items]
+        self._update_list_param(name, items, False)
 
     def get_params(self):
+        """
+        Get node parameters data.
+
+        Returns:
+            dict: parameters data.
+        """
         return self._params
+
+    # def __del__(self):
+    #     print("Delete: ", self.path())

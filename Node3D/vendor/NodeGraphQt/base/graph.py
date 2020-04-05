@@ -19,7 +19,8 @@ from ..constants import (DRAG_DROP_ID,
                          PIPE_LAYOUT_CURVED,
                          PIPE_LAYOUT_STRAIGHT,
                          PIPE_LAYOUT_ANGLE,
-                         IN_PORT, OUT_PORT)
+                         IN_PORT, OUT_PORT,
+                         VIEWER_GRID_LINES)
 from ..widgets.viewer import NodeViewer
 from ..widgets.node_space_bar import node_space_bar
 
@@ -142,7 +143,10 @@ class NodeGraph(QtCore.QObject):
     """
     Signal triggered when MMB is released in viewer with node selected.
     """
-
+    cook_graph = QtCore.Signal()
+    """
+    Signal triggered when all graph nodes need to be cooked.
+    """
     def __init__(self, parent=None):
         super(NodeGraph, self).__init__(parent)
         self.setObjectName('NodeGraphQt')
@@ -159,6 +163,7 @@ class NodeGraph(QtCore.QObject):
 
         self._wire_signals()
         self._node_space_bar = node_space_bar(self)
+        self._auto_update = True
 
     def __repr__(self):
         return '<{} object at {}>'.format(self.__class__.__name__, hex(id(self)))
@@ -402,6 +407,13 @@ class NodeGraph(QtCore.QObject):
             layout.addWidget(self._viewer)
         return self._widget
 
+    @property
+    def auto_update(self):
+        """
+        Returns whether the graph can run node automatically.
+        """
+        return self._auto_update
+
     def show(self):
         """
         Show node graph widget this is just a convenience
@@ -484,14 +496,14 @@ class NodeGraph(QtCore.QObject):
         self.scene().grid_color = (r, g, b)
         self._viewer.force_update()
 
-    def display_grid(self, display=True):
+    def set_grid_mode(self, mode=VIEWER_GRID_LINES):
         """
-        Display node graph background grid.
+        Set node graph grid mode.
 
         Args:
-            display: False to not draw the background grid.
+            mode: VIEWER_GRID_LINES/VIEWER_GRID_DOTS/VIEWER_GRID_NONE.
         """
-        self.scene().grid = display
+        self.scene().grid_mode = mode
         self._viewer.force_update()
 
     def add_properties_bin(self, prop_bin):
@@ -857,8 +869,9 @@ class NodeGraph(QtCore.QObject):
         Args:
             node (NodeGraphQt.SubGraph): node object.
         """
-        if node is self._current_node_space:
+        if node is self._current_node_space or not isinstance(node, SubGraph):
             return
+
         if self._current_node_space is not None:
             self._current_node_space.exit()
 
@@ -1148,6 +1161,9 @@ class NodeGraph(QtCore.QObject):
         Returns:
             list[NodeGraphQt.Nodes]: list of node instances.
         """
+        _temp_auto_update = self._auto_update
+        self._auto_update = False
+
         nodes = {}
         # build the nodes.
         for n_id, n_data in data.get('nodes', {}).items():
@@ -1207,6 +1223,7 @@ class NodeGraph(QtCore.QObject):
 
         if set_parent:
             [node.set_parent(self._current_node_space) for node in node_objs]
+        self._auto_update = _temp_auto_update
 
         return node_objs
 
@@ -1251,6 +1268,7 @@ class NodeGraph(QtCore.QObject):
             node_space = node_space.id
         serialized_data['graph'] = {'node_space': node_space, 'pipe_layout': self._viewer.get_pipe_layout()}
         serialized_data['graph']['graph_rect'] = self._viewer.scene_rect()
+        serialized_data['graph']['grid_mode'] = self.scene().grid_mode
 
         file_path = file_path.strip()
         with open(file_path, 'w') as file_out:
@@ -1298,11 +1316,13 @@ class NodeGraph(QtCore.QObject):
             self.set_node_space(self.root_node())
             self._viewer.set_pipe_layout(layout_data['graph']['pipe_layout'])
             self._viewer.set_scene_rect(layout_data['graph']['graph_rect'])
+            self.set_grid_mode(layout_data['graph'].get('grid_mode', VIEWER_GRID_LINES))
 
         self.set_node_space(self.root_node())
         self._undo_stack.clear()
         self._model.session = file_path
         self.session_changed.emit(file_path)
+        self.cook_graph.emit()
 
     def copy_nodes(self, nodes=None):
         """

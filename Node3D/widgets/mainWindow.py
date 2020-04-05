@@ -7,7 +7,7 @@ from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 from PySide2.QtCore import *
 from .styles import mainStyle
-from ..base.node import AutoNode, GeometryNode, SubGraphNode, RootNode
+from ..base.node import AutoNode, GeometryNode, SubGraphNode, RootNode, update_nodes
 from .glScene import glScene
 from .timeLine import TimeLine
 from .scriptEditor import nodeScriptEditor
@@ -18,7 +18,7 @@ from .nodeInfoPanel import NodeInfoPanel
 
 
 def cook_node(graph, node):
-    node.cook(True)
+    node.update_stream(forceCook=True)
 
 
 def print_functions(graph, node):
@@ -97,7 +97,7 @@ def setup_menu_bar(graph, window, root_menu):
     edit_menu.addAction(redo_actn)
 
     edit_menu.addSeparator()
-    add_command(edit_menu, 'Clear Undo History', lambda: utils._clear_undo(graph))
+    add_command(edit_menu, 'Clear Undo History', lambda: utils._clear_undo(graph), view)
     edit_menu.addSeparator()
 
     add_command(edit_menu, 'Copy', lambda: utils._copy_nodes(graph), view, QtGui.QKeySequence.Copy)
@@ -122,11 +122,19 @@ def setup_menu_bar(graph, window, root_menu):
     add_command(edit_menu, 'Center Selection', lambda: utils._fit_to_selection(graph), view, 'F')
     graph_menu.addSeparator()
 
+    add_command(graph_menu, 'Layout Graph Down Stream', lambda: utils._layout_graph_down(graph), view, 'L')
+    add_command(graph_menu, 'Layout Graph Up Stream', lambda: utils._layout_graph_up(graph), view, 'Ctrl+L')
+    graph_menu.addSeparator()
+
     pipe_menu = graph_menu.addMenu('&Pipe')
     add_command(pipe_menu, 'Curved Pipe', lambda: graph.set_pipe_style(PIPE_LAYOUT_CURVED), view)
-    add_command(pipe_menu, 'Straght Pipe', lambda: graph.set_pipe_style(PIPE_LAYOUT_STRAIGHT), view)
+    add_command(pipe_menu, 'Straight Pipe', lambda: graph.set_pipe_style(PIPE_LAYOUT_STRAIGHT), view)
     add_command(pipe_menu, 'Angle Pipe', lambda: graph.set_pipe_style(PIPE_LAYOUT_ANGLE), view)
-    add_command(graph_menu, 'Toggle Disable Grid', lambda: graph.display_grid(not graph.scene().grid), view)
+
+    pipe_menu = graph_menu.addMenu('&Grid Mode')
+    add_command(pipe_menu, 'None', lambda: graph.set_grid_mode(VIEWER_GRID_NONE), view)
+    add_command(pipe_menu, 'Lines', lambda: graph.set_grid_mode(VIEWER_GRID_LINES), view)
+    add_command(pipe_menu, 'Dots', lambda: graph.set_grid_mode(VIEWER_GRID_DOTS), view)
     graph_menu.addSeparator()
 
     # Node Menu
@@ -157,12 +165,13 @@ class mainWindow(QMainWindow):
         self.graph = NodeGraph()
         self.graph.use_opengl()
         self.graph.session_changed.connect(self.on_session_changed)
+        self.graph.cook_graph.connect(self.cook_graph_nodes)
         self.graph.node_double_clicked.connect(self.update_data)
         self.graph.show_node_info_panel_triggerd.connect(self.show_node_info_panel)
         self.graph.close_node_info_panel_triggered.connect(self.close_node_info_panel)
         self.graph.master = self
-        root_node = RootNode()
-        self.graph.add_node(root_node)
+        self.graph.add_node(RootNode())
+        self.graph.undo_stack().clear()
 
         self.propertiesBin = NodePropBin(node_graph=self.graph)
         self.propertiesBin.setWindowFlags(QtCore.Qt.Tool)
@@ -303,3 +312,6 @@ class mainWindow(QMainWindow):
 
     def close_node_info_panel(self):
         self.nodeInfoPanel.close()
+
+    def cook_graph_nodes(self):
+        update_nodes(self.graph.root_node().children())

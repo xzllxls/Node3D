@@ -89,7 +89,10 @@ from .pkg_info import __version__ as VERSION
 from .pkg_info import __license__ as LICENSE
 
 # functions
-from .base.utils import setup_context_menu
+from .base.utils import setup_context_menu, \
+    topological_sort_by_up, topological_sort_by_down, \
+    update_node_down_stream, update_node_up_stream,\
+    update_nodes_by_up, update_nodes_by_down
 
 # widgets
 from .widgets.node_tree import NodeTreeWidget
@@ -114,5 +117,11 @@ __all__ = [
     'setup_context_menu',
     'NodePublishWidget',
     'SubGraph',
+    'topological_sort_by_up',
+    'topological_sort_by_down',
+    'update_node_up_stream',
+    'update_node_down_stream',
+    'update_nodes_by_up',
+    'update_nodes_by_down',
 ]
 

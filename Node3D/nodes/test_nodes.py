@@ -56,7 +56,7 @@ params = [
 class TestNode(AutoNode):
 
     # set a unique node identifier.
-    __identifier__ = 'Test.test'
+    __identifier__ = 'Test::test_parameters'
 
     # set the initial default node name.
     NODE_NAME = 'Test Params'
