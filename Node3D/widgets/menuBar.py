@@ -1,4 +1,4 @@
-from PySide2 import QtGui, QtWidgets
+from Qt import QtGui, QtWidgets
 from ..base.node import AutoNode, GeometryNode, SubGraphNode
 from ..vendor.NodeGraphQt import NodePublishWidget
 from ..vendor.NodeGraphQt.base import utils

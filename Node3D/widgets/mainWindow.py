@@ -1,11 +1,11 @@
-from ..vendor.NodeGraphQt import NodeGraph, NodeTreeWidget
-from ..vendor.NodeGraphQt.widgets.file_dialog import messageBox
-from ..vendor.NodeGraphQt.base import utils
 from Qt import QtWidgets, QtCore
 from Qt.QtWidgets import QMainWindow, QDockWidget, QMessageBox
 from Qt.QtCore import Qt, QSettings
-from .styles import mainStyle
+from ..vendor.NodeGraphQt import NodeGraph, NodeTreeWidget
+from ..vendor.NodeGraphQt.widgets.file_dialog import messageBox
+from ..vendor.NodeGraphQt.base import utils
 from ..base.node import RootNode, update_nodes
+from .styles import mainStyle
 from .glScene import glScene
 from .timeLine import TimeLine
 from .scriptEditor import nodeScriptEditor
