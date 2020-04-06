@@ -927,7 +927,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self.SHIFT_state = False
         self.ALT_state = False
 
-    def use_opengl(self):
+    def use_OpenGL(self):
         format = QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers)
         format.setSamples(4)
         self.setViewport(QtOpenGL.QGLWidget(format))

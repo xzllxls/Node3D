@@ -1,4 +1,4 @@
-from PySide2 import QtCore, QtGui, QtOpenGL, QtWidgets
+from PySide2 import QtCore, QtGui, QtWidgets
 from OpenGL.GL import *
 import OpenGL.GL.framebufferobjects as glfbo
 import numpy as np
