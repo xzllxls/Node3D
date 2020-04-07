@@ -345,7 +345,7 @@ def get_output_nodes(node, cook=True):
 
     Args:
         node (NodeGraphQt.BaseNode).
-        cook (bool).
+        cook (bool): call this function for cook node.
     Returns:
         list[NodeGraphQt.BaseNode].
     """

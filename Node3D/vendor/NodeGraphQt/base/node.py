@@ -525,10 +525,10 @@ class BaseNode(NodeObject):
             if not self.model.visible:
                 self._has_draw = False
             else:
-                self._view.draw_node()
+                self.view.draw_node()
         else:
             if not self._has_draw:
-                self._view.draw_node()
+                self.view.draw_node()
                 self._has_draw = True
 
     def hide(self):

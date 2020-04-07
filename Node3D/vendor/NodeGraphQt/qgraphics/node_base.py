@@ -685,7 +685,7 @@ class NodeItem(AbstractNodeItem):
         """
         self._delete_port(port, self._output_items.pop(port))
 
-    def get_inputtext_item(self, port_item):
+    def get_input_text_item(self, port_item):
         """
         Args:
             port_item (PortItem): port item.
@@ -695,7 +695,7 @@ class NodeItem(AbstractNodeItem):
         """
         return self._input_items[port_item]
 
-    def get_outputtext_item(self, port_item):
+    def get_output_text_item(self, port_item):
         """
         Args:
             port_item (PortItem): port item.
