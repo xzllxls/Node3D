@@ -325,6 +325,8 @@ class NodeObject(object):
             pass
 
         if self.graph and name == 'name':
+            if len(value) == 0:
+                value = '_'
             value = self.graph.get_unique_name(value)
             self.NODE_NAME = value
 
@@ -516,16 +518,17 @@ class BaseNode(NodeObject):
         self._inputs = []
         self._outputs = []
         self._has_draw = False
+        self._view.text_item.editingFinished.connect(self.set_name)
 
     def draw(self, force=True):
         if force:
             if not self.model.visible:
                 self._has_draw = False
             else:
-                self.view.draw_node()
+                self._view.draw_node()
         else:
             if not self._has_draw:
-                self.view.draw_node()
+                self._view.draw_node()
                 self._has_draw = True
 
     def hide(self):
