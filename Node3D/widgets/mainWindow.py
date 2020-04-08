@@ -32,7 +32,8 @@ class mainWindow(QMainWindow):
         self.graph.use_OpenGL()
         self.graph.session_changed.connect(self.on_session_changed)
         self.graph.cook_graph.connect(self.cook_graph_nodes)
-        self.graph.node_double_clicked.connect(self.update_data)
+        self.graph.node_double_clicked.connect(self.update_view)
+        self.graph.node_selected.connect(self.update_param_widget)
         self.graph.show_node_info_panel_triggerd.connect(self.show_node_info_panel)
         self.graph.close_node_info_panel_triggered.connect(self.close_node_info_panel)
         self.graph.master = self
@@ -85,11 +86,17 @@ class mainWindow(QMainWindow):
         setup_menu_bar(self.graph, self, menu_bar)
         self.setStatusBar(QtWidgets.QStatusBar())
 
-    def update_data(self, node):
+    def update_view(self, node):
         node = self.graph.get_node_by_id(node.id)
-        self.dataTreeWidget.set_node(node)
         self.glWidget.set_node(node)
-        self.consoleWidget.set_node(node)
+
+    def update_param_widget(self, node):
+        node = self.graph.get_node_by_id(node.id)
+        if self.dataTreeWidget.isVisible():
+            self.dataTreeWidget.set_node(node)
+            print('da')
+        if self.consoleWidget.isVisible():
+            self.consoleWidget.set_node(node)
 
     def add_console(self):
         # background-color: #373737; color: #00BFFF

@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtGui, QtCore
+from .. import QtWidgets, QtCore
 
 
 class text_item(QtWidgets.QGraphicsTextItem):
@@ -7,17 +7,17 @@ class text_item(QtWidgets.QGraphicsTextItem):
     def __init__(self, text, parent=None):
         super(text_item, self).__init__(text, parent)
         self.setFlags(QtWidgets.QGraphicsItem.ItemIsFocusable)
-        self.setTextInteractionFlags(QtGui.Qt.NoTextInteraction)
+        self.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.isEditing = False
 
     def _editingFinished(self):
         if self.isEditing:
-            self.setTextInteractionFlags(QtGui.Qt.NoTextInteraction)
+            self.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
             self.isEditing = False
             self.editingFinished.emit(self.toPlainText())
 
     def mousePressEvent(self, event):
-        self.setTextInteractionFlags(QtGui.Qt.TextEditable)
+        self.setTextInteractionFlags(QtCore.Qt.TextEditable)
         self.isEditing = True
         super(text_item, self).mousePressEvent(event)
 
@@ -26,6 +26,6 @@ class text_item(QtWidgets.QGraphicsTextItem):
         super(text_item, self).focusOutEvent(event)
 
     def keyPressEvent(self, event):
-        if event.key() is QtGui.Qt.Key_Return:
+        if event.key() is QtCore.Qt.Key_Return:
             self._editingFinished()
         super(text_item, self).keyPressEvent(event)

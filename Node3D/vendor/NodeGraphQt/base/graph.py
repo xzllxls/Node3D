@@ -156,6 +156,7 @@ class NodeGraph(QtCore.QObject):
         self._node_factory = NodeFactory()
         self._undo_stack = QtWidgets.QUndoStack(self)
         self._current_node_space = None
+        self._editable = True
 
         tab = QtWidgets.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Tab), self._viewer)
         tab.activated.connect(self._toggle_tab_search)
@@ -192,6 +193,8 @@ class NodeGraph(QtCore.QObject):
             node_id (str): selected node id to insert.
             prev_node_pos (dict): previous node position. {NodeItem: [prev_x, prev_y]}
         """
+        if not self._editable:
+            return
         node = self.get_node_by_id(node_id)
 
         # exclude the BackdropNode
@@ -219,6 +222,8 @@ class NodeGraph(QtCore.QObject):
         """
         toggle the tab search widget.
         """
+        if not self._editable:
+            return
         if self._viewer.underMouse():
             self._viewer.tab_search_set_nodes(self._node_factory.names)
             self._viewer.tab_search_toggle()
@@ -233,6 +238,8 @@ class NodeGraph(QtCore.QObject):
             prop_name (str): node property name.
             prop_value (object): python object.
         """
+        if not self._editable:
+            return
         node = self.get_node_by_id(node_id)
 
         # prevent signals from causing a infinite loop.
@@ -323,6 +330,8 @@ class NodeGraph(QtCore.QObject):
             connected (list[list[widgets.port.PortItem]]):
                 pair list of port view items.
         """
+        if not self._editable:
+            return
         if not (disconnected or connected):
             return
 
@@ -352,7 +361,7 @@ class NodeGraph(QtCore.QObject):
             ports (list[list[widgets.port.PortItem]]):
                 pair list of port connections (in port, out port)
         """
-        if not ports:
+        if not ports or not self._editable:
             return
         ptypes = {IN_PORT: 'inputs', OUT_PORT: 'outputs'}
         self._undo_stack.beginMacro('slice connections')
@@ -413,6 +422,25 @@ class NodeGraph(QtCore.QObject):
         Returns whether the graph can run node automatically.
         """
         return self._auto_update
+
+    @property
+    def editable(self):
+        """
+        Returns whether the graph is editable.
+        """
+        return self._editable
+
+    @editable.setter
+    def editable(self, state):
+        """
+        Set whether the graph is editable.
+
+        Args:
+            state(bool).
+        """
+        self._editable = state
+        self._viewer.editable = state
+        self._viewer.scene().editable = state
 
     def show(self):
         """
@@ -776,6 +804,8 @@ class NodeGraph(QtCore.QObject):
         Returns:
             NodeGraphQt.BaseNode: the created instance of the node.
         """
+        if not self._editable:
+            return
         NodeCls = self._node_factory.create_node_instance(node_type)
         if NodeCls:
             node = NodeCls()
@@ -842,6 +872,8 @@ class NodeGraph(QtCore.QObject):
             pos (list[float]): node x,y position. (optional)
             unique_name (bool): make node name unique
         """
+        if not self._editable:
+            return
         assert isinstance(node, NodeObject), 'node must be a Node instance.'
 
         wid_types = node.model.__dict__.pop('_TEMP_property_widget_types')
@@ -879,6 +911,9 @@ class NodeGraph(QtCore.QObject):
         if node is not None:
             node.enter()
             self._node_space_bar.set_node(node)
+            self.editable = node.is_editable()
+        else:
+            self.editable = True
 
     def get_node_space(self):
         """
@@ -896,6 +931,8 @@ class NodeGraph(QtCore.QObject):
         Args:
             node (NodeGraphQt.BaseNode): node object.
         """
+        if not self._editable:
+            return
         assert isinstance(node, NodeObject), \
             'node must be a instance of a NodeObject.'
         if node is self.root_node():
@@ -916,6 +953,8 @@ class NodeGraph(QtCore.QObject):
         Args:
             nodes (list[NodeGraphQt.BaseNode]): list of node instances.
         """
+        if not self._editable:
+            return
         root_node = self.root_node()
         self.nodes_deleted.emit([n.id for n in nodes])
         self._undo_stack.beginMacro('delete nodes')
@@ -1111,9 +1150,7 @@ class NodeGraph(QtCore.QObject):
             node_dict = n.model.to_dict
 
             if isinstance(n, SubGraph):
-                published = n.has_property('published')
-                if published:
-                    published = n.get_property('published')
+                published = n.get_property('published')
                 if not published:
                     children = n.children()
                     if children:
@@ -1161,6 +1198,9 @@ class NodeGraph(QtCore.QObject):
         Returns:
             list[NodeGraphQt.Nodes]: list of node instances.
         """
+        if not self._editable:
+            return
+
         _temp_auto_update = self._auto_update
         self._auto_update = False
 
@@ -1180,18 +1220,18 @@ class NodeGraph(QtCore.QObject):
                 for prop, val in n_data.get('custom', {}).items():
                     node.model.set_property(prop, val)
                 nodes[n_id] = node
-                self.add_node(node, n_data.get('pos'), unique_name=set_parent)
 
                 if isinstance(node, SubGraph):
-                    if n_data.get('custom', None):
-                        published = n_data['custom'].get('published', False)
-                    else:
-                        published = False
+                    node.create_by_deserialize = True
+                    self.add_node(node, n_data.get('pos'), unique_name=set_parent)
+                    published = n_data['custom'].get('published', False)
                     if not published:
                         sub_graph = n_data.get('sub_graph', None)
                         if sub_graph:
                             children = self._deserialize(sub_graph, relative_pos, pos, False)
                             [child.set_parent(node) for child in children]
+                else:
+                    self.add_node(node, n_data.get('pos'), unique_name=set_parent)
 
                 if n_data.get('dynamic_port', None):
                     node.set_ports({'input_ports': n_data['input_ports'], 'output_ports': n_data['output_ports']})
@@ -1357,6 +1397,8 @@ class NodeGraph(QtCore.QObject):
         """
         Pastes nodes copied from the clipboard.
         """
+        if not self._editable:
+            return
         clipboard = QtWidgets.QApplication.clipboard()
         cb_text = clipboard.text()
         if not cb_text:
@@ -1378,7 +1420,7 @@ class NodeGraph(QtCore.QObject):
         Returns:
             list[NodeGraphQt.BaseNode]: list of duplicated node instances.
         """
-        if not nodes:
+        if not nodes or not self._editable:
             return
 
         self._undo_stack.beginMacro('duplicate nodes')
@@ -1406,7 +1448,7 @@ class NodeGraph(QtCore.QObject):
             nodes (list[NodeGraphQt.BaseNode]): list of node instances.
             mode (bool): (optional) disable state of the nodes.
         """
-        if not nodes:
+        if not nodes or not self._editable:
             return
         if mode is None:
             mode = not nodes[0].disabled()

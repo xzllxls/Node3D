@@ -56,6 +56,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         self.setAcceptDrops(True)
         self.resize(850, 800)
+        self.editable = True
 
         self._scene_range = QtCore.QRectF(0, 0, self.size().width(), self.size().height())
         self._update_scene()
@@ -499,7 +500,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         pos = event.scenePos()
         port_items = self._items_near(pos, PortItem, 5, 5)
-        if port_items:
+        if port_items and self.editable:
             port = port_items[0]
             if not port.multi_connection and port.connected_ports:
                 self._detached_port = port.connected_ports[0]
@@ -524,7 +525,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
                 return
 
         pipe_items = self._items_near(pos, Pipe, 3, 3)
-        if pipe_items:
+        if pipe_items and self.editable:
             if not self.LMB_state:
                 return
             pipe = pipe_items[0]
@@ -673,6 +674,8 @@ class NodeViewer(QtWidgets.QGraphicsView):
         establish a new pipe connection.
         (adds a new pipe item to draw between 2 ports)
         """
+        if not self.editable:
+            return
         pipe = Pipe()
         self.scene().addItem(pipe)
         pipe.set_connections(start_port, end_port)

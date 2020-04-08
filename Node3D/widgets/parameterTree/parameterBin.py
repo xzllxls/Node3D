@@ -73,6 +73,9 @@ class PropWidget(QtWidgets.QWidget):
         self.property_changed.emit(self.__node_id, name, value)
 
     def _read_node(self, node):
+        from ...base.node import AutoNode
+        if not isinstance(node, AutoNode):
+            return
         model = node.model
         graph_model = node.graph.model
 

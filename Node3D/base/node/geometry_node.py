@@ -42,12 +42,15 @@ class GeometryNode(AutoNode):
             return None
 
     def getData(self, port):
+        if self.disabled():
+            return self.getInputGeometry(0, True)
         return self.geo
 
     def when_disabled(self):
-        self.geo = self.getInputGeometry(0, True)
+        pass
 
-    def copy_geo(self, geo):
+    @staticmethod
+    def copy_geo(geo):
         if geo is None:
             return None
         mesh = Mesh(copy.deepcopy(geo.mesh))
