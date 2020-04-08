@@ -7,6 +7,10 @@ from ..vendor.NodeGraphQt.constants import (PIPE_LAYOUT_ANGLE, PIPE_LAYOUT_STRAI
                                             VIEWER_GRID_LINES, VIEWER_GRID_NONE)
 
 
+def allow_edit(graph, node):
+    node.set_property('published', False)
+
+
 def cook_node(graph, node):
     node.update_stream(forceCook=True)
 
@@ -71,7 +75,7 @@ def setup_menu_bar(graph, window, root_menu):
     add_command(file_menu, 'Open...', lambda: utils._open_session(graph), window, QtGui.QKeySequence.Open)
     add_command(file_menu, 'Import...', lambda: utils._import_session(graph), window)
     add_command(file_menu, 'Save...', lambda: utils._save_session(graph), window, QtGui.QKeySequence.Save)
-    add_command(file_menu, 'Save As...', lambda: utils._save_session_as(graph), window, 'Ctrl+Shift+s')
+    add_command(file_menu, 'Save As...', lambda: utils._save_session_as(graph), window, 'Ctrl+Shift+S')
     add_command(file_menu, 'New Session', lambda: utils._new_session(graph), window)
     add_command(file_menu, 'Close', window.close, window)
 
@@ -129,11 +133,13 @@ def setup_menu_bar(graph, window, root_menu):
 
     # Node Menu
     node_menu = graph.context_nodes_menu()
+    node_menu.add_command('Allow Edit', allow_edit, node_class=SubGraphNode)
     node_menu.add_command('Enter Node', enter_node, node_class=SubGraphNode)
     node_menu.add_command('Publish Node', publish_node, node_class=SubGraphNode)
     node_menu.add_command('Print Children', print_children, node_class=SubGraphNode)
 
     # node_menu.add_command('Print Functions', print_functions, node_class=ModuleNode)
+    node_menu.add_command('Draw Geometry', draw_geometry, node_class=SubGraphNode)
     node_menu.add_command('Draw Geometry', draw_geometry, node_class=GeometryNode)
     node_menu.add_command('Cook Node', cook_node, node_class=AutoNode)
     node_menu.add_command('Toggle Auto Cook', toggle_auto_cook, node_class=AutoNode)

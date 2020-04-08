@@ -1,5 +1,5 @@
 from Qt import QtWidgets, QtCore, QtGui, QtCompat
-from ..base.node.geometry_node import GeometryNode
+from ..base.node import GeometryNode, AutoNode
 import os
 
 ATTRIBUTE_DATA_COLOR = {"float": '<font color="yellow">{}</font>({})',
@@ -92,6 +92,8 @@ class NodeInfoPanel(QtWidgets.QWidget):
         # node is the specific type of node, eg: bunny node
         # collect node related info
 
+        if not isinstance(node, AutoNode):
+            return
         nodeName = node.name()
         nodeType = node.type_
         nodeCookTime = node.getCookTime()

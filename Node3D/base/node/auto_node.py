@@ -42,14 +42,14 @@ class AutoNode(BaseNode, QtCore.QObject):
     def __init__(self, defaultInputType=None, defaultOutputType=None):
         super(AutoNode, self).__init__()
         QtCore.QObject.__init__(self)
-        self.needCook = True
-        self._autoCook = True
+        self._needCook = True
         self.matchTypes = [['float', 'int']]
         self.errorColor = (0.784, 0.196, 0.196)
         self.stopCookColor = (0.784, 0.784, 0.784)
         self._cryptoColors = CryptoColors()
 
-        self.defaultColor = self.get_property("color")
+        self.create_property('autoCook', True)
+        self.create_property('default_color', self.get_property('color'))
         self.defaultValue = None
         self.defaultInputType = defaultInputType
         self.defaultOutputType = defaultOutputType
@@ -65,7 +65,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         Returns whether the node can update stream automatically.
         """
 
-        return self._autoCook
+        return self.get_property('autoCook')
 
     @autoCook.setter
     def autoCook(self, mode):
@@ -76,14 +76,14 @@ class AutoNode(BaseNode, QtCore.QObject):
             mode(bool).
         """
 
-        if mode is self._autoCook:
+        if mode is self.autoCook:
             return
 
-        self._autoCook = mode
+        self.model.set_property('autoCook', mode)
         if mode:
-            self.set_property('color', self.defaultColor)
+            self.set_property('color', self.get_property('default_color'))
         else:
-            self.defaultColor = self.get_property("color")
+            self.model.set_property('default_color', self.get_property('color'))
             self.set_property('color', self.stopCookColor)
 
     def has_error(self):
@@ -109,7 +109,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         """
 
         if not forceCook:
-            if not self._autoCook or not self.needCook:
+            if not self.autoCook or not self._needCook:
                 return
             if self.graph is not None and not self.graph.auto_update:
                 return
@@ -159,7 +159,7 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         num = max(0, len(self.input_ports())-1)
         for index, out_port in enumerate(self.output_ports()):
-            self.set_property(out_port.name(), self.getInputData(min(index, num)))
+            self.model.set_property(out_port.name(), self.getInputData(min(index, num)))
 
     def cook(self):
         """
@@ -167,8 +167,8 @@ class AutoNode(BaseNode, QtCore.QObject):
         Most time we need to call this method instead of AutoNode.run'.
         """
 
-        _tmp = self._autoCook
-        self._autoCook = False
+        _tmp = self.autoCook
+        self.model.set_property('autoCook', False)
 
         self._close_message()
 
@@ -179,7 +179,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         except:
             self.error(traceback.format_exc())
 
-        self._autoCook = _tmp
+        self.model.set_property('autoCook', _tmp)
 
         if self._message_level is NODE_ERROR:
             return
@@ -199,13 +199,13 @@ class AutoNode(BaseNode, QtCore.QObject):
         if self.checkPortType(to_port, from_port):
             self.update_stream()
         else:
-            self.needCook = False
+            self._needCook = False
             to_port.disconnect_from(from_port)
         self.input_changed.emit()
 
     def on_input_disconnected(self, to_port, from_port):
-        if not self.needCook:
-            self.needCook = True
+        if not self._needCook:
+            self._needCook = True
             return
         self.update_stream()
         self.input_changed.emit()
@@ -306,13 +306,7 @@ class AutoNode(BaseNode, QtCore.QObject):
 
     def set_disabled(self, mode=False):
         super(AutoNode, self).set_disabled(mode)
-        self._autoCook = not mode
-        if mode:
-            self.when_disabled()
-            if self.graph is None or self.graph.auto_update:
-                self.update_stream()
-        else:
-            self.update_stream()
+        self.update_stream()
 
     def get_message(self):
         """
@@ -326,7 +320,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         """
 
         if self._message_level is not NODE_NONE:
-            self.set_property('color', self.defaultColor)
+            self.set_property('color', self.get_property('default_color'))
             self._message = ""
             self._message_level = NODE_NONE
 
@@ -341,7 +335,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         """
 
         if self._message_level is NODE_NONE:
-            self.defaultColor = self.get_property("color")
+            self.model.set_property('default_color', self.get_property('color'))
         self._message = str(message)
         self._message_level = message_level
         if message_level is NODE_ERROR:
@@ -365,11 +359,6 @@ class AutoNode(BaseNode, QtCore.QObject):
             message(str): the describe of the warning.
         """
         self._set_message(message, NODE_WARNING)
-
-    def update_model(self):
-        if self._message_level is not NODE_NONE:
-            self.set_property('color', self.defaultColor)
-        super(AutoNode, self).update_model()
 
     def set_parameters(self, params, tab='Parameters'):
         """
