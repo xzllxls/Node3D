@@ -28,8 +28,8 @@ class SubGraphNode(AutoNode, SubGraph):
             self.add_int_input('output count', 'output count', 0)
         else:
             self.model.dynamic_port = False
-            self.create_property('input count', 'input count', 0)
-            self.create_property('output count', 'output count', 0)
+            self.create_property('input count', 0)
+            self.create_property('output count', 0)
         self._marked_ports = []
         self.create_property('create_from_select', True)
         self._inited = True
@@ -168,6 +168,7 @@ class SubGraphNode(AutoNode, SubGraph):
             else:
                 node.cook()
             if node.has_error():
+                self.error("{} : {}".format(node.name(), node._message))
                 break
 
     def delete(self):

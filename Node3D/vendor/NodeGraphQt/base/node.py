@@ -184,6 +184,9 @@ class NodeObject(object):
         Args:
             name (str): name for the node.
         """
+        if self._graph is not None and not self._graph.editable:
+            self.view.name = self.model.name
+            return
         self.set_property('name', name)
 
     def color(self):
@@ -459,7 +462,7 @@ class NodeObject(object):
         self._view.delete()
         if self._parent is not None:
             self._parent.remove_child(self)
-        # self.set_parent(None)
+            self._parent = None
 
     def hide(self):
         """
@@ -881,7 +884,7 @@ class BaseNode(NodeObject):
         self._inputs.remove(port)
         self._model.inputs.pop(port.name())
         self._view.delete_input(port.view)
-        del port
+        port.model.node = None
         self.draw()
 
     def delete_output(self, port):
@@ -898,7 +901,7 @@ class BaseNode(NodeObject):
         self._outputs.remove(port)
         self._model.outputs.pop(port.name())
         self._view.delete_output(port.view)
-        del port
+        port.model.node = None
         self.draw()
 
     def set_ports(self, port_data):
@@ -909,8 +912,12 @@ class BaseNode(NodeObject):
             port_data(dict): {'input_ports':[{'name':...,'multi_connection':...,'display_name':...,'data_type':...}, ...],
             "                 'output_ports':[{'name':...,'multi_connection':...,'display_name':...,'data_type':...}, ...]}
         """
-        [self._view.delete_input(port.view) for port in self._inputs]
-        [self._view.delete_output(port.view) for port in self._outputs]
+        for port in self._inputs:
+            self._view.delete_input(port.view)
+            port.model.node = None
+        for port in self._outputs:
+            self._view.delete_output(port.view)
+            port.model.node = None
         self._inputs = []
         self._outputs = []
         self._model.outputs = {}

@@ -4,7 +4,7 @@ import json
 import os
 import re
 import copy
-
+import gc
 from .. import QtCore, QtWidgets, QtGui
 from .commands import (NodeAddedCmd,
                        NodeRemovedCmd,
@@ -570,6 +570,7 @@ class NodeGraph(QtCore.QObject):
             :meth:`NodeGraph.undo_stack()`
         """
         self._undo_stack.clear()
+        gc.collect()
 
     def begin_undo(self, name):
         """
@@ -1124,7 +1125,7 @@ class NodeGraph(QtCore.QObject):
                 continue
             self._undo_stack.push(NodeRemovedCmd(self, n))
         self.set_node_space(root_node)
-        self._undo_stack.clear()
+        self.clear_undo_stack()
         self._model.session = None
         self.session_changed.emit("")
 
@@ -1285,7 +1286,7 @@ class NodeGraph(QtCore.QObject):
         """
         self.clear_session()
         self._deserialize(layout_data)
-        self._undo_stack.clear()
+        self.clear_undo_stack()
 
     def save_session(self, file_path):
         """
@@ -1359,7 +1360,7 @@ class NodeGraph(QtCore.QObject):
             self.set_grid_mode(layout_data['graph'].get('grid_mode', VIEWER_GRID_LINES))
 
         self.set_node_space(self.root_node())
-        self._undo_stack.clear()
+        self.clear_undo_stack()
         self._model.session = file_path
         self.session_changed.emit(file_path)
         self.cook_graph.emit()
