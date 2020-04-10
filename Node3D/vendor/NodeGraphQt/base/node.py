@@ -184,9 +184,6 @@ class NodeObject(object):
         Args:
             name (str): name for the node.
         """
-        if self._graph is not None and not self._graph.editable:
-            self.view.name = self.model.name
-            return
         self.set_property('name', name)
 
     def color(self):
@@ -1089,6 +1086,15 @@ class BaseNode(NodeObject):
         """
         return
 
+    def set_editable(self, state):
+        """
+        Returns whether the node view widgets is editable.
+        Args:
+            state(bool).
+        """
+        [wid.setEnabled(state) for wid in self.view._widgets.values()]
+        self.view.text_item.setEnabled(state)
+
 
 class BackdropNode(NodeObject):
     """
@@ -1106,7 +1112,7 @@ class BackdropNode(NodeObject):
     def __init__(self):
         super(BackdropNode, self).__init__(BackdropNodeItem())
         # override base default color.
-        self.model.color = (5, 129, 138, 255)
+        self.model.color = (0.0196, 0.506, 0.541, 1)
         self.create_property('backdrop_text', '',
                              widget_type=NODE_PROP_QTEXTEDIT, tab='Backdrop')
 

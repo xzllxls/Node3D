@@ -74,8 +74,7 @@ class PropWidget(QtWidgets.QWidget):
 
     def _read_node(self, node):
         from ...base.node import AutoNode
-        if not isinstance(node, AutoNode):
-            return
+
         model = node.model
         graph_model = node.graph.model
 
@@ -91,17 +90,18 @@ class PropWidget(QtWidgets.QWidget):
                 print(e)
                 print(node.name())
 
-        # process parameters
-        params = node.get_params()
-        if params:
-            node.update_parameters()
-            for tab, params in params.items():
-                if tab not in self.get_tab_names():
-                    self.add_tab(tab)
-                prop_window = self.get_tab_window(tab)
-                p = Parameter.create(name='params', type='group', children=params)
-                prop_window.setParameters(p, showTop=False)
-                p.sigTreeStateChanged.connect(self.value_change)
+        if isinstance(node, AutoNode):
+            # process parameters
+            params = node.get_params()
+            if params:
+                node.update_parameters()
+                for tab, params in params.items():
+                    if tab not in self.get_tab_names():
+                        self.add_tab(tab)
+                    prop_window = self.get_tab_window(tab)
+                    p = Parameter.create(name='params', type='group', children=params)
+                    prop_window.setParameters(p, showTop=False)
+                    p.sigTreeStateChanged.connect(self.value_change)
 
         # process NodeGraphQt properties.
         for tab in sorted(tab_mapping.keys()):
@@ -247,11 +247,16 @@ class NodePropBin(PropertiesBinWidget):
 
         if itm_find:
             if itm_find[0].row() == 0:
+                try:
+                    itm_find[0].setEnabled(node.graph.editable)
+                except:
+                    pass
                 return
             self._prop_list.removeRow(itm_find[0].row())
 
         self._prop_list.insertRow(0)
         prop_widget = PropWidget(node=node)
+        prop_widget.setEnabled(node.graph.editable)
         prop_widget.property_changed.connect(self._on_changed)
         prop_widget.property_closed.connect(self._on_closed)
         self._prop_list.setCellWidget(0, 0, prop_widget)
