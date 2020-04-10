@@ -55,7 +55,7 @@ class NodeModel(object):
         self.icon = None
         self.name = 'node'
         self.color = (0.051, 0.0706, 0.09)
-        self.border_color = (74, 84, 85)
+        self.border_color = (0.29, 0.329, 0.333)
         self.text_color = (0.706, 0.706, 0.706)
         self.disabled = False
         self.selected = False

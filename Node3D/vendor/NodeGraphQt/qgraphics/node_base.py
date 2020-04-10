@@ -156,7 +156,7 @@ class NodeItem(AbstractNodeItem):
                              self._width + bg_border,
                              self._height + bg_border)
         radius = 2
-        border_color = QtGui.QColor(*self.border_color)
+        border_color = QtGui.QColor.fromRgbF(*self.border_color)
 
         path = QtGui.QPainterPath()
         path.addRoundedRect(rect, radius, radius)

@@ -712,27 +712,8 @@ class NodeViewer(QtWidgets.QGraphicsView):
     def tab_search_set_nodes(self, nodes):
         self._search_widget.set_nodes(nodes)
 
-    def tab_search_toggle(self):
-        if type(self._search_widget) is TabSearchMenuWidget:
-            return
-
-        pos = self._previous_pos
-        state = not self._search_widget.isVisible()
-        if state:
-            rect = self._search_widget.rect()
-            new_pos = QtCore.QPoint(pos.x() - rect.width() / 2,
-                                    pos.y() - rect.height() / 2)
-            self._search_widget.move(new_pos)
-            self._search_widget.setVisible(state)
-            rect = self.mapToScene(rect).boundingRect()
-            self.scene().update(rect)
-        else:
-            self._search_widget.setVisible(state)
-            self.clearFocus()
-
     def rebuild_tab_search(self):
-        if type(self._search_widget) is TabSearchMenuWidget:
-            self._search_widget.rebuild = True
+        self._search_widget.rebuild = True
 
     def context_menus(self):
         return {'graph': self._ctx_menu,
