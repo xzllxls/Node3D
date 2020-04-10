@@ -226,7 +226,6 @@ class NodeGraph(QtCore.QObject):
             return
         if self._viewer.underMouse():
             self._viewer.tab_search_set_nodes(self._node_factory.names)
-            self._viewer.tab_search_toggle()
 
     def _on_property_bin_changed(self, node_id, prop_name, prop_value):
         """
