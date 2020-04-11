@@ -21,7 +21,7 @@ def print_functions(graph, node):
 
 
 def toggle_auto_cook(graph, node):
-    node.autoCook = not node.autoCook
+    node.auto_cook = not node.auto_cook
 
 
 def show_parameter(graph, node):

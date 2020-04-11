@@ -1,6 +1,5 @@
-from ...vendor.NodeGraphQt import BaseNode, SubGraph, Port, QtCore
-from ...vendor.NodeGraphQt.constants import NODE_PROP
-from . utils import update_node_down_stream
+from ...vendor.NodeGraphQt import BaseNode, Port, QtCore
+from . utils import update_node_down_stream, convert_data_type
 import hashlib
 import copy
 import time
@@ -48,27 +47,27 @@ class AutoNode(BaseNode, QtCore.QObject):
         self.stopCookColor = (0.784, 0.784, 0.784)
         self._cryptoColors = CryptoColors()
 
-        self.create_property('autoCook', True)
+        self.create_property('auto_cook', True)
         self.create_property('default_color', self.get_property('color'))
         self.defaultValue = None
         self.defaultInputType = defaultInputType
         self.defaultOutputType = defaultOutputType
 
-        self._cookTime = 0.0
+        self._cook_time = 0.0
         self._message = ""
         self._message_level = NODE_NONE
         self._params = {}
 
     @property
-    def autoCook(self):
+    def auto_cook(self):
         """
         Returns whether the node can update stream automatically.
         """
 
-        return self.get_property('autoCook')
+        return self.get_property('auto_cook')
 
-    @autoCook.setter
-    def autoCook(self, mode):
+    @auto_cook.setter
+    def auto_cook(self, mode):
         """
         Set whether the node can update stream automatically.
 
@@ -76,15 +75,22 @@ class AutoNode(BaseNode, QtCore.QObject):
             mode(bool).
         """
 
-        if mode is self.autoCook:
+        if mode is self.auto_cook:
             return
 
-        self.model.set_property('autoCook', mode)
+        self.model.set_property('auto_cook', mode)
         if mode:
             self.set_property('color', self.get_property('default_color'))
         else:
             self.model.set_property('default_color', self.get_property('color'))
             self.set_property('color', self.stopCookColor)
+
+    def cook_time(self):
+        """
+        Returns the last cooked time of the node.
+        """
+
+        return self._cook_time
 
     def has_error(self):
         """
@@ -93,29 +99,22 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         return self._message_level is NODE_ERROR
 
-    def getCookTime(self):
-        """
-        Returns the last cooked time of the node.
-        """
-
-        return self._cookTime
-
     def update_stream(self, forceCook=False):
         """
         Update all down stream nodes.
 
         Args:
-            forceCook(bool): if True, it will ignore the autoCook and so on.
+            forceCook(bool): if True, it will ignore the auto_cook and so on.
         """
 
         if not forceCook:
-            if not self.autoCook or not self._needCook:
+            if not self.auto_cook or not self._needCook:
                 return
             if self.graph is not None and not self.graph.auto_update:
                 return
         update_node_down_stream(self)
 
-    def getData(self, port):
+    def get_data(self, port):
         """
         Get node data by port.
         Most time it will called by output nodes of the node.
@@ -129,7 +128,7 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         return self.get_property(port.name())
 
-    def getInputData(self, port):
+    def get_input_data(self, port):
         """
         Get input data by input port name/index/object.
 
@@ -149,7 +148,7 @@ class AutoNode(BaseNode, QtCore.QObject):
             return copy.deepcopy(self.defaultValue)
 
         for from_port in from_ports:
-            data = from_port.node().getData(from_port)
+            data = from_port.node().get_data(from_port)
             return copy.deepcopy(data)
 
     def when_disabled(self):
@@ -159,7 +158,7 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         num = max(0, len(self.input_ports())-1)
         for index, out_port in enumerate(self.output_ports()):
-            self.model.set_property(out_port.name(), self.getInputData(min(index, num)))
+            self.model.set_property(out_port.name(), self.get_input_data(min(index, num)))
 
     def cook(self):
         """
@@ -167,8 +166,8 @@ class AutoNode(BaseNode, QtCore.QObject):
         Most time we need to call this method instead of AutoNode.run'.
         """
 
-        _tmp = self.autoCook
-        self.model.set_property('autoCook', False)
+        _tmp = self.auto_cook
+        self.model.set_property('auto_cook', False)
 
         self._close_message()
 
@@ -179,12 +178,12 @@ class AutoNode(BaseNode, QtCore.QObject):
         except:
             self.error(traceback.format_exc())
 
-        self.model.set_property('autoCook', _tmp)
+        self.model.set_property('auto_cook', _tmp)
 
         if self._message_level is NODE_ERROR:
             return
 
-        self._cookTime = time.time() - _start_time
+        self._cook_time = time.time() - _start_time
 
         self.cooked.emit()
 
@@ -196,7 +195,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         pass
 
     def on_input_connected(self, to_port, from_port):
-        if self.checkPortType(to_port, from_port):
+        if self.check_port_type(to_port, from_port):
             self.update_stream()
         else:
             self._needCook = False
@@ -210,7 +209,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         self.update_stream()
         self.input_changed.emit()
 
-    def checkPortType(self, to_port, from_port):
+    def check_port_type(self, to_port, from_port):
         """
         Check whether the port_type of the to_port and from_type is matched.
 
@@ -269,27 +268,12 @@ class AutoNode(BaseNode, QtCore.QObject):
             conn_type = 'multi' if current_port.multi_connection() else 'single'
             current_port.view.setToolTip('{}: {} ({}) '.format(current_port.name(), data_type, conn_type))
 
-    def create_property(self, name, value, items=None, range=None,
-                        widget_type=NODE_PROP, tab=None, ext=None, funcs=None):
-        super(AutoNode, self).create_property(name, value, items, range, widget_type, tab, ext, funcs)
-
-        if value is not None:
-            self.set_port_type(name, type(value).__name__)
-
     def add_input(self, name='input', data_type='None', multi_input=False, display_name=True,
                   color=None):
         new_port = super(AutoNode, self).add_input(name, multi_input, display_name, color)
         if data_type == 'None' and self.defaultInputType is not None:
             data_type = self.defaultInputType
-        if type(data_type) is not str:
-            if data_type is None:
-                data_type = 'None'
-            else:
-                try:
-                    data_type = data_type.__name__
-                except:
-                    data_type = type(data_type).__name__
-        self.set_port_type(new_port, data_type)
+        self.set_port_type(new_port, convert_data_type(data_type))
 
         return new_port
 
@@ -298,9 +282,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         new_port = super(AutoNode, self).add_output(name, multi_output, display_name, color)
         if data_type == 'None' and self.defaultOutputType is not None:
             data_type = self.defaultOutputType
-        if type(data_type) is not str:
-            data_type = data_type.__name__
-        self.set_port_type(new_port, data_type)
+        self.set_port_type(new_port, convert_data_type(data_type))
 
         return new_port
 

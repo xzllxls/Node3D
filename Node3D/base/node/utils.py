@@ -17,3 +17,15 @@ def update_node_down_stream(node):
 
 def update_nodes(nodes):
     _update_nodes(topological_sort_by_down(all_nodes=nodes))
+
+
+def convert_data_type(data_type):
+    if type(data_type) is not str:
+        if data_type is None:
+            data_type = 'None'
+        else:
+            try:
+                data_type = data_type.__name__
+            except:
+                data_type = type(data_type).__name__
+    return data_type

@@ -43,13 +43,13 @@ class SubGraph(GeometryNode, SubGraphNode):
     def run(self):
         SubGraphNode.run(self)
 
-    def getData(self, port):
-        return SubGraphNode.getData(self, port)
+    def get_data(self, port):
+        return SubGraphNode.get_data(self, port)
 
     @property
     def geo(self):
         if self.output_ports():
-            return self.getData(self.output_ports()[0])
+            return self.get_data(self.output_ports()[0])
         return None
 
 

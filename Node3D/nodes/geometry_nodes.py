@@ -112,7 +112,7 @@ class Subdivide(GeometryNode):
         self.add_input("geo")
 
     def run(self):
-        geo = self.getInputGeometryRef(0)
+        geo = self.get_input_geometry_ref(0)
         if geo is None:
             return
 
@@ -178,7 +178,7 @@ class Scatter(GeometryNode):
         self.add_input("geo")
 
     def run(self):
-        geo = self.getInputGeometryRef(0)
+        geo = self.get_input_geometry_ref(0)
         if geo is None:
             return
 

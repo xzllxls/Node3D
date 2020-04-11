@@ -19,7 +19,7 @@ class ScriptNode(GeometryNode):
     def set_property(self, name, value):
         super(ScriptNode, self).set_property(name, value)
         if name == 'Depend Time':
-            self.setDependTime(value)
+            self.set_depend_time(value)
 
 
 

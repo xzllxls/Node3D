@@ -49,7 +49,7 @@ class Vertex_Wrangle(ScriptNode):
             d = self.geo.getVertexAttribData(attrib_name)
             data.append(d)
         if dt:
-            data.append(self.getFrame())
+            data.append(self.get_frame())
         data.append(self.geo.getNumVertexes())
         return data
 

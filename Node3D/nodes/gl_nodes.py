@@ -36,7 +36,7 @@ class Face(GeometryNode):
 
     def run(self):
         self.geo = Mesh()
-        geos = [port.node().getData(port) for port in self.get_port(0).connected_ports()]
+        geos = [port.node().get_data(port) for port in self.get_port(0).connected_ports()]
         points = []
         pscales = []
         colors = []
@@ -80,7 +80,7 @@ class Merge(GeometryNode):
 
     def run(self):
         self.geo = None
-        geos = [port.node().getData(port) for port in self.get_port(0).connected_ports()]
+        geos = [port.node().get_data(port) for port in self.get_port(0).connected_ports()]
         if len(geos) == 0:
             return
         self.geo = self.copy_geo(geos[0])
@@ -162,7 +162,7 @@ class Merge(GeometryNode):
 
 
 def moveToOrigin(node):
-    in_geo = node.getInputGeometryRef(0)
+    in_geo = node.get_input_geometry_ref(0)
     if in_geo is not None:
         c = in_geo.bbox_center
         node.set_property("Translate", [-c[0], -c[1], -c[2]])

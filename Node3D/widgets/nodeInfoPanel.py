@@ -96,7 +96,7 @@ class NodeInfoPanel(QtWidgets.QWidget):
             return
         nodeName = node.name()
         nodeType = node.type_
-        nodeCookTime = node.getCookTime()
+        nodeCookTime = node.cook_time()
         nodeMessage, nodeMessageLevel = node.get_message()
 
         self.hide_elements()

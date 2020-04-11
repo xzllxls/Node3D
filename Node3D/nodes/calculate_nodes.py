@@ -236,7 +236,7 @@ class Winding_Number(GeometryNode):
     def run(self):
         if not self.copyData():
             return
-        g = self.getInputGeometryRef(1)
+        g = self.get_input_geometry_ref(1)
         if g is None:
             return
 

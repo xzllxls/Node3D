@@ -22,7 +22,7 @@ class Get_Attribute_Data(GeometryNode):
             return None
 
     def run(self):
-        geo = self.getInputGeometryRef(0)
+        geo = self.get_input_geometry_ref(0)
         if geo is None:
             self.set_property('out data', None)
             self.error('Please input a geometry')
@@ -73,7 +73,7 @@ class Set_Attribute_Data(GeometryNode):
         if not self.geo.hasAttribute(attrib_class, attrib_name):
             return
 
-        data = self.getInputData(1)
+        data = self.get_input_data(1)
         if data is None:
             return
 

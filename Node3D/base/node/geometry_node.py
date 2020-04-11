@@ -41,9 +41,9 @@ class GeometryNode(AutoNode):
         else:
             return None
 
-    def getData(self, port):
+    def get_data(self, port):
         if self.disabled():
-            return self.getInputGeometry(0, True)
+            return self.get_input_geometry(0, True)
         return self.geo
 
     def when_disabled(self):
@@ -58,7 +58,7 @@ class GeometryNode(AutoNode):
         mesh._attributeMap = copy.deepcopy(geo.attributeMap)
         return mesh
 
-    def getInputGeometry(self, port, ref=False):
+    def get_input_geometry(self, port, ref=False):
         to_port = self.get_port(port)
 
         if not to_port:
@@ -69,16 +69,16 @@ class GeometryNode(AutoNode):
             return None
 
         for from_port in from_ports:
-            geo = from_port.node().getData(from_port)
+            geo = from_port.node().get_data(from_port)
             if ref:
                 return geo
             else:
                 return self.copy_geo(geo)
 
-    def getInputGeometryRef(self, port):
-        return self.getInputGeometry(port, True)
+    def get_input_geometry_ref(self, port):
+        return self.get_input_geometry(port, True)
 
-    def getInputNode(self, port):
+    def get_input_node(self, port):
         to_port = self.get_port(port)
         if not to_port:
             return None
@@ -91,35 +91,35 @@ class GeometryNode(AutoNode):
             return from_port.node()
 
     def copyData(self, index=0):
-        self.geo = self.getInputGeometry(index)
+        self.geo = self.get_input_geometry(index)
         return self.geo is not None
 
     def set_graph(self, graph):
         super(GeometryNode, self).set_graph(graph)
         if self.get_property('Depend Time'):
-            self.graph.master.timeline.frameChanged.connect(self.updateFrame)
+            self.graph.master.timeline.frameChanged.connect(self.update_frame)
 
-    def getFrame(self):
+    def get_frame(self):
         return self.graph.master.timeline.getFrame()
 
-    def getTime(self):
+    def get_time(self):
         return self.graph.master.timeline.getTime()
 
-    def getFps(self):
+    def get_fps(self):
         return self.graph.master.timeline.fps
 
-    def updateFrame(self):
+    def update_frame(self):
         self.cook()
 
-    def setDependTime(self, state):
+    def set_depend_time(self, state):
         if not self.has_property('Depend Time'):
             self.create_property('Depend Time', state)
 
         if self.graph is not None:
             if state:
-                self.graph.master.timeline.frameChanged.connect(self.updateFrame)
+                self.graph.master.timeline.frameChanged.connect(self.update_frame)
             else:
                 try:
-                    self.graph.master.timeline.frameChanged.disconnect(self.updateFrame)
+                    self.graph.master.timeline.frameChanged.disconnect(self.update_frame)
                 except:
                     pass

@@ -49,12 +49,12 @@ class ModuleNode(AutoNode):
         self.add_combo_menu('funcs', 'Functions', items=list(self.module_functions.keys()))
 
         # switch math function type
-        self.view.widgets['funcs'].value_changed.connect(self.addFunction)
+        self.view.widgets['funcs'].value_changed.connect(self.add_function)
         self.add_output('output')
         self.create_property('output', None)
 
         self.view.widgets['funcs'].widget.setCurrentIndex(0)
-        self.addFunction(None, self.view.widgets['funcs'].widget.currentText())
+        self.add_function(None, self.view.widgets['funcs'].widget.currentText())
 
     def is_function(self,obj):
         if inspect.isfunction(self.func) or inspect.isbuiltin(self.func):
@@ -64,7 +64,7 @@ class ModuleNode(AutoNode):
 
         return False
 
-    def addFunction(self, prop, func):
+    def add_function(self, prop, func):
         """
         Create inputs based on functions arguments.
         """
@@ -115,7 +115,7 @@ class ModuleNode(AutoNode):
         for port in self.input_ports():
             if not port.visible():
                 continue
-            data = self.getInputData(port)
+            data = self.get_input_data(port)
             if data is not None:
                 args.append(data)
             elif self.defaultValue is not None:

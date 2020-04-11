@@ -57,7 +57,7 @@ class DataViewerNode(AutoNode):
         self.create_property("out", None)
 
     def run(self):
-        value = self.getInputData(0)
+        value = self.get_input_data(0)
         if type(value) == float:
             self.set_property('data', "{:.10f}".format(value))
         else:
@@ -97,7 +97,7 @@ class Sin(AutoNode):
         self.add_input('data', np.ndarray)
 
     def run(self):
-        data = self.getInputData(0)
+        data = self.get_input_data(0)
         if data is None:
             self.error("No enough input")
             return
@@ -116,8 +116,8 @@ class Add(AutoNode):
         self.add_input('B', None)
 
     def run(self):
-        a = self.getInputData(0)
-        b = self.getInputData(1)
+        a = self.get_input_data(0)
+        b = self.get_input_data(1)
 
         if a is None or b is None:
             self.error("No enough input")
@@ -137,8 +137,8 @@ class Subtract(AutoNode):
         self.add_input('B', None)
 
     def run(self):
-        a = self.getInputData(0)
-        b = self.getInputData(1)
+        a = self.get_input_data(0)
+        b = self.get_input_data(1)
 
         if a is None or b is None:
             self.error("No enough input")
@@ -158,8 +158,8 @@ class Multiply(AutoNode):
         self.add_input('B', None)
 
     def run(self):
-        a = self.getInputData(0)
-        b = self.getInputData(1)
+        a = self.get_input_data(0)
+        b = self.get_input_data(1)
 
         if a is None or b is None:
             self.error("No enough input")
@@ -179,8 +179,8 @@ class Divide(AutoNode):
         self.add_input('B', None)
 
     def run(self):
-        a = self.getInputData(0)
-        b = self.getInputData(1)
+        a = self.get_input_data(0)
+        b = self.get_input_data(1)
 
         if a is None or b is None:
             self.error("No enough input")
@@ -199,7 +199,7 @@ class Random(AutoNode):
         self.add_input('data', np.ndarray)
 
     def run(self):
-        a = self.getInputData(0)
+        a = self.get_input_data(0)
         if a is None:
             self.error("No enough input")
             return
@@ -230,7 +230,7 @@ class VectorSplit(AutoNode):
         self.map = {0: "x", 1: "y", 2: "z", 3: "w"}
 
     def run(self):
-        value = self.getInputData(0)
+        value = self.get_input_data(0)
         if type(value) is not list:
             self.error("Input data not list")
         for index, data in enumerate(value):
@@ -261,7 +261,7 @@ class VectorMaker(AutoNode):
     def run(self):
         result = []
         for i in range(4):
-            data = self.getInputData(i)
+            data = self.get_input_data(i)
             if data is not None:
                 result.append(data)
 
@@ -290,15 +290,15 @@ class DataConvect(AutoNode):
         method = self.get_property("method")
         try:
             if method == "all to int":
-                data = int(float(self.getInputData(0)))
+                data = int(float(self.get_input_data(0)))
             elif method == "all to float":
-                data = float(self.getInputData(0))
+                data = float(self.get_input_data(0))
             elif method == "all to string":
-                data = str(self.getInputData(0))
+                data = str(self.get_input_data(0))
             elif method == "eval string":
-                data = eval(self.getInputData(0))
+                data = eval(self.get_input_data(0))
             elif method == "all to list":
-                data = list(self.getInputData(0))
+                data = list(self.get_input_data(0))
             self.set_property("out", data)
         except Exception as error:
             self.error(error)
@@ -400,10 +400,10 @@ class IfNode(AutoNode):
         self.create_property('out', None)
 
     def run(self):
-        if self.getInputData(self.condition):
-            result = self.getInputData(self._then)
+        if self.get_input_data(self.condition):
+            result = self.get_input_data(self._then)
         else:
-            result = self.getInputData(self._else)
+            result = self.get_input_data(self._else)
 
         self.set_property('out', result)
 
@@ -449,8 +449,8 @@ class BooleanNode(AutoNode):
         self.cook()
 
     def run(self):
-        a = self.getInputData(self.a)
-        b = self.getInputData(self.b)
+        a = self.get_input_data(self.a)
+        b = self.get_input_data(self.b)
 
         if a is None or (b is None and 'b' in self.func):
             self.error("No inputs!")

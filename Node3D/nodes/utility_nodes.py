@@ -15,7 +15,7 @@ class ConvexHull(GeometryNode):
 
     def run(self):
         self.geo = None
-        geo = self.getInputGeometryRef(0)
+        geo = self.get_input_geometry_ref(0)
         if geo is None:
             return
 
