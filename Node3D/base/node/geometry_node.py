@@ -15,8 +15,6 @@ class GeometryNode(AutoNode):
         if pre_generate:
             self.add_output("out")
             self.create_property("out", None)
-        # else:
-        #     self.geo = None
 
     @property
     def geo(self):
@@ -27,19 +25,14 @@ class GeometryNode(AutoNode):
         if self._geo is not None:
             self._geo.clear()
             del self._geo
-            self._geo = None
             gc.collect()
         self._geo = geo
 
     def get_port(self, port):
-        if type(port) is int:
-            return self.input(port)
-        elif type(port) is str:
-            return self.inputs()[port]
-        elif type(port) is Port:
-            return port
+        if type(port) is not Port:
+            return self.get_input(port)
         else:
-            return None
+            return port
 
     def get_data(self, port):
         if self.disabled():

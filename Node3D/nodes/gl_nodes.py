@@ -65,11 +65,13 @@ class Merge(GeometryNode):
 
     def __init__(self):
         super(Merge, self).__init__()
-        self.add_input("geos", GeometryNode, multi_input=True)
+        self.set_dynamic_port(True)
+        self.add_input("geo0", multi_input=True)
         self.create_property(
             "Recompute Normals", True, widget_type=NODE_PROP_QCHECKBOX)
 
-    def createAttributeData(self, count, attribType, defaultValue, array_mode):
+    @staticmethod
+    def createAttributeData(count, attribType, defaultValue, array_mode):
         shape = DATA_SHAPE_MAP.get(attribType, None)
         if attribType == 'list':
             shape = [0, len(defaultValue)]
@@ -80,7 +82,16 @@ class Merge(GeometryNode):
 
     def run(self):
         self.geo = None
-        geos = [port.node().get_data(port) for port in self.get_port(0).connected_ports()]
+        idx = 0
+        geos = []
+        for port in self.input_ports():
+            geo = self.get_input_geometry_ref(port)
+            if geo:
+                geos.append(geo)
+                idx += 1
+        if idx == len(self.input_ports()):
+            self.add_input('geo'+str(idx))
+
         if len(geos) == 0:
             return
         self.geo = self.copy_geo(geos[0])

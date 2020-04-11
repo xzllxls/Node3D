@@ -15,7 +15,7 @@ class Get_Attribute_Data(GeometryNode):
                               'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'}])
 
-    def getData(self, port):
+    def get_data(self, port):
         try:
             return self.get_property('out data')
         except:
