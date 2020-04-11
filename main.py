@@ -11,7 +11,7 @@ import importlib
 import qdarkstyle
 
 
-def run(nodes=[]):
+def run(nodes=None):
     app = QtWidgets.QApplication([])
     app.setFont(QtGui.QFont("Consolas", 9))
     win = mainWindow()

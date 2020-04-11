@@ -46,23 +46,20 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
         self.opts = {
             'viewport': None,
             'drawGrid': True,
-            'drawPoints' : False,
-            'drawFaces' : True,
-            'drawEdges': False
+            'drawPoints': False,
+            'drawFaces': True,
+            'drawEdges': False,
+            'bgcolor': (0.3, 0.3, 0.3, 1),
         }
-        self.setBackgroundColor('k')
+        # self.setBackgroundColor('k')
         self.items = []
-        self.MeshItems = []
+        self.meshItems = []
         self.noRepeatKeys = [QtCore.Qt.Key_Right, QtCore.Qt.Key_Left, QtCore.Qt.Key_Up, QtCore.Qt.Key_Down,
                              QtCore.Qt.Key_PageUp, QtCore.Qt.Key_PageDown]
         self.keysPressed = {}
 
         self.makeCurrent()
         self.cam = camera()
-
-        self.grid = gl.GLGridItem()
-        self.grid.scale(2, 2, 2)
-        self.addItem(self.grid)
 
         self._canShowMenu = True
         self.setup_menus()
@@ -101,7 +98,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
             except:
                 checkOpenGLVersion('Error while adding item %s to GLViewWidget.' % str(item))
         if MeshItem:
-            self.MeshItems.append(item)
+            self.meshItems.append(item)
         else:
             self.items.append(item)
         item._setView(self)
@@ -110,9 +107,9 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
     def addMeshItem(self, item):
         self.addItem(item, True)
 
-    def removeItem(self, item, MeshItem=False):
-        if MeshItem:
-            self.MeshItems.remove(item)
+    def removeItem(self, item, meshItem=False):
+        if meshItem:
+            self.meshItems.remove(item)
         else:
             self.items.remove(item)
         item._setView(None)
@@ -327,7 +324,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
 
     def drawItemTree(self, item=None):
         if item is None:
-            items = self.MeshItems + self.items
+            items = self.meshItems + self.items
             # items.sort(key=lambda a: a.depthValue())
             for i in items:
                 if not i.visible():
@@ -362,7 +359,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
         ray_world = self.viewMatrix().inverted().transformVector(ray_eye, fill=0.0).normalized()
 
         # calculate hit
-        meshes = [m for m in self.MeshItems if AABB_Hit(m.bbox_min, m.bbox_max, self.cam.getPos(), ray_world)]
+        meshes = [m for m in self.meshItems if AABB_Hit(m.bbox_min, m.bbox_max, self.cam.getPos(), ray_world)]
 
         if meshes:
             return meshes[0]
@@ -373,7 +370,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
         self.mousePos = ev.pos()
         if ev.button() == QtCore.Qt.LeftButton:
             self.cam.setTarget()
-            [item.setSelected(False) for item in self.MeshItems]
+            [item.setSelected(False) for item in self.meshItems]
             y = self.height() - ev.pos().y()
             item = self.itemsAt(x=ev.pos().x(), y=y)
             if item:
@@ -434,5 +431,6 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
     def setCameraPosition(self, pos):
         self.cam.reset(pos)
 
-    def clear_MeshItems(self):
-        [self.removeMeshItem(i) for i in self.MeshItems]
+    def clear_meshItems(self):
+        self.meshItems.clear()
+        # [self.removeMeshItem(i) for i in self.meshItems[:]]

@@ -1,4 +1,4 @@
-from ..base.data import vector, quaternion, matrix4x4
+from ..base.data import vector, quaternion, matrix4x4, matrix3x3
 
 CAMERA_TRANSLATION_FACTOR = 0.01
 
@@ -34,7 +34,7 @@ class camera(object):
         self.move((side * -dx + up * dy) * 0.1)
 
     def rotate(self, dx, dy):
-        up = self.getUp()
+        up = vector(0, 1, 0)
         side = self.getSide()
         target = self.getTarget()
 
@@ -51,12 +51,6 @@ class camera(object):
         quat = quaternion.from_axi_angle(axi, ang*0.01)
         self.rot(quat)
         self.move(target)
-
-        fw = self.getForward()
-        sd = fw.cross(self.getUp())
-        sd.setY(0)
-        up = sd.cross(fw).normalized()
-        self.upPos = self.pos + up
 
     def zoom(self, delta):
         dis = self.getDistance()

@@ -221,8 +221,8 @@ class matrix4x4(object):
         else:
             self.setToIdentity()
 
-    def __getitem__(self, i, j):
-        return self._data[i, j]
+    def __getitem__(self, i):
+        return self._data[i]
 
     def __setitem__(self, i, j, x):
         self._data[i, j] = x

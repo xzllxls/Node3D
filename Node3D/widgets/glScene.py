@@ -10,9 +10,17 @@ class glScene(GLViewWidget):
         self.init_scene()
 
     def init_scene(self):
-        self.grid = gl.GLGridItem()
-        self.grid.scale(2, 2, 2)
-        self.addItem(self.grid)
+
+        grid = gl.GLGridItem()
+        grid.setSize(50, 50, 50)
+        grid.setSpacing(5, 5, 5)
+        grid.setColor((1, 1, 1, 0.5))
+        grid.draw_axis = True
+        self.addItem(grid)
+        grid = gl.GLGridItem()
+        grid.setSize(50, 50, 50)
+        grid.setColor((1, 1, 1, 0.35))
+        self.addItem(grid)
 
     def set_node(self, node):
         if not isinstance(node, GeometryNode):
@@ -29,7 +37,7 @@ class glScene(GLViewWidget):
         self.node.cooked.connect(self.update_data)
 
     def update_data(self):
-        self.clear_MeshItems()
+        self.clear_meshItems()
         if self.node and self.node.geo:
             self.addMeshItem(self.node.geo)
         self.update()
