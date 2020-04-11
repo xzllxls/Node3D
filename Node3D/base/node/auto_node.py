@@ -88,14 +88,14 @@ class AutoNode(BaseNode, QtCore.QObject):
 
     def has_error(self):
         """
-        Returns whether the node has error.
+        Returns whether the node has errors.
         """
 
         return self._message_level is NODE_ERROR
 
     def getCookTime(self):
         """
-        Get the last cooked time of the node.
+        Returns the last cooked time of the node.
         """
 
         return self._cookTime

@@ -809,7 +809,10 @@ def minimize_node_ref_count(node):
         from .node import BaseNode, SubGraph
         node._parent = None
         if isinstance(node, BaseNode):
-            [wid.deleteLater() for wid in node.view._widgets.values()]
+            try:
+                [wid.deleteLater() for wid in node.view._widgets.values()]
+            except:
+                pass
             node.view._widgets.clear()
             for port in node._inputs:
                 port.model.node = None

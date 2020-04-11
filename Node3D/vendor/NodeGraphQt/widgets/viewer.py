@@ -365,6 +365,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         if self.LMB_state and self._rubber_band.isActive:
             rect = QtCore.QRect(self._origin_pos, event.pos()).normalized()
+            # if the rubber band is too small, do not show it.
             if max(rect.width(), rect.height()) > 5:
                 if not self._rubber_band.isVisible():
                     self._rubber_band.show()

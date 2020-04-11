@@ -49,9 +49,9 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
             'drawPoints': False,
             'drawFaces': True,
             'drawEdges': False,
-            'bgcolor': (0.3, 0.3, 0.3, 1),
+            'bgColor': (0.3, 0.3, 0.3, 1),
         }
-        # self.setBackgroundColor('k')
+
         self.items = []
         self.meshItems = []
         self.noRepeatKeys = [QtCore.Qt.Key_Right, QtCore.Qt.Key_Left, QtCore.Qt.Key_Up, QtCore.Qt.Key_Down,
@@ -136,7 +136,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
         Set the background color of the widget. Accepts the same arguments as
         pg.mkColor() and pg.glColor().
         """
-        self.opts['bgcolor'] = fn.glColor(*args, **kwds)
+        self.opts['bgColor'] = fn.glColor(*args, **kwds)
         self.update()
 
     def getViewport(self):
@@ -317,8 +317,8 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
             glViewport(*viewport)
         self.setProjection(region=region)
         self.setModelView()
-        bgcolor = self.opts['bgcolor']
-        glClearColor(*bgcolor)
+        bgColor = self.opts['bgColor']
+        glClearColor(*bgColor)
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT)
         self.drawItemTree()
 
@@ -433,4 +433,3 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
 
     def clear_meshItems(self):
         self.meshItems.clear()
-        # [self.removeMeshItem(i) for i in self.meshItems[:]]
