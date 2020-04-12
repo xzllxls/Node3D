@@ -11,8 +11,11 @@ def _update_nodes(nodes):
             break
 
 
-def update_node_down_stream(node):
-    _update_nodes(topological_sort_by_down(start_nodes=[node]))
+def update_node_down_stream(node=None, nodes=None):
+    if node is not None:
+        _update_nodes(topological_sort_by_down(start_nodes=[node]))
+    elif nodes is not None:
+        _update_nodes(topological_sort_by_down(start_nodes=nodes))
 
 
 def update_nodes(nodes):

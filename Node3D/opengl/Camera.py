@@ -1,4 +1,4 @@
-from ..base.data import vector, quaternion, matrix4x4, matrix3x3
+from ..base.data import vector, quaternion, matrix4x4
 
 CAMERA_TRANSLATION_FACTOR = 0.01
 
@@ -14,14 +14,14 @@ class camera(object):
         self.reset()
 
     def getFarClip(self):
-        return self.getDistance()*0.001
+        return self.getDistance() * 0.001
 
     def getNearClip(self):
-        return self.getDistance()*1000
+        return self.getDistance() * 1000
 
     def getClip(self):
         d = self.getDistance()
-        return d*0.001, d*1000
+        return d * 0.001, d * 1000
 
     def pan(self, dx, dy):
         dis = self.getDistance()
@@ -48,7 +48,7 @@ class camera(object):
 
         self.move(-target)
 
-        quat = quaternion.from_axi_angle(axi, ang*0.01)
+        quat = quaternion.from_axi_angle(axi, ang * 0.01)
         self.rot(quat)
         self.move(target)
 
@@ -57,7 +57,7 @@ class camera(object):
         if dis == 0.0:
             dis = 0.01
         delta *= dis * CAMERA_TRANSLATION_FACTOR
-        self.move((self.target-self.pos).normalized() * delta * 0.05)
+        self.move((self.target - self.pos).normalized() * delta * 0.05)
 
     def move(self, delta):
         self.pos += delta

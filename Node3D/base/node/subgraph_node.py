@@ -1,6 +1,7 @@
 from .auto_node import AutoNode
 from ...vendor.NodeGraphQt import SubGraph, topological_sort_by_down, BackdropNode
 import json
+from .utils import update_node_down_stream
 
 
 class SubGraphNode(AutoNode, SubGraph):
@@ -133,9 +134,26 @@ class SubGraphNode(AutoNode, SubGraph):
             if node in self.sub_graph_output_nodes:
                 self.sub_graph_output_nodes.remove(node)
 
+    def when_disabled(self):
+        pass
+
+    def get_input_data_ref(self):
+        """
+        Returns the data of the first input port connected node.
+        """
+        to_port = self.get_input(0)
+
+        if not to_port:
+            return self.defaultValue
+
+        from_ports = to_port.connected_ports()
+        if not from_ports:
+            return None
+        return from_ports[0].node().get_data(from_ports[0])
+
     def get_data(self, port):
         if self.disabled():
-            return super(SubGraphNode, self).get_data(port)
+            return self.get_input_data_ref()
 
         index = int(port.name()[-1])
         for node in self.sub_graph_output_nodes:
@@ -411,6 +429,24 @@ class SubGraphOutputNode(AutoNode):
 
         for from_port in from_ports:
             return from_port.node().get_data(from_port)
+
+    def run(self):
+        parent = self.parent()
+        if parent is None:
+            return
+        if not parent.auto_cook:
+            return
+
+        port = parent.get_output(self.get_property('output index'))
+        if not port:
+            return
+
+        to_ports = port.connected_ports()
+        if not to_ports:
+            return
+
+        nodes = [p.node() for p in to_ports]
+        update_node_down_stream(nodes=nodes)
 
 
 class RootNode(SubGraphNode):

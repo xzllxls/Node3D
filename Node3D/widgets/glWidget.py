@@ -425,7 +425,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
 
     def resetCamera(self):
         self.cam.reset()
-        self.update
+        self.update()
         self.paintGL()
 
     def setCameraPosition(self, pos):
