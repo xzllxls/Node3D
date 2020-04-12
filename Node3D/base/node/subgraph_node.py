@@ -446,7 +446,7 @@ class SubGraphOutputNode(AutoNode):
             return
 
         nodes = [p.node() for p in to_ports]
-        update_node_down_stream(nodes=nodes)
+        update_node_down_stream(nodes)
 
 
 class RootNode(SubGraphNode):
@@ -468,3 +468,6 @@ class RootNode(SubGraphNode):
     def set_graph(self, graph):
         super(RootNode, self).set_graph(graph)
         graph.set_node_space(self)
+
+    def has_error(self):
+        return False

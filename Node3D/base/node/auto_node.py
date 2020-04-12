@@ -290,15 +290,6 @@ class AutoNode(BaseNode, QtCore.QObject):
         super(AutoNode, self).set_disabled(mode)
         self.update_stream()
 
-    def set_dynamic_port(self, state):
-        """
-        Set whether the node's port will be deleted/added after node created.
-
-        Args:
-            state(bool).
-        """
-        self.model.dynamic_port = state
-
     def get_message(self):
         """
         Returns the node warning/error message.
