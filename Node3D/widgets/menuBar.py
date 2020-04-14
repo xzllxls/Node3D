@@ -54,6 +54,15 @@ def publish_node(graph, node):
     wid.show()
 
 
+def draw_node_geometry(graph):
+    nodes = graph.selected_nodes()
+    if not nodes:
+        return
+    node = nodes[0]
+    if isinstance(node, GeometryNode):
+        graph.master.glWidget.set_node(node)
+
+
 def add_command(menu, name, func=None, parent=None, shortcut=None):
     action = QtWidgets.QAction(name, parent)
     if shortcut:
@@ -92,6 +101,7 @@ def setup_menu_bar(graph, window, root_menu):
 
     edit_menu.addSeparator()
     add_command(edit_menu, 'Clear Undo History', lambda: utils._clear_undo(graph), view)
+    add_command(edit_menu, 'Show Undo View', lambda: utils._show_undo_view(graph), view)
     edit_menu.addSeparator()
 
     add_command(edit_menu, 'Copy', lambda: utils._copy_nodes(graph), view, QtGui.QKeySequence.Copy)
@@ -130,6 +140,7 @@ def setup_menu_bar(graph, window, root_menu):
     add_command(pipe_menu, 'Lines', lambda: graph.set_grid_mode(VIEWER_GRID_LINES), view)
     add_command(pipe_menu, 'Dots', lambda: graph.set_grid_mode(VIEWER_GRID_DOTS), view)
     graph_menu.addSeparator()
+    add_command(graph_menu, 'Draw Node Geometry', lambda: draw_node_geometry(graph), view, 'S')
 
     # Node Menu
     node_menu = graph.context_nodes_menu()

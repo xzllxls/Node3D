@@ -151,6 +151,7 @@ class NodeGraph(QtCore.QObject):
         super(NodeGraph, self).__init__(parent)
         self.setObjectName('NodeGraphQt')
         self._widget = None
+        self._undo_view = None
         self._model = NodeGraphModel()
         self._viewer = NodeViewer()
         self._node_factory = NodeFactory()
@@ -414,6 +415,20 @@ class NodeGraph(QtCore.QObject):
                 layout.addWidget(self._node_space_bar)
             layout.addWidget(self._viewer)
         return self._widget
+
+    @property
+    def undo_view(self):
+        """
+        Returns node graph undo view.
+
+        Returns:
+            PySide2.QtWidgets.QUndoView: node graph undo view.
+        """
+        if self._undo_view is None:
+            self._undo_view = QtWidgets.QUndoView(self._undo_stack)
+            self._undo_view.setWindowTitle("Undo View")
+            self._undo_view.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        return self._undo_view
 
     @property
     def auto_update(self):
@@ -1390,9 +1405,11 @@ class NodeGraph(QtCore.QObject):
         Args:
             nodes (list[NodeGraphQt.BaseNode]): list of nodes (default: selected nodes).
         """
+        self._undo_stack.beginMacro('cut nodes')
         nodes = nodes or self.selected_nodes()
         self.copy_nodes(nodes)
         self.delete_nodes(nodes)
+        self._undo_stack.endMacro()
 
     def paste_nodes(self):
         """

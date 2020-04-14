@@ -38,8 +38,10 @@ class glScene(GLViewWidget):
 
     def update_data(self):
         self.clear_meshItems()
-        if self.node and self.node.geo:
-            self.addMeshItem(self.node.geo)
+        if self.node:
+            geo = self.node.get_data(self.node.get_output(0))
+            if geo:
+                self.addMeshItem(geo)
         self.update()
 
     def evalKeyState(self):

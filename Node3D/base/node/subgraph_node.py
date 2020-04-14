@@ -134,9 +134,6 @@ class SubGraphNode(AutoNode, SubGraph):
             if node in self.sub_graph_output_nodes:
                 self.sub_graph_output_nodes.remove(node)
 
-    def when_disabled(self):
-        pass
-
     def get_input_data_ref(self):
         """
         Returns the data of the first input port connected node.
@@ -183,9 +180,8 @@ class SubGraphNode(AutoNode, SubGraph):
 
         for node in nodes:
             if node.disabled():
-                node.when_disabled()
-            else:
-                node.cook()
+                continue
+            node.cook()
             if node.has_error():
                 self.error("{} : {}".format(node.name(), node._message))
                 break

@@ -39,9 +39,6 @@ class GeometryNode(AutoNode):
             return self.get_input_geometry(0, True)
         return self.geo
 
-    def when_disabled(self):
-        pass
-
     @staticmethod
     def copy_geo(geo):
         if geo is None:
