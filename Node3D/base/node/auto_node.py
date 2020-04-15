@@ -1,4 +1,4 @@
-from ...vendor.NodeGraphQt import BaseNode, Port, QtCore
+from ...vendor.NodeGraphQt import BaseNode, Port, QtCore, QtWidgets, QtGui
 from . utils import update_node_down_stream, convert_data_type
 import hashlib
 import copy
@@ -48,7 +48,6 @@ class AutoNode(BaseNode, QtCore.QObject):
         self._cryptoColors = CryptoColors()
 
         self.create_property('auto_cook', True)
-        self.create_property('default_color', self.get_property('color'))
         self.defaultValue = None
         self.defaultInputType = defaultInputType
         self.defaultOutputType = defaultOutputType
@@ -57,6 +56,28 @@ class AutoNode(BaseNode, QtCore.QObject):
         self._message = ""
         self._message_level = NODE_NONE
         self._params = {}
+
+        self.view.setGraphicsEffect(self.shadow_effect)
+
+    @property
+    def shadow_effect(self):
+        """
+        Returns QGraphicsDropShadowEffect.
+        """
+        shadow_effect = QtWidgets.QGraphicsDropShadowEffect()
+        shadow_effect.setOffset(7)
+        shadow_effect.setColor(QtGui.QColor.fromRgbF(0.22, 0.22, 0.22, 0.4))
+        shadow_effect.setBlurRadius(2)
+        return shadow_effect
+
+    @property
+    def color_effect(self):
+        """
+        Returns QGraphicsColorizeEffect.
+        """
+        color_effect = QtWidgets.QGraphicsColorizeEffect()
+        color_effect.setStrength(0.7)
+        return color_effect
 
     @property
     def auto_cook(self):
@@ -80,10 +101,11 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         self.model.set_property('auto_cook', mode)
         if mode:
-            self.set_property('color', self.get_property('default_color'))
+            self.view.setGraphicsEffect(self.shadow_effect)
         else:
-            self.model.set_property('default_color', self.get_property('color'))
-            self.set_property('color', self.stopCookColor)
+            effect = self.color_effect
+            effect.setColor(QtGui.QColor.fromRgbF(*self.stopCookColor))
+            self.view.setGraphicsEffect(effect)
 
     def cook_time(self):
         """
@@ -301,7 +323,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         """
 
         if self._message_level is not NODE_NONE:
-            self.set_property('color', self.get_property('default_color'))
+            self.view.setGraphicsEffect(self.shadow_effect)
             self._message = ""
             self._message_level = NODE_NONE
 
@@ -315,12 +337,12 @@ class AutoNode(BaseNode, QtCore.QObject):
             message_level(int): NODE_NONE/NODE_WARNING/NODE_ERROR.
         """
 
-        if self._message_level is NODE_NONE:
-            self.model.set_property('default_color', self.get_property('color'))
         self._message = str(message)
         self._message_level = message_level
         if message_level is NODE_ERROR:
-            self.set_property('color', self.errorColor)
+            effect = self.color_effect
+            effect.setColor(QtGui.QColor.fromRgbF(*self.errorColor))
+            self.view.setGraphicsEffect(effect)
 
     def error(self, message):
         """
