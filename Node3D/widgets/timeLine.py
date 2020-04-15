@@ -117,8 +117,8 @@ class TimeLine(QtWidgets.QWidget):
         self.timeline.setDirection(QtCore.QTimeLine.Backward)
 
     def updateTime(self):
-        delat = float(self.timeline.endFrame() - self.timeline.startFrame())
-        time = delat / self.fps
+        delta = float(self.timeline.endFrame() - self.timeline.startFrame())
+        time = delta / self.fps
         self.timeline.setDuration(int(time * 1000))
 
     def setFps(self, fps):

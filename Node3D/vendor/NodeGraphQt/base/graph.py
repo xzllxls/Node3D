@@ -147,6 +147,9 @@ class NodeGraph(QtCore.QObject):
     """
     Signal triggered when all graph nodes need to be cooked.
     """
+
+    graph_instance = None
+
     def __init__(self, parent=None):
         super(NodeGraph, self).__init__(parent)
         self.setObjectName('NodeGraphQt')
@@ -166,6 +169,7 @@ class NodeGraph(QtCore.QObject):
         self._wire_signals()
         self._node_space_bar = node_space_bar(self)
         self._auto_update = True
+        NodeGraph.graph_instance = self
 
     def __repr__(self):
         return '<{} object at {}>'.format(self.__class__.__name__, hex(id(self)))
