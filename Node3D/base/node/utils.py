@@ -1,9 +1,10 @@
-from ...vendor.NodeGraphQt import topological_sort_by_down, QtCore, NodeGraph
+from ...vendor.NodeGraphQt import topological_sort_by_down, QtCore
+from threading import Thread
 
 
-class CookThread(QtCore.QThread):
-    def __init__(self, parent):
-        super(CookThread, self).__init__(parent)
+class CookThread(Thread):
+    def __init__(self):
+        super(CookThread, self).__init__()
         self.start_nodes = None
         self.all_nodes = None
 
@@ -25,14 +26,14 @@ def update_node_down_stream(nodes):
     if not isinstance(nodes, list):
         nodes = [nodes]
     _update_nodes(topological_sort_by_down(start_nodes=nodes))
-    # thread = CookThread(NodeGraph.graph_instance.widget)
+    # thread = CookThread()
     # thread.start_nodes = nodes
     # thread.start()
 
 
 def update_nodes(nodes):
     _update_nodes(topological_sort_by_down(all_nodes=nodes))
-    # thread = CookThread(NodeGraph.graph_instance.widget)
+    # thread = CookThread()
     # thread.all_nodes = nodes
     # thread.start()
 
