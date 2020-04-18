@@ -1,6 +1,5 @@
 from ...vendor.NodeGraphQt import BaseNode, Port, QtCore, QtWidgets, QtGui
-from . utils import update_node_down_stream, convert_data_type
-import hashlib
+from . utils import update_node_down_stream, get_data_type, CryptoColors
 import copy
 import time
 from ...widgets.parameterTree import DEFAULT_VALUE_MAP, build_curve_ramp, get_ramp_colors, get_ramp_color
@@ -12,27 +11,6 @@ NODE_WARNING = 1
 NODE_ERROR = 2
 
 
-class CryptoColors(object):
-    """
-    Generate random color based on strings
-    """
-
-    def __init__(self):
-        self.colors = {}
-
-    def get(self, text, Min=50, Max=200):
-        if text in self.colors:
-            return self.colors[text]
-        h = hashlib.sha256(text.encode('utf-8')).hexdigest()
-        d = int('0xFFFFFFFFFFFFFFFF', 0)
-        r = int(Min + (int("0x" + h[:16], 0) / d) * (Max - Min))
-        g = int(Min + (int("0x" + h[16:32], 0) / d) * (Max - Min))
-        b = int(Min + (int("0x" + h[32:48], 0) / d) * (Max - Min))
-        # a = int(Min + (int("0x" + h[48:], 0) / d) * (Max - Min))
-        self.colors[text] = (r, g, b, 255)
-        return self.colors[text]
-
-
 class AutoNode(BaseNode, QtCore.QObject):
     cooked = QtCore.Signal()
     param_changed = QtCore.Signal()
@@ -41,11 +19,10 @@ class AutoNode(BaseNode, QtCore.QObject):
     def __init__(self, defaultInputType=None, defaultOutputType=None):
         super(AutoNode, self).__init__()
         QtCore.QObject.__init__(self)
-        self._needCook = True
+        self._need_cook = True
         self.matchTypes = [['float', 'int']]
         self.errorColor = (0.784, 0.196, 0.196)
         self.stopCookColor = (0.784, 0.784, 0.784)
-        self._cryptoColors = CryptoColors()
 
         self.create_property('auto_cook', True)
         self.defaultValue = None
@@ -57,27 +34,11 @@ class AutoNode(BaseNode, QtCore.QObject):
         self._message_level = NODE_NONE
         self._params = {}
 
-        self.view.setGraphicsEffect(self.shadow_effect)
-
-    @property
-    def shadow_effect(self):
-        """
-        Returns QGraphicsDropShadowEffect.
-        """
-        shadow_effect = QtWidgets.QGraphicsDropShadowEffect()
-        shadow_effect.setOffset(7)
-        shadow_effect.setColor(QtGui.QColor.fromRgbF(0.22, 0.22, 0.22, 0.4))
-        shadow_effect.setBlurRadius(2)
-        return shadow_effect
-
-    @property
-    def color_effect(self):
-        """
-        Returns QGraphicsColorizeEffect.
-        """
-        color_effect = QtWidgets.QGraphicsColorizeEffect()
-        color_effect.setStrength(0.7)
-        return color_effect
+        # effect
+        self.color_effect = QtWidgets.QGraphicsColorizeEffect()
+        self.color_effect.setStrength(0.7)
+        self.color_effect.setEnabled(False)
+        self.view.setGraphicsEffect(self.color_effect)
 
     @property
     def auto_cook(self):
@@ -100,12 +61,9 @@ class AutoNode(BaseNode, QtCore.QObject):
             return
 
         self.model.set_property('auto_cook', mode)
-        if mode:
-            self.view.setGraphicsEffect(self.shadow_effect)
-        else:
-            effect = self.color_effect
-            effect.setColor(QtGui.QColor.fromRgbF(*self.stopCookColor))
-            self.view.setGraphicsEffect(effect)
+        self.color_effect.setEnabled(not mode)
+        if not mode:
+            self.color_effect.setColor(QtGui.QColor.fromRgbF(*self.stopCookColor))
 
     def cook_time(self):
         """
@@ -130,7 +88,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         """
 
         if not forceCook:
-            if not self.auto_cook or not self._needCook:
+            if not self.auto_cook or not self._need_cook:
                 return
             if self.graph is not None and not self.graph.auto_update:
                 return
@@ -217,13 +175,13 @@ class AutoNode(BaseNode, QtCore.QObject):
         if self.check_port_type(to_port, from_port):
             self.update_stream()
         else:
-            self._needCook = False
+            self._need_cook = False
             to_port.disconnect_from(from_port)
         self.input_changed.emit()
 
     def on_input_disconnected(self, to_port, from_port):
-        if not self._needCook:
-            self._needCook = True
+        if not self._need_cook:
+            self._need_cook = True
             return
         self.update_stream()
         self.input_changed.emit()
@@ -241,7 +199,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         """
 
         if to_port.data_type != from_port.data_type:
-            if to_port.data_type == 'None' or from_port.data_type == 'None':
+            if to_port.data_type == 'NoneType' or from_port.data_type == 'NoneType':
                 return True
             for types in self.matchTypes:
                 if to_port.data_type in types and from_port.data_type in types:
@@ -269,7 +227,7 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         if type(port) is Port:
             current_port = port
-        elif type(port) is str:
+        elif isinstance(port, str):
             inputs = self.inputs()
             outputs = self.outputs()
             if port in inputs.keys():
@@ -283,33 +241,31 @@ class AutoNode(BaseNode, QtCore.QObject):
             else:
                 current_port.data_type = data_type
 
-            current_port.border_color = current_port.color = self._cryptoColors.get(data_type)
+            current_port.border_color = current_port.color = CryptoColors.get(data_type)
             conn_type = 'multi' if current_port.multi_connection() else 'single'
             current_port.view.setToolTip('{}: {} ({}) '.format(current_port.name(), data_type, conn_type))
 
-    def add_input(self, name='input', data_type='None', multi_input=False, display_name=True,
+    def add_input(self, name='input', data_type='', multi_input=False, display_name=True,
                   color=None):
         new_port = super(AutoNode, self).add_input(name, multi_input, display_name, color)
-        if data_type == 'None' and self.defaultInputType is not None:
+        if data_type == '':
             data_type = self.defaultInputType
-        self.set_port_type(new_port, convert_data_type(data_type))
-
+        self.set_port_type(new_port, get_data_type(data_type))
         return new_port
 
-    def add_output(self, name='output', data_type='None', multi_output=True, display_name=True,
+    def add_output(self, name='output', data_type='', multi_output=True, display_name=True,
                    color=None):
         new_port = super(AutoNode, self).add_output(name, multi_output, display_name, color)
-        if data_type == 'None' and self.defaultOutputType is not None:
+        if data_type == '':
             data_type = self.defaultOutputType
-        self.set_port_type(new_port, convert_data_type(data_type))
-
+        self.set_port_type(new_port, get_data_type(data_type))
         return new_port
 
     def set_disabled(self, mode=False):
         super(AutoNode, self).set_disabled(mode)
-        self.update_stream()
         if mode:
             self.cooked.emit()
+        self.update_stream()
 
     def get_message(self):
         """
@@ -323,7 +279,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         """
 
         if self._message_level is not NODE_NONE:
-            self.view.setGraphicsEffect(self.shadow_effect)
+            self.color_effect.setEnabled(False)
             self._message = ""
             self._message_level = NODE_NONE
 
@@ -340,9 +296,8 @@ class AutoNode(BaseNode, QtCore.QObject):
         self._message = str(message)
         self._message_level = message_level
         if message_level is NODE_ERROR:
-            effect = self.color_effect
-            effect.setColor(QtGui.QColor.fromRgbF(*self.errorColor))
-            self.view.setGraphicsEffect(effect)
+            self.color_effect.setEnabled(True)
+            self.color_effect.setColor(QtGui.QColor.fromRgbF(*self.errorColor))
 
     def error(self, message):
         """

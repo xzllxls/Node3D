@@ -1,5 +1,6 @@
 from ...vendor.NodeGraphQt import topological_sort_by_down, QtCore
 from threading import Thread
+import hashlib
 
 
 class CookThread(Thread):
@@ -38,13 +39,31 @@ def update_nodes(nodes):
     # thread.start()
 
 
-def convert_data_type(data_type):
-    if type(data_type) is not str:
-        if data_type is None:
-            data_type = 'None'
+def get_data_type(data_type):
+    if not isinstance(data_type, str):
+        if hasattr(data_type, '__name__'):
+            data_type = data_type.__name__
         else:
-            try:
-                data_type = data_type.__name__
-            except:
-                data_type = type(data_type).__name__
+            data_type = type(data_type).__name__
     return data_type
+
+
+class CryptoColors(object):
+    """
+    Generate random color based on strings
+    """
+
+    colors = {}
+
+    @staticmethod
+    def get(text, Min=50, Max=200):
+        if text in CryptoColors.colors:
+            return CryptoColors.colors[text]
+        h = hashlib.sha256(text.encode('utf-8')).hexdigest()
+        d = int('0xFFFFFFFFFFFFFFFF', 0)
+        r = int(Min + (int("0x" + h[:16], 0) / d) * (Max - Min))
+        g = int(Min + (int("0x" + h[16:32], 0) / d) * (Max - Min))
+        b = int(Min + (int("0x" + h[32:48], 0) / d) * (Max - Min))
+        # a = int(Min + (int("0x" + h[48:], 0) / d) * (Max - Min))
+        CryptoColors.colors[text] = (r, g, b, 255)
+        return CryptoColors.colors[text]

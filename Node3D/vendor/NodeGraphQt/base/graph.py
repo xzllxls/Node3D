@@ -824,6 +824,7 @@ class NodeGraph(QtCore.QObject):
             return
         NodeCls = self._node_factory.create_node_instance(node_type)
         if NodeCls:
+            self.clear_selection()
             node = NodeCls()
             node.model._graph_model = self.model
 
