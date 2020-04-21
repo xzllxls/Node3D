@@ -85,8 +85,8 @@ def setup_context_menu(graph):
 
     edit_menu.add_separator()
 
-    edit_menu.add_command('Layout Graph Down Stream', _layout_graph_down, 'L')
-    edit_menu.add_command('Layout Graph Up Stream', _layout_graph_up, 'Ctrl+L')
+    edit_menu.add_command('Layout Graph Up Stream', _layout_graph_up, 'L')
+    edit_menu.add_command('Layout Graph Down Stream', _layout_graph_down, 'Ctrl+L')
 
     edit_menu.add_separator()
 
@@ -503,8 +503,12 @@ def topological_sort_by_down(start_nodes=None, all_nodes=None):
     'start_nodes' and 'all_nodes' only one needs to be given.
 
     Args:
-        start_nodes (list[NodeGraphQt.BaseNode])(Optional): the start update nodes of the graph.
-        all_nodes (list[NodeGraphQt.BaseNode])(Optional): if 'start_nodes' is None the function can calculate start nodes from 'all_nodes'.
+        start_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) the start update nodes of the graph.
+        all_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) if 'start_nodes' is None the function can calculate
+            start nodes from 'all_nodes'.
+
     Returns:
         list[NodeGraphQt.BaseNode]: sorted nodes.
     """
@@ -533,8 +537,11 @@ def topological_sort_by_up(start_nodes=None, all_nodes=None):
     'start_nodes' and 'all_nodes' only one needs to be given.
 
     Args:
-        start_nodes (list[NodeGraphQt.BaseNode])(Optional): the end update nodes of the graph.
-        all_nodes (list[NodeGraphQt.BaseNode])(Optional): if 'start_nodes' is None the function can calculate start nodes from 'all_nodes'.
+        start_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) the end update nodes of the graph.
+        all_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) if 'start_nodes' is None the function can calculate
+            start nodes from 'all_nodes'.
     Returns:
         list[NodeGraphQt.BaseNode]: sorted nodes.
     """
@@ -636,11 +643,12 @@ def _compute_rank_down(start_nodes):
     Compute the rank of the down stream nodes.
 
     Args:
-        start_nodes (list[NodeGraphQt.BaseNode])(Optional): the start nodes of the graph.
+        start_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) the start nodes of the graph.
+
     Returns:
         dict{NodeGraphQt.BaseNode: node_rank, ...}
     """
-
     nodes_rank = {}
     for node in start_nodes:
         nodes_rank[node] = 0
@@ -663,7 +671,9 @@ def _compute_rank_up(start_nodes):
     Compute the rank of the up stream nodes.
 
     Args:
-        start_nodes (list[NodeGraphQt.BaseNode])(Optional): the end nodes of the graph.
+        start_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) the end nodes of the graph.
+
     Returns:
         dict{NodeGraphQt.BaseNode: node_rank, ...}
     """
@@ -680,8 +690,11 @@ def auto_layout_up(start_nodes=None, all_nodes=None):
     Auto layout the nodes by up stream direction.
 
     Args:
-        start_nodes (list[NodeGraphQt.BaseNode])(Optional): the end nodes of the graph.
-        all_nodes (list[NodeGraphQt.BaseNode])(Optional): if 'start_nodes' is None the function can calculate start nodes from 'all_nodes'.
+        start_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) the end nodes of the graph.
+        all_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) if 'start_nodes' is None the function can calculate
+            start nodes from 'all_nodes'.
     """
     if not start_nodes and not all_nodes:
         return
@@ -741,8 +754,11 @@ def auto_layout_down(start_nodes=None, all_nodes=None):
     Auto layout the nodes by down stream direction.
 
     Args:
-        start_nodes (list[NodeGraphQt.BaseNode])(Optional): the start update nodes of the graph.
-        all_nodes (list[NodeGraphQt.BaseNode])(Optional): if 'start_nodes' is None the function can calculate start nodes from 'all_nodes'.
+        start_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) the start update nodes of the graph.
+        all_nodes (list[NodeGraphQt.BaseNode]):
+            (Optional) if 'start_nodes' is None the function can calculate
+            start nodes from 'all_nodes'.
     """
     if not start_nodes and not all_nodes:
         return
@@ -810,7 +826,8 @@ def minimize_node_ref_count(node):
         if hasattr(node, 'deleted'):
             del node
             return
-        from .node import BaseNode, SubGraph
+        from .node import BaseNode
+        from .graph import SubGraph
         node._parent = None
         if isinstance(node, BaseNode):
             try:

@@ -1,7 +1,8 @@
 #!/usr/bin/python
 from .. import QtWidgets, QtCore, QtGui, QtCompat
-from .properties import NodePropWidget
 from ..constants import ICON_CLEAR, ICON_LOCK, ICON_UNLOCK
+
+from .properties import NodePropWidget
 
 
 class PropertiesDelegate(QtWidgets.QStyledItemDelegate):
@@ -264,11 +265,11 @@ if __name__ == '__main__':
     import sys
     from .. import BaseNode, NodeGraph
     from ..constants import (NODE_PROP_QLABEL,
-                            NODE_PROP_QLINEEDIT,
-                            NODE_PROP_QCOMBO,
-                            NODE_PROP_QSPINBOX,
-                            NODE_PROP_COLORPICKER,
-                            NODE_PROP_SLIDER)
+                             NODE_PROP_QLINEEDIT,
+                             NODE_PROP_QCOMBO,
+                             NODE_PROP_QSPINBOX,
+                             NODE_PROP_COLORPICKER,
+                             NODE_PROP_SLIDER)
 
 
     class TestNode(BaseNode):
@@ -292,7 +293,7 @@ if __name__ == '__main__':
                                  widget_type=NODE_PROP_SLIDER)
 
     def prop_changed(node_id, prop_name, prop_value):
-        print('-'*100)
+        print('-' * 100)
         print(node_id, prop_name, prop_value)
 
 

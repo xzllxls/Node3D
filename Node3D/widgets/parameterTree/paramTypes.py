@@ -1,7 +1,7 @@
 from ...vendor.pyqtgraph.parametertree import parameterTypes as pTypes
 from ...vendor.pyqtgraph.parametertree import Parameter, ParameterItem, registerParameterType
-from ...vendor.NodeGraphQt.widgets.properties import PropFilePath, _valueEdit, \
-    _valueSliderEdit, PropVector2, PropVector3, PropVector4, PropLabel, \
+from ...vendor.NodeGraphQt.widgets.properties import PropFilePath, _ValueEdit, \
+    _ValueSliderEdit, PropVector2, PropVector3, PropVector4, PropLabel, \
     PropColorPicker, PropTextEdit
 from Qt import QtGui, QtWidgets, QtCore
 from .curveEditor import CurveWidget
@@ -36,7 +36,7 @@ class FloatEditParameterItem(pTypes.WidgetParameterItem):
         super().__init__(param, depth)
 
     def makeWidget(self):
-        w = _valueEdit()
+        w = _ValueEdit()
         w.setMaximumHeight(30)
         w.sigChanged = w.valueChanged
         return w
@@ -55,7 +55,7 @@ class IntEditParameterItem(pTypes.WidgetParameterItem):
         super().__init__(param, depth)
 
     def makeWidget(self):
-        w = _valueEdit()
+        w = _ValueEdit()
         w.set_data_type(int)
         w.setMaximumHeight(30)
         w.sigChanged = w.valueChanged
@@ -75,7 +75,7 @@ class FloatSliderEditParameterItem(pTypes.WidgetParameterItem):
         super().__init__(param, depth)
 
     def makeWidget(self):
-        w = _valueSliderEdit()
+        w = _ValueSliderEdit()
         opts = self.param.opts
         if 'limits' in opts:
             _min, _max = opts['limits']
@@ -100,7 +100,7 @@ class IntSliderEditParameterItem(pTypes.WidgetParameterItem):
         super().__init__(param, depth)
 
     def makeWidget(self):
-        w = _valueSliderEdit()
+        w = _ValueSliderEdit()
         w.set_data_type(int)
         opts = self.param.opts
         if 'limits' in opts:

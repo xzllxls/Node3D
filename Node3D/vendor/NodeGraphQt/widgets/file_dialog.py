@@ -1,6 +1,7 @@
-from .. import QtWidgets
-from .stylesheet import STYLE_MESSAGEBOX
 import os
+
+from .stylesheet import STYLE_MESSAGEBOX
+from .. import QtWidgets
 
 current_dir = os.path.expanduser('~')
 
@@ -41,7 +42,7 @@ class file_dialog(object):
         return file_dlg
 
 
-def messageBox(text, title , buttons):
+def messageBox(text, title, buttons):
     msg = QtWidgets.QMessageBox()
     msg.setStyleSheet(STYLE_MESSAGEBOX)
     msg.setWindowTitle(title)

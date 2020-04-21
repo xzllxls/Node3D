@@ -13,7 +13,7 @@ from .commands import (NodeAddedCmd,
 from .factory import NodeFactory
 from .menu import NodeGraphMenu, NodesMenu
 from .model import NodeGraphModel
-from .node import NodeObject, BaseNode, SubGraph
+from .node import NodeObject, BaseNode
 from .port import Port
 from ..constants import (DRAG_DROP_ID,
                          PIPE_LAYOUT_CURVED,
@@ -89,6 +89,14 @@ class NodeGraph(QtCore.QObject):
     
     :parameters: :class:`NodeGraphQt.NodeObject`
     :emits: selected node
+    """
+    node_selection_changed = QtCore.Signal(list, list)
+    """
+    Signal triggered when the node selection has changed.
+
+    :parameters: list[:class:`NodeGraphQt.NodeObject`], 
+                 list[:class:`NodeGraphQt.NodeObject`]
+    :emits: previous node selection, new selection.
     """
     node_double_clicked = QtCore.Signal(NodeObject)
     """
@@ -184,6 +192,8 @@ class NodeGraph(QtCore.QObject):
 
         # pass through signals.
         self._viewer.node_selected.connect(self._on_node_selected)
+        self._viewer.node_selection_changed.connect(
+            self._on_node_selection_changed)
         self._viewer.data_dropped.connect(self._on_node_data_dropped)
 
     def _insert_node(self, pipe, node_id, prev_node_pos):
@@ -275,6 +285,19 @@ class NodeGraph(QtCore.QObject):
         """
         node = self.get_node_by_id(node_id)
         self.node_selected.emit(node)
+
+    def _on_node_selection_changed(self, prev_ids, node_ids):
+        """
+        called when the node selection changes in the viewer.
+        (emits node objects <un-selected nodes>, <selected nodes>)
+
+        Args:
+            prev_ids (list[str]): previous selection.
+            node_ids (list[str]): current selection.
+        """
+        prev_nodes = [self.get_node_by_id(nid) for nid in prev_ids]
+        new_nodes = [self.get_node_by_id(nid) for nid in node_ids]
+        self.node_selection_changed.emit(prev_nodes, new_nodes)
 
     def _on_node_data_dropped(self, data, pos):
         """
@@ -824,7 +847,6 @@ class NodeGraph(QtCore.QObject):
             return
         NodeCls = self._node_factory.create_node_instance(node_type)
         if NodeCls:
-            self.clear_selection()
             node = NodeCls()
             node.model._graph_model = self.model
 
@@ -838,6 +860,11 @@ class NodeGraph(QtCore.QObject):
                 for pname, pattrs in prop_attrs.items():
                     node_attrs[node.type_][pname].update(pattrs)
                 self.model.set_node_common_properties(node_attrs)
+
+            sel_nodes = []
+            if isinstance(node, SubGraph):
+                sel_nodes = self.selected_nodes()
+            self.clear_selection()
 
             node.NODE_NAME = self.get_unique_name(name or node.NODE_NAME)
             node.model.name = node.NODE_NAME
@@ -872,7 +899,7 @@ class NodeGraph(QtCore.QObject):
                 self.begin_undo('create sub graph node')
                 self._undo_stack.push(undo_cmd)
                 if node.get_property('create_from_select'):
-                    node.create_from_nodes(self.selected_nodes())
+                    node.create_from_nodes(sel_nodes)
                 self.end_undo()
             else:
                 self._undo_stack.push(undo_cmd)
@@ -1579,3 +1606,67 @@ class NodeGraph(QtCore.QObject):
             node (BaseNode): node object.
         """
         return self.get_node_by_id('0' * 13)
+
+
+class SubGraph(object):
+    """
+    The ``NodeGraphQt.SubGraph`` class is the base class that all
+    Sub Graph Node inherit from.
+
+    *Implemented on NodeGraphQt: * ``v0.1.0``
+
+    .. image:: _images/example_subgraph.gif
+        :width: 80%
+
+    """
+
+    def __init__(self):
+        self._children = set()
+
+    def children(self):
+        """
+        Returns the children of the sub graph.
+        """
+        return list(self._children)
+
+    def create_from_nodes(self, nodes):
+        """
+        Create sub graph from the nodes.
+
+        Args:
+            nodes (list[NodeGraphQt.NodeObject]): nodes to create the sub graph.
+        """
+        if self in nodes:
+            nodes.remove(self)
+        [n.set_parent(self) for n in nodes]
+
+    def add_child(self, node):
+        """
+        Add a node to the sub graph.
+
+        Args:
+            node (NodeGraphQt.BaseNode): node object.
+        """
+        self._children.add(node)
+
+    def remove_child(self, node):
+        """
+        Remove a node from the sub graph.
+
+        Args:
+            node (NodeGraphQt.BaseNode): node object.
+        """
+        if node in self._children:
+            self._children.remove(node)
+
+    def enter(self):
+        """
+        Action when enter the sub graph.
+        """
+        pass
+
+    def exit(self):
+        """
+        Action when exit the sub graph.
+        """
+        pass

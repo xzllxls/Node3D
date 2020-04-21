@@ -246,16 +246,18 @@ class AutoNode(BaseNode, QtCore.QObject):
             current_port.view.setToolTip('{}: {} ({}) '.format(current_port.name(), data_type, conn_type))
 
     def add_input(self, name='input', data_type='', multi_input=False, display_name=True,
-                  color=None):
-        new_port = super(AutoNode, self).add_input(name, multi_input, display_name, color)
+                  color=None, painter_func=None):
+        new_port = super(AutoNode, self).add_input(name, multi_input, display_name,
+                                                   color, data_type, painter_func)
         if data_type == '':
             data_type = self.defaultInputType
         self.set_port_type(new_port, get_data_type(data_type))
         return new_port
 
     def add_output(self, name='output', data_type='', multi_output=True, display_name=True,
-                   color=None):
-        new_port = super(AutoNode, self).add_output(name, multi_output, display_name, color)
+                   color=None, painter_func=None):
+        new_port = super(AutoNode, self).add_output(name, multi_output, display_name,
+                                                    color, data_type, painter_func)
         if data_type == '':
             data_type = self.defaultOutputType
         self.set_port_type(new_port, get_data_type(data_type))

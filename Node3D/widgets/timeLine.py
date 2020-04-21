@@ -1,5 +1,5 @@
 from Qt import QtWidgets, QtCore, QtGui
-from ..vendor.NodeGraphQt.widgets.properties import _valueSliderEdit, _valueEdit
+from ..vendor.NodeGraphQt.widgets.properties import _ValueSliderEdit, _ValueEdit
 from .styles import STYLE_BUTTON
 import os
 
@@ -38,14 +38,14 @@ class TimeLine(QtWidgets.QWidget):
         btn4.setStyleSheet(STYLE_BUTTON)
         btn5.setStyleSheet(STYLE_BUTTON)
 
-        self.slider = _valueSliderEdit()
+        self.slider = _ValueSliderEdit()
         self.slider.set_data_type(int)
         hbox.addWidget(self.slider)
 
-        self.startValue = _valueEdit()
+        self.startValue = _ValueEdit()
         self.startValue.set_data_type(int)
         self.startValue.setMaximumWidth(50)
-        self.endValue = _valueEdit()
+        self.endValue = _ValueEdit()
         self.endValue.set_data_type(int)
         self.endValue.setMaximumWidth(50)
         hbox.addWidget(self.startValue)

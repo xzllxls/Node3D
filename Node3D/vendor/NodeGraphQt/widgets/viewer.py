@@ -36,6 +36,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
     # pass through signals
     node_selected = QtCore.Signal(str)
+    node_selection_changed = QtCore.Signal(list, list)
     node_double_clicked = QtCore.Signal(str)
     data_dropped = QtCore.Signal(QtCore.QMimeData, QtCore.QPoint)
 
@@ -56,11 +57,12 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         self.setAcceptDrops(True)
         self.resize(850, 800)
-        self.editable = True
 
-        self._scene_range = QtCore.QRectF(0, 0, self.size().width(), self.size().height())
+        self._scene_range = QtCore.QRectF(
+            0, 0, self.size().width(), self.size().height())
         self._update_scene()
         self._last_size = self.size()
+        self.editable = True
 
         self._pipe_layout = PIPE_LAYOUT_CURVED
         self._detached_port = None
@@ -144,14 +146,14 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
     def scale(self, sx, sy, pos=None):
         scale = [sx, sx]
-
         center = pos or self._scene_range.center()
-
         w = self._scene_range.width() / scale[0]
         h = self._scene_range.height() / scale[1]
-        self._scene_range = QtCore.QRectF(center.x() - (center.x() - self._scene_range.left()) / scale[0],
-                                          center.y() - (center.y() - self._scene_range.top()) / scale[1], w, h)
-
+        self._scene_range = QtCore.QRectF(
+            center.x() - (center.x() - self._scene_range.left()) / scale[0],
+            center.y() - (center.y() - self._scene_range.top()) / scale[1],
+            w, h
+        )
         self._update_scene()
 
     def _update_scene(self):
@@ -253,7 +255,6 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         items = self._items_near(map_pos, None, 20, 20)
         nodes = [i for i in items if isinstance(i, AbstractNodeItem)]
-        # pipes = [i for i in items if isinstance(i, Pipe)]
 
         if nodes:
             if self.MMB_state:
@@ -316,11 +317,25 @@ class NodeViewer(QtWidgets.QGraphicsView):
                 self._rubber_band.hide()
 
                 rect = QtCore.QRect(self._origin_pos, event.pos()).normalized()
-                for item in self.scene().items(self.mapToScene(rect).boundingRect()):
+                rect_items = self.scene().items(
+                    self.mapToScene(rect).boundingRect()
+                )
+                node_ids = []
+                for item in rect_items:
                     if isinstance(item, AbstractNodeItem):
-                        self.node_selected.emit(item.id)
-                        break
+                        node_ids.append(item.id)
+
+                # emit the node selection signals.
+                if node_ids:
+                    prev_ids = [
+                        n.id for n in self._prev_selection_nodes
+                        if not n.selected
+                    ]
+                    self.node_selected.emit(node_ids[0])
+                    self.node_selection_changed.emit(prev_ids, node_ids)
+
                 self.scene().update(map_rect)
+                return
 
         # find position changed nodes and emit signal.
         moved_nodes = {
@@ -336,10 +351,15 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         # emit signal if selected node collides with pipe.
         # Note: if collide state is true then only 1 node is selected.
+        nodes, pipes = self.selected_items()
         if self.COLLIDING_state:
-            nodes, pipes = self.selected_items()
             if nodes and pipes:
                 self.insert_node.emit(pipes[0], nodes[0].id, moved_nodes)
+
+        # emit node selection changed signal.
+        prev_ids = [n.id for n in self._prev_selection_nodes if not n.selected]
+        node_ids = [n.id for n in nodes if n not in self._prev_selection_nodes]
+        self.node_selection_changed.emit(prev_ids, node_ids)
 
         super(NodeViewer, self).mouseReleaseEvent(event)
 
@@ -418,7 +438,6 @@ class NodeViewer(QtWidgets.QGraphicsView):
             delta = event.angleDelta().y()
             if delta == 0:
                 delta = event.angleDelta().x()
-
         self._set_viewer_zoom(delta, pos=event.pos())
 
     def dropEvent(self, event):
@@ -555,6 +574,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
     def sceneMouseReleaseEvent(self, event):
         """
         triggered mouse release event for the scene.
+
         Args:
             event (QtWidgets.QGraphicsSceneMouseEvent):
                 The event handler from the QtWidgets.QGraphicsScene
@@ -567,7 +587,9 @@ class NodeViewer(QtWidgets.QGraphicsView):
     def apply_live_connection(self, event):
         """
         triggered mouse press/release event for the scene.
-         - verify to make a the connection Pipe.
+        - verifies the live connection pipe.
+        - makes a connection pipe if valid.
+        - emits the "connection changed" signal.
 
         Args:
             event (QtWidgets.QGraphicsSceneMouseEvent):
@@ -901,11 +923,8 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self._update_scene()
 
     def scene_rect(self):
-        return [self._scene_range.x(), self._scene_range.y(), self._scene_range.width(), self._scene_range.height()]
-
-    def set_scene_rect(self, rect):
-        self._scene_range = QtCore.QRectF(*rect)
-        self._update_scene()
+        return [self._scene_range.x(), self._scene_range.y(),
+                self._scene_range.width(), self._scene_range.height()]
 
     def scene_center(self):
         cent = self._scene_range.center()
@@ -914,6 +933,10 @@ class NodeViewer(QtWidgets.QGraphicsView):
     def nodes_rect_center(self, nodes):
         cent = self._combined_rect(nodes).center()
         return [cent.x(), cent.y()]
+
+    def set_scene_rect(self, rect):
+        self._scene_range = QtCore.QRectF(*rect)
+        self._update_scene()
 
     def clear_key_state(self):
         self.CTRL_state = False
