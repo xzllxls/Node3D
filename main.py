@@ -3,7 +3,7 @@
 import sys
 import os
 from Node3D.vendor.NodeGraphQt import BackdropNode
-from PySide2 import QtWidgets, QtGui
+from PySide2 import QtWidgets, QtGui, QtCore
 from Node3D.widgets.mainWindow import mainWindow
 from Node3D.nodes.subgraph_nodes import Publish
 import inspect
@@ -12,6 +12,7 @@ import qdarkstyle
 
 
 def run(nodes=None):
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication()
     app.setFont(QtGui.QFont("Consolas", 9))
     win = mainWindow()
