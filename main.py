@@ -14,12 +14,10 @@ import qdarkstyle
 def run(nodes=None):
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication()
-    app.setFont(QtGui.QFont("Consolas", 9))
-    win = mainWindow()
-
+    # app.setFont(QtGui.QFont("Consolas", 9))
     app.setStyleSheet(qdarkstyle.load_stylesheet_from_environment())
 
-    # create node graph.
+    win = mainWindow()
     graph = win.graph
 
     # registered nodes.

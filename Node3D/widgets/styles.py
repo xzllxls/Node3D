@@ -18,7 +18,7 @@ QWidget{{
 QLabel{{
     background-color:{0};
     color:rgb(200,200,200);
-    font-size:15px;
+    font-size:13px;
     border:0px;
     }}
 QTabWidget::pane {{
@@ -51,7 +51,7 @@ QSlider {{
 QLineEdit{{
     border: 1px groove;
     border-radius: 1px;
-    background:rgb(20,20,20);
+    background: rgb(20,20,20);
     max-height: 17px;
 }}
 QGraphicsView{{
@@ -81,10 +81,10 @@ QPushButton {{
     border-radius: 1px;  
     border-width: 2px;
     border-color: rgb(30,30,30);
-    min-width: 50;
-    min-height: 15;
-    max-width: 200;
-    max-height: 15;
+    min-width: 30;
+    min-height: 10;
+    max-width: 30;
+    max-height: 10;
     }}
 QPushButton::pressed {{
     border-style: inset;
@@ -211,7 +211,30 @@ QTextBrowser{{
 QStatusBar {{
     background: rgb(45,45,45);
 }}
+QSlider::Horizontal{{
+    height: 6px;
+    background:transparent;
+}}
+QSlider::groove::Horizontal{{
+    border: 1px solid rgb(0, 0, 0);
+    height: 4px;
+    background:rgb(30,30,30);
+}}
+QSlider::handle:Horizontal{{
+    border: 1px solid rgb(0, 0, 0);
+    width: 5px;
+    margin: -10px 0;
+    border-radius: 1px;
+}}
+QSlider::sub-page:Horizontal{{
+    border: 1px solid rgb(0, 0, 0);
+    background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, 
+                                stop:0 rgb(231,80,229), 
+                                stop:1 rgb(7,208,255));
+    height: 6px;
+}}
 '''.format(mainColor, icon_path)
+
 
 #QCheckBox::indicator:checked {{
 #    image: url({1}/check.png);
@@ -247,10 +270,10 @@ QPushButton {
     border-radius: 0px;  
     border-width: 1px;
     border-color: rgb(30,30,30);
-    min-width: 20;
-    min-height: 17;
-    max-width: 40;
-    font-size:15px;
+    min-width: 15;
+    min-height: 15;
+    max-width: 20;
+    font-size: 13px;
     color:rgb(200,200,200);
     padding-left: 10px;
     padding-right: 10px;
@@ -280,6 +303,7 @@ QLineEdit{{
     min-height: 20px;
     padding: 0px;
     margin: 0px;
+    font-size:13px;
 }}
 QComboBox{{ 
     border-width: 1px;
@@ -315,7 +339,7 @@ QTextEdit{{
 }}
 QTreeWidget{{ 
     background:transparent;
-    font-size:15px;
+    font-size:13px;
 }}
 QHeaderView::section {{  
     min-height: 25px;
@@ -369,6 +393,7 @@ QTreeView::branch:!has-children:!has-siblings:adjoins-item {{
 }}
 QLabel{{
     border:0px;
+    font-size:13px;
 }}
 QScrollBar:vertical{{
     background: rgb(40,40,40);
@@ -387,7 +412,7 @@ QPushButton {{
     border-color: rgb(30,30,30);
     min-width: 20;
     min-height: 17;
-    font-size:15px;
+    font-size:13px;
     color:rgb(200,200,200);
     padding-left: 10px;
     padding-right: 10px;
