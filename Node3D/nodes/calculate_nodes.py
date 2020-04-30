@@ -4,12 +4,12 @@ import numpy as np
 import igl
 
 
-class Gaussian_Curvature(GeometryNode):
+class GaussianCurvature(GeometryNode):
     __identifier__ = 'Calculate'
     NODE_NAME = 'Gaussian_Curvature'
 
     def __init__(self):
-        super(Gaussian_Curvature, self).__init__()
+        super(GaussianCurvature, self).__init__()
         self.add_text_input("Attribute Name", "Attribute Name", "curvature")
         self.add_float_input("Scale", "Scale", 1.0)
         self.add_input("geo")
@@ -58,12 +58,12 @@ class Attribute_Blur(GeometryNode):
         self.geo.meshFuncs.smoothVertexAttrib(name, self.get_property("Iteration"))
 
 
-class Distance_Along_Surface(GeometryNode):
+class DistanceAlongSurface(GeometryNode):
     __identifier__ = 'Calculate'
     NODE_NAME = 'Distance_Along_Surface'
 
     def __init__(self):
-        super(Distance_Along_Surface, self).__init__()
+        super(DistanceAlongSurface, self).__init__()
         self.add_text_input("Attribute Name", "Attribute Name", "distance")
         self.add_int_input("Start Point", "Start Point", 0, range=(0, 100))
         self.add_checkbox("Normalize", "Normalize", state=False)
@@ -161,12 +161,12 @@ class ARAP(GeometryNode):
             self.geo.mesh.setVertexAttribData("pos", uv)
 
 
-class Ambient_Occlusion(GeometryNode):
+class AmbientOcclusion(GeometryNode):
     __identifier__ = 'Calculate'
     NODE_NAME = 'Ambient_Occlusion'
 
     def __init__(self):
-        super(Ambient_Occlusion, self).__init__()
+        super(AmbientOcclusion, self).__init__()
         self.add_text_input("Attribute Name", "Attribute Name", "ao")
         self.add_int_input("Angle", "Angle", 50, range=(0, 180))
         self.add_input("geo")
@@ -223,12 +223,12 @@ class Measure(GeometryNode):
         # self.geo.setFaceAttribData("gradient", g, attribType='float', defaultValue=0.0)
 
 
-class Winding_Number(GeometryNode):
+class WindingNumber(GeometryNode):
     __identifier__ = 'Calculate'
     NODE_NAME = 'Winding_Number'
 
     def __init__(self):
-        super(Winding_Number, self).__init__()
+        super(WindingNumber, self).__init__()
         self.add_text_input("Attribute Name", "Attribute Name", "winding_number")
         self.add_input("geo")
         self.add_input("bound geo")

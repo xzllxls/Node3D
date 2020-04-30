@@ -2,12 +2,12 @@ from Node3D.base.node import GeometryNode
 import numpy as np
 
 
-class Get_Attribute_Data(GeometryNode):
+class GetAttributeData(GeometryNode):
     __identifier__ = 'Attribute'
     NODE_NAME = 'Get_Attribute_Data'
 
     def __init__(self):
-        super(Get_Attribute_Data, self).__init__(False)
+        super(GetAttributeData, self).__init__(False)
         self.create_property('out data', None)
         self.add_input('geo', GeometryNode)
         self.add_output('out data', np.ndarray)
@@ -48,12 +48,12 @@ class Get_Attribute_Data(GeometryNode):
         self.set_property('out data', data)
 
 
-class Set_Attribute_Data(GeometryNode):
+class SetAttributeData(GeometryNode):
     __identifier__ = 'Attribute'
     NODE_NAME = 'Set_Attribute_Data'
 
     def __init__(self):
-        super(Set_Attribute_Data, self).__init__()
+        super(SetAttributeData, self).__init__()
         self.create_property('out data', None)
         self.add_input('geo', GeometryNode)
         self.add_input('in data', np.ndarray)
@@ -98,12 +98,12 @@ class Set_Attribute_Data(GeometryNode):
             self.geo.setFaceAttribData(attrib_name, data)
 
 
-class Attribute_Delete(GeometryNode):
+class AttributeDelete(GeometryNode):
     __identifier__ = 'Attribute'
     NODE_NAME = 'Attribute_Delete'
 
     def __init__(self):
-        super(Attribute_Delete, self).__init__()
+        super(AttributeDelete, self).__init__()
         self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
                               'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'}])
@@ -119,12 +119,12 @@ class Attribute_Delete(GeometryNode):
         self.geo.removeAttribute(attrib_class, attrib_name)
 
 
-class Attribute_Create(GeometryNode):
+class AttributeCreate(GeometryNode):
     __identifier__ = 'Attribute'
     NODE_NAME = 'Attribute_Create'
 
     def __init__(self):
-        super(Attribute_Create, self).__init__()
+        super(AttributeCreate, self).__init__()
         self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
                               'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'str'},
@@ -217,12 +217,12 @@ class Attribute_Create(GeometryNode):
         self.geo.attributeMap[attrib_class][attrib_name]['default_value'] = default_value
 
 
-class Attribute_Promote(GeometryNode):
+class AttributePromote(GeometryNode):
     __identifier__ = 'Attribute'
     NODE_NAME = 'Attribute_Promote'
 
     def __init__(self):
-        super(Attribute_Promote, self).__init__()
+        super(AttributePromote, self).__init__()
         self.set_parameters(
             [{'name': 'From', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
              {'name': 'To', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face', 'detail']},
@@ -274,12 +274,12 @@ class Attribute_Promote(GeometryNode):
             self.geo.removeAttribute(from_class, attrib_name)
 
 
-class Attribute_Rename(GeometryNode):
+class AttributeRename(GeometryNode):
     __identifier__ = 'Attribute'
     NODE_NAME = 'Attribute_Rename'
 
     def __init__(self):
-        super(Attribute_Rename, self).__init__()
+        super(AttributeRename, self).__init__()
         self.set_parameters([{'name': 'Attribute Class', 'type': 'list', 'value': 'vertex',
                               'limits': ['vertex', 'edge', 'face', 'detail']},
                              {'name': 'Attribute Name', 'type': 'listText'},
