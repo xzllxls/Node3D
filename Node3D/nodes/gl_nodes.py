@@ -109,57 +109,62 @@ class Merge(GeometryNode):
             ne = geo.getNumEdges()
 
             # vertex
-            for v_name, v_data in attrib_data['vertex'].items():
-                is_array = v_data['is_array']
+            if nv > 0:
+                for v_name, v_data in attrib_data['vertex'].items():
+                    is_array = v_data['is_array']
 
-                if geo.hasAttribute('vertex', v_name):
-                    data = geo.getVertexAttribData(v_name)
-                else:
-                    data = self.createAttributeData(nv, v_data['type'], v_data['default_value'], is_array)
-                if 'data' in attrib_data['vertex'][v_name].keys():
-                    if is_array:
-                        attrib_data['vertex'][v_name]['data'] = np.append(attrib_data['vertex'][v_name]['data'], data, axis=0)
+                    if geo.hasAttribute('vertex', v_name):
+                        data = geo.getVertexAttribData(v_name)
                     else:
-                        attrib_data['vertex'][v_name]['data'].extend(data)
-                else:
-                    attrib_data['vertex'][v_name]['data'] = data
+                        data = self.createAttributeData(nv, v_data['type'], v_data['default_value'], is_array)
+                    if 'data' in attrib_data['vertex'][v_name].keys():
+                        if is_array:
+                            attrib_data['vertex'][v_name]['data'] = np.append(attrib_data['vertex'][v_name]['data'], data, axis=0)
+                        else:
+                            attrib_data['vertex'][v_name]['data'].extend(data)
+                    else:
+                        attrib_data['vertex'][v_name]['data'] = data
 
             # face
-            for f_name, f_data in attrib_data['face'].items():
-                is_array = f_data['is_array']
+            if nv > 0:
+                for f_name, f_data in attrib_data['face'].items():
+                    is_array = f_data['is_array']
 
-                if geo.hasAttribute('face', f_name):
-                    data = geo.getFaceAttribData(f_name)
-                else:
-                    data = self.createAttributeData(nf, f_data['type'], f_data['default_value'], is_array)
-                if 'data' in attrib_data['face'][f_name].keys():
-                    if is_array:
-                        attrib_data['face'][f_name]['data'] = np.append(attrib_data['face'][f_name]['data'], data, axis=0)
+                    if geo.hasAttribute('face', f_name):
+                        data = geo.getFaceAttribData(f_name)
                     else:
-                        attrib_data['face'][f_name]['data'].extend(data)
-                else:
-                    attrib_data['face'][f_name]['data'] = data
+                        data = self.createAttributeData(nf, f_data['type'], f_data['default_value'], is_array)
+                    if 'data' in attrib_data['face'][f_name].keys():
+                        if is_array:
+                            attrib_data['face'][f_name]['data'] = np.append(attrib_data['face'][f_name]['data'], data, axis=0)
+                        else:
+                            attrib_data['face'][f_name]['data'].extend(data)
+                    else:
+                        attrib_data['face'][f_name]['data'] = data
 
             # edge
-            for e_name, e_data in attrib_data['edge'].items():
-                is_array = e_data['is_array']
+            if ne > 0:
+                for e_name, e_data in attrib_data['edge'].items():
+                    is_array = e_data['is_array']
 
-                if geo.hasAttribute('edge', e_name):
-                    data = geo.getEdgeAttribData(e_name)
-                else:
-                    data = self.createAttributeData(ne, e_data['type'], e_data['default_value'], is_array)
-                if 'data' in attrib_data['edge'][e_name].keys():
-                    if is_array:
-                        attrib_data['edge'][e_name]['data'] = np.append(attrib_data['edge'][e_name]['data'], data, axis=0)
+                    if geo.hasAttribute('edge', e_name):
+                        data = geo.getEdgeAttribData(e_name)
                     else:
-                        attrib_data['edge'][e_name]['data'].extend(data)
-                else:
-                    attrib_data['edge'][e_name]['data'] = data
+                        data = self.createAttributeData(ne, e_data['type'], e_data['default_value'], is_array)
+                    if 'data' in attrib_data['edge'][e_name].keys():
+                        if is_array:
+                            attrib_data['edge'][e_name]['data'] = np.append(attrib_data['edge'][e_name]['data'], data, axis=0)
+                        else:
+                            attrib_data['edge'][e_name]['data'].extend(data)
+                    else:
+                        attrib_data['edge'][e_name]['data'] = data
 
         for geo in geos[1:]:
             offset = self.geo.getNumVertexes()
-            self.geo.addVertices(geo.getVertexes())
-            [self.geo.addFace(face+offset) for face in geo.getFaces()]
+            if geo.getNumVertexes() > 0:
+                self.geo.addVertices(geo.getVertexes())
+                if geo.getNumFaces() > 0:
+                    [self.geo.addFace(face+offset) for face in geo.getFaces()]
 
         for name, data in attrib_data['vertex'].items():
             self.geo.setVertexAttribData(name, data['data'], attribType=data['type'], defaultValue=data['default_value'])
