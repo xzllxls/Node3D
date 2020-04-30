@@ -8,6 +8,7 @@ from ..vendor.pyqtgraph.opengl.GLGraphicsItem import GLGraphicsItem
 from OpenGL.GL import *
 from ..vendor.pyqtgraph import functions as fn
 import copy
+import cupy as cp
 
 
 @numba.jit(nopython=True, cache=True, nogil=True)  # parallel=True, nogil=True
@@ -258,14 +259,21 @@ class MeshFuncs(object):
         else:
             return
 
-        res = positions.dot(matrix)
+        # cpu
+        # res = positions.dot(matrix)
+
+        # gpu - cuda
+        p = cp.asarray(positions)
+        m = cp.asarray(matrix)
+        res = cp.asnumpy(p.dot(m))
+
         points[..., [0, 1, 2]] = res[..., [0, 1, 2]]
 
         if offset is not None:
             points[..., [0, 1, 2]] += offset
 
 
-class mesh_signals(QtCore.QObject):
+class MeshSignals(QtCore.QObject):
     attribChanged = QtCore.Signal()
 
     def __init__(self):
@@ -275,9 +283,9 @@ class mesh_signals(QtCore.QObject):
         self.attribChanged.emit()
 
 
-class bbox(GLGraphicsItem):
+class BBox(GLGraphicsItem):
     def __init__(self):
-        super(bbox, self).__init__()
+        super(BBox, self).__init__()
         self.size = [1, 1, 1]
         self.setColor((255, 255, 0, 200))
         self.setGLOptions('translucent')

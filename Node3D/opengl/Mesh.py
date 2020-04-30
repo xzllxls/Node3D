@@ -1,6 +1,6 @@
 import numpy as np
 from OpenGL.arrays import vbo
-from .Mesh_utils import MeshFuncs, mesh_signals, bbox
+from .Mesh_utils import MeshFuncs, MeshSignals, BBox
 import openmesh
 import copy
 from .Shader import *
@@ -168,7 +168,7 @@ class Mesh(object):
             "detail": {}
         }
 
-        self.signals = mesh_signals()
+        self.signals = MeshSignals()
         self._selected = False
 
         self.edge_colors = {
@@ -193,7 +193,7 @@ class Mesh(object):
         self._mesh.release_face_texture_index()
         self._mesh.release_edge_colors()
 
-        self.bbox = bbox()
+        self.bbox = BBox()
         self._GLFaces = None
         self._flatColor = 0
         self.__view = None
