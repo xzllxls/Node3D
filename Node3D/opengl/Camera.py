@@ -1,23 +1,23 @@
-from ..base.data import vector, quaternion, matrix4x4
-
+from ..base.data import vector3, Vector3, quaternion, Quaternion, matrix44
+import numpy as np
 CAMERA_TRANSLATION_FACTOR = 0.01
 
 
 class camera(object):
     def __init__(self):
-        self.pos = vector(0, 0, 0)
-        self.forwardPos = vector(0, 0, 1)
-        self.upPos = vector(0, 1, 0)
-        self.target = vector(0, 0, 0)
-        self.zero = vector(0, 0, 0)
+        self.pos = Vector3([0, 0, 0], dtype=np.float64)
+        self.forwardPos = Vector3([0, 0, 1], dtype=np.float64)
+        self.upPos = Vector3([0, 1, 0], dtype=np.float64)
+        self.target = Vector3([0, 0, 0], dtype=np.float64)
+        self.zero = Vector3([0, 0, 0], dtype=np.float64)
         self.fov = 70.0
         self.reset()
 
     def getFarClip(self):
-        return self.getDistance() * 0.001
+        return self.getDistance() * 1000
 
     def getNearClip(self):
-        return self.getDistance() * 1000
+        return self.getDistance() * 0.001
 
     def getClip(self):
         d = self.getDistance()
@@ -34,7 +34,7 @@ class camera(object):
         self.move((side * -dx + up * dy) * 0.1)
 
     def rotate(self, dx, dy):
-        up = vector(0, 1, 0)
+        up = Vector3([0, 1, 0], dtype=np.float64)
         side = self.getSide()
         target = self.getTarget()
 
@@ -48,7 +48,7 @@ class camera(object):
 
         self.move(-target)
 
-        quat = quaternion.from_axi_angle(axi, ang * 0.01)
+        quat = Quaternion.from_axis_rotation(axi, ang * 0.01)
         self.rot(quat)
         self.move(target)
 
@@ -57,7 +57,7 @@ class camera(object):
         if dis == 0.0:
             dis = 0.01
         delta *= dis * CAMERA_TRANSLATION_FACTOR
-        self.move((self.target - self.pos).normalized() * delta * 0.05)
+        self.move(vector3.normalize(self.target - self.pos) * delta * 0.05)
 
     def move(self, delta):
         self.pos += delta
@@ -65,43 +65,43 @@ class camera(object):
         self.upPos += delta
 
     def rot(self, quat):
-        self.pos = quat.rotateVector(self.pos)
-        self.forwardPos = quat.rotateVector(self.forwardPos)
-        self.upPos = quat.rotateVector(self.upPos)
+        self.pos = quaternion.apply_to_vector(quat, self.pos)
+        self.forwardPos = quaternion.apply_to_vector(quat, self.forwardPos)
+        self.upPos = quaternion.apply_to_vector(quat, self.upPos)
 
     def getViewMatrix(self):
-        return matrix4x4.from_lookAt(self.pos, self.forwardPos, self.getUp())
+        return matrix44.create_look_at(self.pos, self.forwardPos, self.getUp())
 
     def getTarget(self):
         return self.target
 
     def setTarget(self, target=None):
         if target is None:
-            dis = self.pos.distanceToPoint(self.zero)
+            dis = vector3.length(self.pos - self.zero)
             self.target = self.pos + self.getForward() * dis
         else:
-            self.target = vector.fromList(target)
+            self.target = Vector3(target)
 
     def getSide(self):
-        return self.getForward().cross(self.getUp())
+        return vector3.cross(self.getForward(), self.getUp())
 
     def getForward(self):
-        return (self.forwardPos - self.pos).normalized()
+        return vector3.normalize(self.forwardPos - self.pos)
 
     def getUp(self):
-        return (self.upPos - self.pos).normalized()
+        return vector3.normalize(self.upPos - self.pos)
 
-    def reset(self, pos=vector(-10, 10, 10)):
+    def reset(self, pos=Vector3([-10, 10, 10], dtype=np.float64)):
         self.pos = pos
-        dir = (self.zero - self.pos).normalized()
+        dir = vector3.normalize(self.zero - self.pos)
         self.forwardPos = self.pos + dir
-        up = vector(0, 1, 0)
-        side = dir.cross(up)
-        self.upPos = self.pos + side.cross(dir)
-        self.target = vector(0, 0, 0)
+        up = Vector3([0, 1, 0], dtype=np.float64)
+        side = vector3.cross(dir, up)
+        self.upPos = self.pos + vector3.cross(side, dir)
+        self.target = Vector3([0, 0, 0], dtype=np.float64)
 
     def getPos(self):
-        return [self.pos.x(), self.pos.y(), self.pos.z()]
+        return self.pos
 
     def getDistance(self):
-        return self.pos.distanceToPoint(self.target)
+        return vector3.length(self.pos - self.target)

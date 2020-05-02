@@ -246,23 +246,10 @@ class MeshFuncs(object):
         if offset is not None:
             data[..., [0, 1, 2]] += offset
 
-    def transformVertex(self, mat, offset=None):
+    def transform(self, mat):
         points = self.mesh.points()
-
-        if type(mat) is np.ndarray or type(mat) is np.matrix:
-            matrix = mat
-            if mat.shape[1] == 3:
-                positions = points
-            else:
-                positions = np.c_[points, np.ones(points.shape[0])]
-        else:
-            return
-
-        res = positions.dot(matrix)
-        points[..., [0, 1, 2]] = res[..., [0, 1, 2]]
-
-        if offset is not None:
-            points[..., [0, 1, 2]] += offset
+        positions = np.c_[points, np.ones(points.shape[0])]
+        points[..., [0, 1, 2]] = positions.dot(mat)[..., [0, 1, 2]]
 
 
 class mesh_signals(QtCore.QObject):

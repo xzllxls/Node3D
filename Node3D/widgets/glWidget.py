@@ -6,7 +6,7 @@ from ..vendor.pyqtgraph import functions as fn
 from ..vendor.pyqtgraph import debug
 from ..vendor.pyqtgraph import opengl as gl
 from ..opengl import camera
-from ..base.data import matrix4x4, AABB_Hit, vector
+from ..base.data import matrix44, AABB_Hit, vector3
 ShareWidget = None
 
 
@@ -168,10 +168,10 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
         bottom = t * ((region[1] - y0) * (2.0 / h) - 1)
         top = t * ((region[1] + region[3] - y0) * (2.0 / h) - 1)
 
-        return matrix4x4.create_perspective_projection_from_bounds(left, right, bottom, top, nearClip, farClip)
+        return matrix44.create_perspective_projection_from_bounds(left, right, bottom, top, nearClip, farClip)
 
     def setProjection(self, region=None):
-        m = self.projectionMatrix(region).data()
+        m = self.projectionMatrix(region)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         glMultMatrixf(m)
@@ -182,7 +182,7 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
     def setModelView(self):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
-        m = self.viewMatrix().data()
+        m = self.viewMatrix()
         glMultMatrixf(m.transpose())
 
     def pixelSize(self, pos):
@@ -353,10 +353,10 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
 
     def itemsAt(self, x, y):
         # get ray form mouse pos
-        ray_ndc = vector(2.0*x/self.width() - 1.0, 2.0*y/self.height() - 1.0, -1)
-        ray_eye = self.projectionMatrix().inverted().transformVector(ray_ndc)
-        ray_eye.setZ(-1)
-        ray_world = self.viewMatrix().inverted().transformVector(ray_eye, fill=0.0).normalized()
+        ray_ndc = np.array([2.0*x/self.width() - 1.0, 2.0*y/self.height() - 1.0, -1])
+        ray_eye = matrix44.apply_to_vector(matrix44.inverse(self.projectionMatrix()), ray_ndc)
+        ray_eye[2] = -1
+        ray_world = vector3.normalize(matrix44.apply_to_vector(matrix44.inverse(self.viewMatrix()), ray_eye))
 
         # calculate hit
         meshes = [m for m in self.meshItems if AABB_Hit(m.bbox_min, m.bbox_max, self.cam.getPos(), ray_world)]

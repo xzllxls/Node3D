@@ -1,6 +1,6 @@
 from Node3D.base.node import GeometryNode
 from Node3D.opengl import Mesh, DATA_SHAPE_MAP, get_shape
-from Node3D.base.data import matrix4x4
+from Node3D.base.data import matrix44
 from Node3D.vendor.NodeGraphQt.constants import *
 import numpy as np
 import copy
@@ -222,12 +222,12 @@ class Transform(GeometryNode):
             rot = np.radians(self.get_property("Rotate"))
             shear = np.radians(self.get_property("Shear"))
 
-            mat = matrix4x4.from_compose(scale, shear, rot, trans)
+            mat = matrix44.create_from_compose(scale, shear, rot, trans)
 
         if self.get_property("Invert"):
-            mat.invert()
+            mat = matrix44.inverse(mat)
 
-        self.geo.meshFuncs.transformVertex(mat.data())
+        self.geo.meshFuncs.transform(mat)
 
         if self.get_property("Output Matrix"):
             self.geo.setDetailAttrib("transform", mat, attribType='matrix4')

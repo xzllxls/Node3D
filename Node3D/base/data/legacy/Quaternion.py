@@ -3,7 +3,7 @@ from quaternion import quaternion as quat
 import quaternion as qt
 from math import sin, cos, sqrt, acos
 import numpy as np
-from .utils import vector_norm, _EPS
+from .utils import _EPS
 
 
 class quaternion(quat):
@@ -57,7 +57,6 @@ class quaternion(quat):
 
     def __truediv__(self, q):
         return quaternion.fromQuaternion(super(quaternion, self).__truediv__(q))
-
 
     def setW(self, x):
         self.w = x
@@ -196,25 +195,34 @@ class quaternion(quat):
     @staticmethod
     def from_matrix(matrix):
         q = np.empty((4,), dtype=np.float64)
-        M = np.array(matrix.data(), dtype=np.float64, copy=False)[:4, :4]
-        t = np.trace(M)
-        if t > M[3, 3]:
-            q[3] = t
-            q[2] = M[1, 0] - M[0, 1]
-            q[1] = M[0, 2] - M[2, 0]
-            q[0] = M[2, 1] - M[1, 2]
+        a = np.array(matrix.data(), dtype=np.float64, copy=False)[:4, :4]
+        trace = a[0][0] + a[1][1] + a[2][2]
+        if trace > 0:
+            s = 0.5 / sqrt(trace + 1.0)
+            q[0] = 0.25 / s
+            q[1] = (a[2][1] - a[1][2]) * s
+            q[2] = (a[0][2] - a[2][0]) * s
+            q[3] = (a[1][0] - a[0][1]) * s
         else:
-            i, j, k = 0, 1, 2
-            if M[1, 1] > M[0, 0]:
-                i, j, k = 1, 2, 0
-            if M[2, 2] > M[i, i]:
-                i, j, k = 2, 0, 1
-            t = M[i, i] - (M[j, j] + M[k, k]) + M[3, 3]
-            q[i] = t
-            q[j] = M[i, j] + M[j, i]
-            q[k] = M[k, i] + M[i, k]
-            q[3] = M[k, j] - M[j, k]
-        q *= 0.5 / sqrt(t * M[3, 3])
+            if a[0][0] > a[1][1] and a[0][0] > a[2][2]:
+                s = 2.0 * sqrt(1.0 + a[0][0] - a[1][1] - a[2][2])
+                q[0] = (a[2][1] - a[1][2]) / s
+                q[1] = 0.25 * s
+                q[2] = (a[0][1] + a[1][0]) / s
+                q[3] = (a[0][2] + a[2][0]) / s
+            elif a[1][1] > a[2][2]:
+                s = 2.0 * sqrt(1.0 + a[1][1] - a[0][0] - a[2][2])
+                q[0] = (a[0][2] - a[2][0]) / s
+                q[1] = (a[0][1] + a[1][0]) / s
+                q[2] = 0.25 * s
+                q[3] = (a[1][2] + a[2][1]) / s
+            else:
+                s = 2.0 * sqrt(1.0 + a[2][2] - a[0][0] - a[1][1])
+                q[0] = (a[1][0] - a[0][1]) / s
+                q[1] = (a[0][2] + a[2][0]) / s
+                q[2] = (a[1][2] + a[2][1]) / s
+                q[3] = 0.25 * s
+
         return quaternion.fromList(q)
 
 

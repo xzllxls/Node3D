@@ -1,4 +1,4 @@
-from PySide2.QtGui import QVector3D, QVector2D, QVector4D
+from Qt.QtGui import QVector3D, QVector2D, QVector4D
 import numpy as np
 
 
