@@ -89,9 +89,9 @@ def create_from_axis_rotation(axis, theta, dtype=np.float64):
     axis = vector.normalize(axis)
     x,y,z = axis
 
-    s = np.sin(theta);
-    c = np.cos(theta);
-    t = 1 - c;
+    s = np.sin(theta)
+    c = np.cos(theta)
+    t = 1 - c
 
     # Construct the elements of the rotation matrix
     return np.array(
