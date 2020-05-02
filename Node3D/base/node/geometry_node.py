@@ -60,6 +60,8 @@ class GeometryNode(AutoNode):
 
         for from_port in from_ports:
             geo = from_port.node().get_data(from_port)
+            if geo.getNumVertexes() == 0:
+                return None
             if ref:
                 return geo
             else:

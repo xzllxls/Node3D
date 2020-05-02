@@ -1,5 +1,6 @@
 from Node3D.base.node import GeometryNode
 from Node3D.vendor.NodeGraphQt.constants import *
+from scipy.spatial import ckdtree
 import numpy as np
 import igl
 
@@ -27,12 +28,12 @@ class GaussianCurvature(GeometryNode):
         self.geo.setVertexAttribData(self.get_property("Attribute Name"), r * s, attribType='float', defaultValue=0.0)
 
 
-class Attribute_Blur(GeometryNode):
+class AttributeBlur(GeometryNode):
     __identifier__ = 'Calculate'
     NODE_NAME = 'Attribute_Blur'
 
     def __init__(self):
-        super(Attribute_Blur, self).__init__()
+        super(AttributeBlur, self).__init__()
         self.add_combo_menu('Attribute', 'Attribute', items= ['No Attribute'])
         self.create_property(
             "Iteration", 1, widget_type=NODE_PROP_INT, range=(0, 10))
@@ -248,3 +249,51 @@ class WindingNumber(GeometryNode):
         f = mesh.face_vertex_indices()
         wn = igl.winding_number(v, f, self.geo.getVertexes())
         self.geo.setVertexAttribData(self.get_property("Attribute Name"), wn, attribType='float', defaultValue=0.0)
+
+
+class Kdtree(GeometryNode):
+    __identifier__ = 'Calculate'
+    NODE_NAME = 'Kdtree'
+
+    def __init__(self):
+        super(Kdtree, self).__init__()
+        self.add_input("geo")
+        self.set_parameters([{'name': 'Group Name', 'type': 'str', 'value': 'searched'},
+                             {'name': 'Distance Name', 'type': 'str', 'value': 'distance'},
+                             {'name': 'Search Radius', 'type': 'float', 'value': 1.0},
+                             {'name': 'Search Count', 'type': 'int', 'value': 100000},
+                             {'name': 'Search Position', 'type': 'vector3', 'value': [0, 1, 0]}])
+
+    def run(self):
+        if not self.copyData():
+            return
+
+        group_name = self.get_property('Group Name')
+        distance_name = self.get_property('Distance Name')
+        if not group_name or not distance_name:
+            return
+
+        search_position = self.get_property('Search Position')
+        max_count = self.get_property('Search Count')
+        max_dist = self.get_property('Search Radius')
+        if max_dist <= 0:
+            max_dist = None
+        points = self.geo.getVertexes()
+        tree = ckdtree.cKDTree(points)
+        dist, idx = tree.query(search_position, max_count, distance_upper_bound=max_dist)
+        if len(idx) == 0:
+            return
+        npoints = self.geo.getNumVertexes()
+        self.geo.createGroup('vertex', group_name)
+        self.geo.createAttribute('vertex', distance_name, "float", -1.0, True)
+        if not self.geo.hasAttribute('vertex', 'color'):
+            self.geo.createAttribute('vertex', 'color', "vector3", [1.0, 1.0, 1.0], True)
+
+        for i, d in zip(idx, dist):
+            if i >= npoints:
+                continue
+
+            self.geo.setVertexAttrib(distance_name, i, d)
+            self.geo.setGroup('vertex', group_name, i, True)
+            self.geo.setVertexAttrib("color", i, [1.0, 0, 0])
+

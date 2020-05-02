@@ -412,6 +412,7 @@ QPushButton {{
     border-color: rgb(30,30,30);
     min-width: 20;
     min-height: 17;
+    max-width: 200;
     font-size:13px;
     color:rgb(200,200,200);
     padding-left: 10px;
