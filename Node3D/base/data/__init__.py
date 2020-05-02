@@ -1,7 +1,7 @@
 import pyrr
 from .utils import AABB_Hit
 
-from pyrr import (
+from ...vendor.pyrr import (
     aabb,
     aambb,
     euler,

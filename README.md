@@ -17,7 +17,6 @@ The following libraries can be installed with `pip`.
 * [numpy](https://pypi.org/project/numpy/) v1.18.2 or higher
 * [scipy](https://pypi.org/project/scipy/) v1.4.1 or higher
 * [numba](http://numba.pydata.org/) v0.48.0 or higher
-* [numpy-quaternion](https://pypi.org/project/numpy-quaternion/)
 * [pyfastnoisesimd](https://github.com/robbmcleod/pyfastnoisesimd)
 
 The following library can install by pre-compiled `whl`
@@ -33,3 +32,4 @@ The following third-party libraries which has been modified are already included
 * [NodeGraphQt](https://github.com/jchanvfx/NodeGraphQt)
 * [pw_MultiScriptEditor](https://github.com/paulwinex/pw_MultiScriptEditor)
 * [pyqtgraph](https://github.com/pyqtgraph/pyqtgraph)
+* [pyrr](https://github.com/adamlwgriffiths/Pyrr)

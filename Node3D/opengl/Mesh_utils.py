@@ -1,14 +1,18 @@
 import numpy as np
 import openmesh as om
-import copy
 import numba
-from numba import cuda
 from Qt import QtCore, QtGui
 from ..vendor.pyqtgraph.opengl.GLGraphicsItem import GLGraphicsItem
 from OpenGL.GL import *
 from ..vendor.pyqtgraph import functions as fn
 import copy
-import cupy as cp
+
+WITH_CUDA = False
+try:
+    import cupy as cp
+    WITH_CUDA = True
+except:
+    pass
 
 
 @numba.jit(nopython=True, cache=True, nogil=True)  # parallel=True, nogil=True
@@ -256,13 +260,14 @@ class MeshFuncs(object):
         else:
             positions = np.c_[points, np.ones(points.shape[0])]
 
-        # cpu
-        # res = positions.dot(matrix)
-
-        # gpu - cuda
-        p = cp.asarray(positions)
-        m = cp.asarray(matrix)
-        res = cp.asnumpy(p.dot(m))
+        if WITH_CUDA:
+            # gpu - cuda
+            p = cp.asarray(positions)
+            m = cp.asarray(matrix)
+            res = cp.asnumpy(p.dot(m))
+        else:
+            # cpu
+            res = positions.dot(matrix)
 
         points[..., [0, 1, 2]] = res[..., [0, 1, 2]]
 
