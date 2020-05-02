@@ -1,7 +1,8 @@
 from Node3D.base.node import AutoNode, ModuleNode
 from Node3D.base.node.module_node import get_functions_from_type
-import numpy as np
 from Node3D.vendor.NodeGraphQt.constants import *
+from Node3D.constants import NodeCategory
+import numpy as np
 import math
 
 
@@ -37,7 +38,7 @@ class MathModuleNode(ModuleNode):
 
     # set the initial default node name.
     NODE_NAME = 'Math Module'
-
+    NODE_CATEGORY = NodeCategory.CALCULATE
     module_functions = get_functions_from_type(math)
 
     def __init__(self):
@@ -48,6 +49,7 @@ class MathModuleNode(ModuleNode):
 class DataViewerNode(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Data View'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(DataViewerNode, self).__init__()
@@ -68,6 +70,7 @@ class DataViewerNode(AutoNode):
 class Time(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Time'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Time, self).__init__()
@@ -89,6 +92,7 @@ class Time(AutoNode):
 class Sin(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Sin'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Sin, self).__init__()
@@ -107,6 +111,7 @@ class Sin(AutoNode):
 class Add(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Add'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Add, self).__init__()
@@ -128,6 +133,7 @@ class Add(AutoNode):
 class Subtract(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Subtract'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Subtract, self).__init__()
@@ -149,6 +155,7 @@ class Subtract(AutoNode):
 class Multiply(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Multiply'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Multiply, self).__init__()
@@ -170,6 +177,7 @@ class Multiply(AutoNode):
 class Divide(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Divide'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Divide, self).__init__()
@@ -191,6 +199,7 @@ class Divide(AutoNode):
 class Random(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Random'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Random, self).__init__()
@@ -208,11 +217,12 @@ class Random(AutoNode):
 
 class VectorSplit(AutoNode):
     """
-    Splict a vector to x,y,z
+    Split a vector to x,y,z
     """
 
     __identifier__ = 'Math'
     NODE_NAME = 'Vector Split'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(VectorSplit, self).__init__()
@@ -246,6 +256,7 @@ class VectorMaker(AutoNode):
 
     __identifier__ = 'Math'
     NODE_NAME = 'Vector Maker'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(VectorMaker, self).__init__()
@@ -275,6 +286,7 @@ class DataConvect(AutoNode):
 
     __identifier__ = 'Math'
     NODE_NAME = 'Data Convect'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(DataConvect, self).__init__()
@@ -311,6 +323,7 @@ class FloatInputNode(AutoNode):
 
     __identifier__ = 'Math'
     NODE_NAME = 'Float'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(FloatInputNode, self).__init__()
@@ -325,6 +338,7 @@ class IntInputNode(AutoNode):
 
     __identifier__ = 'Math'
     NODE_NAME = 'Int'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(IntInputNode, self).__init__()
@@ -335,6 +349,7 @@ class IntInputNode(AutoNode):
 class Vector2InputNode(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Vector2'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Vector2InputNode, self).__init__()
@@ -346,6 +361,7 @@ class Vector2InputNode(AutoNode):
 class Vector3InputNode(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Vector3'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Vector3InputNode, self).__init__()
@@ -357,6 +373,7 @@ class Vector3InputNode(AutoNode):
 class Vector4InputNode(AutoNode):
     __identifier__ = 'Math'
     NODE_NAME = 'Vector4'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(Vector4InputNode, self).__init__()
@@ -372,6 +389,7 @@ class BoolInputNode(AutoNode):
 
     __identifier__ = 'Math'
     NODE_NAME = 'Bool'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(BoolInputNode, self).__init__()
@@ -390,6 +408,7 @@ class IfNode(AutoNode):
 
     __identifier__ = 'Math'
     NODE_NAME = 'If'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     def __init__(self):
         super(IfNode, self).__init__()
@@ -416,6 +435,7 @@ class BooleanNode(AutoNode):
     __identifier__ = 'Math'
 
     NODE_NAME = 'Boolean'
+    NODE_CATEGORY = NodeCategory.CALCULATE
 
     logics = {'and': 'a and b',
               'or': 'a or b',

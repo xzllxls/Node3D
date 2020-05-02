@@ -5,7 +5,7 @@ import os
 from Node3D.vendor.NodeGraphQt import BackdropNode
 from PySide2 import QtWidgets, QtGui, QtCore
 from Node3D.widgets.mainWindow import mainWindow
-from Node3D.nodes.subgraph_nodes import Publish
+from Node3D.nodes.subgraph_nodes import PublishedGeometry
 import inspect
 import importlib
 import qdarkstyle
@@ -22,6 +22,7 @@ def run(nodes=None):
 
     # registered nodes.
     BackdropNode.__identifier__ = 'Utility'
+    BackdropNode.NODE_CATEGORY = None
     nodes.append(BackdropNode)
     [graph.register_node(n) for n in nodes]
 
@@ -65,7 +66,7 @@ def get_published_nodes_from_folder(folder_path):
         if not i.endswith(".node") and not i.endswith(".json"):
             continue
         file_name = os.path.join(folder_path, i)
-        node = Publish.create_node_class(file_name)
+        node = PublishedGeometry.create_node_class(file_name, PublishedGeometry)
         if node is not None:
             nodes.append(node)
 

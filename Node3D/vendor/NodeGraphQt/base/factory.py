@@ -11,6 +11,7 @@ class NodeFactory(object):
     __aliases = {}
     __names = {}
     __nodes = {}
+    __category = {}
 
     @property
     def names(self):
@@ -74,6 +75,7 @@ class NodeFactory(object):
 
         name = node.NODE_NAME
         node_type = node.type_
+        node_category = node.NODE_CATEGORY
 
         if self.__nodes.get(node_type):
             raise NodeRegistrationError(
@@ -82,13 +84,18 @@ class NodeFactory(object):
                 .format(node_type))
         self.__nodes[node_type] = node
 
-        if self.__names.get(name):
+        if name in self.__names:
             self.__names[name].append(node_type)
         else:
             self.__names[name] = [node_type]
 
+        if node_category in self.__category:
+            self.__category[node_category].append(name)
+        else:
+            self.__category[node_category] = [name]
+
         if alias:
-            if self.__aliases.get(alias):
+            if alias in self.__aliases:
                 raise NodeRegistrationError(
                     'Alias: "{}" already registered to "{}"'
                     .format(alias, self.__aliases.get(alias))
@@ -102,3 +109,12 @@ class NodeFactory(object):
         self.__nodes.clear()
         self.__names.clear()
         self.__aliases.clear()
+
+    def get_names_by_category(self, category):
+        if category not in self.__category:
+            return []
+        names = self.__category[category]
+        if category is not None:
+            names.extend(self.__category[None])
+        return {name: self.__names[name] for name in names}
+

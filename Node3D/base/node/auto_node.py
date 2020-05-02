@@ -5,16 +5,14 @@ import time
 from ...widgets.parameterTree import DEFAULT_VALUE_MAP, build_curve_ramp, get_ramp_colors, get_ramp_color
 import numpy as np
 import traceback
-
-NODE_NONE = 0
-NODE_WARNING = 1
-NODE_ERROR = 2
+from ...constants import NodeCategory, NodeMessageLevel
 
 
 class AutoNode(BaseNode, QtCore.QObject):
     cooked = QtCore.Signal()
     param_changed = QtCore.Signal()
     input_changed = QtCore.Signal()
+    NODE_CATEGORY = NodeCategory.NONE
 
     def __init__(self, defaultInputType=None, defaultOutputType=None):
         super(AutoNode, self).__init__()
@@ -31,7 +29,7 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         self._cook_time = 0.0
         self._message = ""
-        self._message_level = NODE_NONE
+        self._message_level = NodeMessageLevel.NONE
         self._params = {}
 
         # effect
@@ -77,7 +75,7 @@ class AutoNode(BaseNode, QtCore.QObject):
         Returns whether the node has errors.
         """
 
-        return self._message_level is NODE_ERROR
+        return self._message_level is NodeMessageLevel.ERROR
 
     def update_stream(self, forceCook=False):
         """
@@ -157,7 +155,7 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         self.model.set_property('auto_cook', _tmp)
 
-        if self._message_level is NODE_ERROR:
+        if self._message_level is NodeMessageLevel.ERROR:
             return
 
         self._cook_time = time.time() - _start_time
@@ -280,10 +278,10 @@ class AutoNode(BaseNode, QtCore.QObject):
         Set node to normal mode and clear the node warning/error message.
         """
 
-        if self._message_level is not NODE_NONE:
+        if self._message_level is not NodeMessageLevel.NONE:
             self.color_effect.setEnabled(False)
             self._message = ""
-            self._message_level = NODE_NONE
+            self._message_level = NodeMessageLevel.NONE
 
     def _set_message(self, message, message_level):
         """
@@ -292,33 +290,33 @@ class AutoNode(BaseNode, QtCore.QObject):
 
         Args:
             message(str): the describe of the error.
-            message_level(int): NODE_NONE/NODE_WARNING/NODE_ERROR.
+            message_level(int): NodeMessageLevel.NONE/NodeMessageLevel.WARNING/NodeMessageLevel.ERROR.
         """
 
         self._message = str(message)
         self._message_level = message_level
-        if message_level is NODE_ERROR:
+        if message_level is NodeMessageLevel.ERROR:
             self.color_effect.setEnabled(True)
             self.color_effect.setColor(QtGui.QColor.fromRgbF(*self.errorColor))
 
     def error(self, message):
         """
-        Set message_level to NODE_ERROR and change the node color.
+        Set message_level to NodeMessageLevel.ERROR and change the node color.
 
         Args:
             message(str): the describe of the error.
         """
 
-        self._set_message(message, NODE_ERROR)
+        self._set_message(message, NodeMessageLevel.ERROR)
 
     def warning(self, message):
         """
-        Set message_level to NODE_WARNING.
+        Set message_level to NodeMessageLevel.WARNING.
 
         Args:
             message(str): the describe of the warning.
         """
-        self._set_message(message, NODE_WARNING)
+        self._set_message(message, NodeMessageLevel.WARNING)
 
     def set_parameters(self, params, tab='Parameters'):
         """

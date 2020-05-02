@@ -167,6 +167,7 @@ class NodeGraph(QtCore.QObject):
         self._undo_stack = QtWidgets.QUndoStack(self)
         self._current_node_space = None
         self._editable = True
+        self._last_category = -1
 
         tab = QtWidgets.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Tab), self._viewer)
         tab.activated.connect(self._toggle_tab_search)
@@ -237,7 +238,12 @@ class NodeGraph(QtCore.QObject):
         if not self._editable:
             return
         if self._viewer.underMouse():
-            self._viewer.tab_search_set_nodes(self._node_factory.names)
+            nodes = None
+            if self._current_node_space.CHILDREN_CATEGORY is not self._last_category:
+                self._viewer.rebuild_tab_search()
+                self._last_category = self._current_node_space.CHILDREN_CATEGORY
+                nodes = self._node_factory.get_names_by_category(self._current_node_space.CHILDREN_CATEGORY)
+            self._viewer.tab_search_set_nodes(nodes)
 
     def _on_property_bin_changed(self, node_id, prop_name, prop_value):
         """
@@ -846,6 +852,9 @@ class NodeGraph(QtCore.QObject):
         if not self._editable:
             return
         NodeCls = self._node_factory.create_node_instance(node_type)
+        if NodeCls.NODE_CATEGORY is not None and \
+                NodeCls.NODE_CATEGORY is not self._current_node_space.CHILDREN_CATEGORY:
+            return
         if NodeCls:
             node = NodeCls()
             node.model._graph_model = self.model
@@ -1254,6 +1263,10 @@ class NodeGraph(QtCore.QObject):
         for n_id, n_data in data.get('nodes', {}).items():
             identifier = n_data['type_']
             NodeCls = self._node_factory.create_node_instance(identifier)
+            if set_parent and self._current_node_space is not None and NodeCls.NODE_CATEGORY is not None:
+                if NodeCls.NODE_CATEGORY is not None and \
+                        NodeCls.NODE_CATEGORY is not self._current_node_space.CHILDREN_CATEGORY:
+                    return
             if NodeCls:
                 node = NodeCls()
                 node.NODE_NAME = n_data.get('name', node.NODE_NAME)

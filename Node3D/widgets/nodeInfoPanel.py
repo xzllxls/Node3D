@@ -1,5 +1,6 @@
 from Qt import QtWidgets, QtCore, QtGui, QtCompat
 from ..base.node import GeometryNode, AutoNode
+from ..constants import NodeMessageLevel
 import os
 
 ATTRIBUTE_DATA_COLOR = {"float": '<font color="yellow">{}</font>({})',
@@ -104,16 +105,12 @@ class NodeInfoPanel(QtWidgets.QWidget):
         self.ui.nodeTypeLabel.setText(nodeType)
         self.ui.cookTimeLabel.setText(str(nodeCookTime))
 
-        if nodeMessageLevel > 0:
-            if nodeMessageLevel == 1:
-                # warning
-                messageColor = MESSAGE_COLOR["warning"]
-            elif nodeMessageLevel == 2:
-                # error
-                messageColor = MESSAGE_COLOR["error"]
-            else:
-                # other
-                messageColor = MESSAGE_COLOR["none"]
+        if nodeMessageLevel is NodeMessageLevel.NONE:
+            messageColor = MESSAGE_COLOR["none"]
+        elif nodeMessageLevel is NodeMessageLevel.WARNING:
+            messageColor = MESSAGE_COLOR["warning"]
+        elif nodeMessageLevel is NodeMessageLevel.ERROR:
+            messageColor = MESSAGE_COLOR["error"]
 
             self.ui.label_9.setVisible(True)
             self.ui.nodeErrorText.setVisible(True)

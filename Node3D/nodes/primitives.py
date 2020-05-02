@@ -4,7 +4,6 @@ from Node3D.vendor.NodeGraphQt.constants import *
 import numpy as np
 from Node3D.base.mesh.base_primitives import generate_tube, generate_sphere, \
     generate_cylinder, generate_cone, generate_torus
-from Node3D.base.data import vector
 import open3d as o3d
 
 

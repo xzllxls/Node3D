@@ -1,6 +1,7 @@
 from .auto_node import AutoNode
 from ...opengl import Mesh
 from ...vendor.NodeGraphQt.base.port import Port
+from ...constants import NodeCategory
 import copy
 import gc
 
@@ -8,6 +9,7 @@ import gc
 class GeometryNode(AutoNode):
 
     __identifier__ = 'OpenGL'
+    NODE_CATEGORY = NodeCategory.GEOMETRY
 
     def __init__(self, pre_generate=True):
         super(GeometryNode, self).__init__(defaultInputType=GeometryNode, defaultOutputType=GeometryNode)
