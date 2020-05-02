@@ -12,12 +12,12 @@ def get_group_name(group_class, name):
     return name
 
 
-class Group_Delete(GeometryNode):
+class GroupDelete(GeometryNode):
     __identifier__ = 'Group'
     NODE_NAME = 'Group_Delete'
 
     def __init__(self):
-        super(Group_Delete, self).__init__()
+        super(GroupDelete, self).__init__()
         self.add_input("geo", GeometryNode)
         self.set_parameters(
             [{'name': 'Group Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face']},
@@ -36,12 +36,12 @@ class Group_Delete(GeometryNode):
         self.geo.removeGroup(group_class, group_name)
 
 
-class Group_Create(GeometryNode):
+class GroupCreate(GeometryNode):
     __identifier__ = 'Group'
     NODE_NAME = 'Group_Create'
 
     def __init__(self):
-        super(Group_Create, self).__init__()
+        super(GroupCreate, self).__init__()
         self.add_input("geo", GeometryNode)
         self.set_parameters(
             [{'name': 'Group Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face']},
@@ -61,12 +61,12 @@ class Group_Create(GeometryNode):
         self.geo.createGroup(group_class, group_name, value)
 
 
-class Group_Promote(GeometryNode):
+class GroupPromote(GeometryNode):
     __identifier__ = 'Group'
     NODE_NAME = 'Group_Promote'
 
     def __init__(self):
-        super(Group_Promote, self).__init__()
+        super(GroupPromote, self).__init__()
         self.add_input("geo", GeometryNode)
         self.set_parameters(
             [{'name': 'From', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face']},
@@ -118,12 +118,12 @@ class Group_Promote(GeometryNode):
             self.geo.removeAttribute(from_class, group_name)
 
 
-class Group_Rename(GeometryNode):
+class GroupRename(GeometryNode):
     __identifier__ = 'Group'
     NODE_NAME = 'Group_Rename'
 
     def __init__(self):
-        super(Group_Rename, self).__init__()
+        super(GroupRename, self).__init__()
         self.add_input("geo", GeometryNode)
         self.set_parameters(
             [{'name': 'Group Class', 'type': 'list', 'value': 'vertex', 'limits': ['vertex', 'edge', 'face']},

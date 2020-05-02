@@ -139,12 +139,12 @@ class Subdivide(GeometryNode):
         self.geo.addFaces(f)
 
 
-class Collapse_Small_Triangles(GeometryNode):
+class CollapseSmallTriangles(GeometryNode):
     __identifier__ = 'Geometry'
     NODE_NAME = 'Collapse_Small_Triangles'
 
     def __init__(self):
-        super(Collapse_Small_Triangles, self).__init__()
+        super(CollapseSmallTriangles, self).__init__()
         self.add_float_input("Threshold", "Threshold", 0.01, range=(0, 1))
         self.add_input("geo")
 

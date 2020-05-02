@@ -27,12 +27,12 @@ class Python(ScriptNode):
         self.execute()
 
 
-class Vertex_Wrangle(ScriptNode):
+class VertexWrangle(ScriptNode):
     __identifier__ = 'Script'
     NODE_NAME = 'Vertex_Wrangle'
 
     def __init__(self):
-        super(Vertex_Wrangle, self).__init__()
+        super(VertexWrangle, self).__init__()
         # attribs = {}
         self.preCode = '''def run_per_vertex({}, _vertex_count):
     for idx in range(_vertex_count):
