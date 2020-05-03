@@ -26,13 +26,12 @@ class SubGraphNode(AutoNode, SubGraph):
         self.sub_graph_output_nodes = []
         self.create_property('graph_rect', None)
         self.create_property('published', False)
+        self.set_dynamic_port(dynamic_port)
+
         if dynamic_port:
-            self.set_dynamic_port(True)
-            self.model.dynamic_port = True
             self.add_int_input('input count', 'input count', 0)
             self.add_int_input('output count', 'output count', 0)
         else:
-            self.set_dynamic_port(False)
             self.create_property('input count', 0)
             self.create_property('output count', 0)
         self._marked_ports = []
@@ -154,7 +153,8 @@ class SubGraphNode(AutoNode, SubGraph):
     def get_data(self, port):
         if self.disabled():
             return self.get_input_data_ref()
-
+        if port is None:
+            return None
         index = int(port.name()[-1])
         for node in self.sub_graph_output_nodes:
             if node.get_property('output index') == index:
@@ -257,6 +257,8 @@ class SubGraphNode(AutoNode, SubGraph):
         if self in nodes:
             nodes.remove(self)
         [n.set_parent(self) for n in nodes]
+        # if not nodes:
+        #     return
 
         self.set_property('input count', 0)
         self.set_property('output count', 0)
@@ -320,6 +322,7 @@ class SubGraphNode(AutoNode, SubGraph):
         if len(self.output_ports()) == 0:
             self.create_output_node()
         self.set_property('create_from_select', False)
+        print(self.get_property('input count'))
 
     def update_ports(self):
         """

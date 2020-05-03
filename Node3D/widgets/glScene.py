@@ -1,6 +1,6 @@
 from ..vendor.pyqtgraph import opengl as gl
 from .glWidget import GLViewWidget
-from ..base.node.geometry_node import GeometryNode
+from ..base.node import GeometryNode
 
 
 class glScene(GLViewWidget):

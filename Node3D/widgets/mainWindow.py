@@ -13,6 +13,7 @@ from .dataTreeWidget import NodeDataTreeWidget
 from .parameterTree import NodePropBin
 from .nodeInfoPanel import NodeInfoPanel
 from .menuBar import setup_menu_bar
+from .imageViewer import ImageViewer
 import numpy
 
 
@@ -55,6 +56,8 @@ class mainWindow(QMainWindow):
 
         self.nodeInfoPanel = NodeInfoPanel()
 
+        self.imageViewer = ImageViewer()
+
         # set up default menu and commands.
         self.setup_menus()
 
@@ -65,7 +68,8 @@ class mainWindow(QMainWindow):
         nodeTreeDock = self.add_dock(self.node_tree, "Node tree")
         dataTreeDock = self.add_dock(self.dataTreeWidget, "Data tree")
         consoleDock = self.add_dock(self.consoleWidget, "Console")
-        glDock = self.add_dock(self.glWidget, "Scene")
+        glDock = self.add_dock(self.glWidget, "Geometry Viewer")
+        imageViewerDock = self.add_dock(self.imageViewer, "Image Viewer")
         # timeDock = self.add_dock(self.timeline, "TimeLine")
 
         # Qt.Horizontal/Qt.Vertical
@@ -76,6 +80,7 @@ class mainWindow(QMainWindow):
         self.splitDockWidget(graphDock, propertiesDock, Qt.Horizontal)
         self.splitDockWidget(propertiesDock, dataTreeDock, Qt.Vertical)
         self.tabifyDockWidget(consoleDock, nodeTreeDock)
+        self.tabifyDockWidget(glDock, imageViewerDock)
 
         nodeTreeDock.setMaximumWidth(250)
         self.setup_scene()
@@ -94,9 +99,10 @@ class mainWindow(QMainWindow):
         node = self.graph.get_node_by_id(node.id)
         if self.dataTreeWidget.isVisible():
             self.dataTreeWidget.set_node(node)
-            print('da')
         if self.consoleWidget.isVisible():
             self.consoleWidget.set_node(node)
+        if self.imageViewer.isVisible():
+            self.imageViewer.set_node(node)
 
     def add_console(self):
         # background-color: #373737; color: #00BFFF

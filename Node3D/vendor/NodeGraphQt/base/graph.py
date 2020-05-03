@@ -243,6 +243,8 @@ class NodeGraph(QtCore.QObject):
                 self._viewer.rebuild_tab_search()
                 self._last_category = self._current_node_space.CHILDREN_CATEGORY
                 nodes = self._node_factory.get_names_by_category(self._current_node_space.CHILDREN_CATEGORY)
+                if not nodes:
+                    return
             self._viewer.tab_search_set_nodes(nodes)
 
     def _on_property_bin_changed(self, node_id, prop_name, prop_value):

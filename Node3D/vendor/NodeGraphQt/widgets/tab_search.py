@@ -161,6 +161,8 @@ class TabSearchMenuWidget(QtWidgets.QMenu):
 
     def set_nodes(self, node_dict=None):
         if not self._node_dict or self.rebuild:
+            if node_dict is None:
+                return
             self._node_dict.clear()
             self._clear_actions()
             self._set_menu_visible(False)

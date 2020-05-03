@@ -119,3 +119,4 @@ class PublishedCalculate(SubGraphCalculate, PublishedNode):
         if self.get_property('published'):
             return
         SubGraphCalculate.publish(self, file_path, node_name, node_identifier, node_class_name)
+

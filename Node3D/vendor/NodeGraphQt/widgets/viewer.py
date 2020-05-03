@@ -138,7 +138,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self.scale(scale, scale, pos)
 
     def _set_viewer_pan(self, pos_x, pos_y):
-        speed = self._scene_range.width() * 0.0015
+        speed = self._scene_range.width() * 0.0012
         x = -pos_x * speed
         y = -pos_y * speed
         self._scene_range.adjust(x, y, x, y)
@@ -470,6 +470,16 @@ class NodeViewer(QtWidgets.QGraphicsView):
         if event.modifiers() == (QtCore.Qt.AltModifier | QtCore.Qt.ShiftModifier):
             self.ALT_state = True
             self.SHIFT_state = True
+
+        if event.key() == QtCore.Qt.Key_F:
+            nodes = self.selected_nodes()
+            if not nodes:
+                nodes = [item for item in self.scene().items() \
+                         if isinstance(item, AbstractNodeItem)]
+
+            if not nodes:
+                return
+            self.zoom_to_nodes(nodes)
 
         super(NodeViewer, self).keyPressEvent(event)
 

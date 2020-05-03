@@ -75,7 +75,9 @@ def get_published_nodes_from_folder(folder_path):
 
 if __name__ == '__main__':
     node_path = os.getcwd() + "/Node3D/nodes"
+    image_node_path = os.getcwd() + "/Node3D/nodes/image_nodes"
     published_node_path = os.getcwd() + "/Node3D/nodes/published_nodes"
     register_nodes = get_nodes_from_folder(node_path)
+    register_nodes.extend(get_nodes_from_folder(image_node_path))
     register_nodes.extend(get_published_nodes_from_folder(published_node_path))
     run(register_nodes)

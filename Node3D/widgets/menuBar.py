@@ -123,7 +123,7 @@ def setup_menu_bar(graph, window, root_menu):
     add_command(graph_menu, 'Zoom In', lambda: utils._zoom_in(graph), view, '=')
     add_command(graph_menu, 'Zoom Out', lambda: utils._zoom_out(graph), view, '-')
     add_command(graph_menu, 'Reset Zoom', lambda: utils._reset_zoom(graph), view, 'H')
-    add_command(edit_menu, 'Center Selection', lambda: utils._fit_to_selection(graph), view, 'F')
+    add_command(edit_menu, 'Center Selection', lambda: utils._fit_to_selection(graph), view)
     graph_menu.addSeparator()
 
     add_command(graph_menu, 'Layout Graph Down Stream', lambda: utils._layout_graph_down(graph), view, 'L')

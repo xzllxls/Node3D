@@ -112,7 +112,7 @@ class NodeFactory(object):
 
     def get_names_by_category(self, category):
         if category not in self.__category:
-            return []
+            return None
         names = self.__category[category]
         if category is not None:
             names.extend(self.__category[None])
