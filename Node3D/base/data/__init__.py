@@ -1,4 +1,3 @@
-import pyrr
 from .utils import AABB_Hit
 
 from ...vendor.pyrr import (

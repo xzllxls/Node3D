@@ -2,11 +2,11 @@ from PySide2 import QtCore, QtGui, QtWidgets
 from OpenGL.GL import *
 import OpenGL.GL.framebufferobjects as glfbo
 import numpy as np
-from ..vendor.pyqtgraph import functions as fn
-from ..vendor.pyqtgraph import debug
-from ..vendor.pyqtgraph import opengl as gl
-from ..opengl import camera
-from ..base.data import matrix44, AABB_Hit, vector3
+from ...vendor.pyqtgraph import functions as fn
+from ...vendor.pyqtgraph import debug
+from ...vendor.pyqtgraph import opengl as gl
+from ...opengl import camera
+from ...base.data import matrix44, AABB_Hit, vector3
 ShareWidget = None
 
 
@@ -353,14 +353,13 @@ class GLViewWidget(QtWidgets.QOpenGLWidget):
 
     def itemsAt(self, x, y):
         # get ray form mouse pos
-        ray_ndc = np.array([2.0*x/self.width() - 1.0, 2.0*y/self.height() - 1.0, -1])
+        ray_ndc = np.array([2.0*x/self.width() - 1.0, 2.0*y/self.height() - 1.0, -1.0])
         ray_eye = matrix44.apply_to_vector(matrix44.inverse(self.projectionMatrix()), ray_ndc)
         ray_eye[2] = -1
-        ray_world = vector3.normalize(matrix44.apply_to_vector(matrix44.inverse(self.viewMatrix()), ray_eye))
+        ray_world = vector3.normalize(matrix44.apply_to_vector(matrix44.inverse(self.viewMatrix()), ray_eye, fill=0.0))
 
         # calculate hit
         meshes = [m for m in self.meshItems if AABB_Hit(m.bbox_min, m.bbox_max, self.cam.getPos(), ray_world)]
-
         if meshes:
             return meshes[0]
         else:

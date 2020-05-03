@@ -1,5 +1,5 @@
-from pyrr.matrix44 import *
-from pyrr import Matrix44, vector3
+from ...vendor.pyrr.matrix44 import *
+from ...vendor.pyrr import Matrix44, vector3
 import numpy as np
 
 
@@ -43,3 +43,11 @@ def create_look_at(eye, target, up):
         Minv[2][i] = z[i]
         Tr[i][3] = -target[i]
     return np.dot(Minv, Tr)
+
+
+def apply_to_vector(mat, vec, fill=1.0):
+    if len(vec) == 3:
+        vec = [vec[0], vec[1], vec[2], fill]
+        return np.dot(mat, vec)[:-1]
+    else:
+        return np.dot(mat, vec)

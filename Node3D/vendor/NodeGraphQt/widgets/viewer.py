@@ -474,8 +474,8 @@ class NodeViewer(QtWidgets.QGraphicsView):
         if event.key() == QtCore.Qt.Key_F:
             nodes = self.selected_nodes()
             if not nodes:
-                nodes = [item for item in self.scene().items() \
-                         if isinstance(item, AbstractNodeItem)]
+                nodes = [item for item in self.scene().items()
+                         if isinstance(item, AbstractNodeItem) and item.isVisible()]
 
             if not nodes:
                 return
@@ -751,6 +751,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
     # --- viewer ---
 
     def tab_search_set_nodes(self, nodes):
+        self._previous_pos = self.mapFromGlobal(QtGui.QCursor.pos())
         self._search_widget.set_nodes(nodes)
 
     def rebuild_tab_search(self):
@@ -811,12 +812,12 @@ class NodeViewer(QtWidgets.QGraphicsView):
         return nodes
 
     def selected_nodes(self):
-        nodes = [item for item in self.scene().selectedItems() \
+        nodes = [item for item in self.scene().selectedItems()
                  if isinstance(item, AbstractNodeItem)]
         return nodes
 
     def selected_pipes(self):
-        pipes = [item for item in self.scene().selectedItems() \
+        pipes = [item for item in self.scene().selectedItems()
                  if isinstance(item, Pipe)]
         return pipes
 

@@ -332,7 +332,11 @@ def inverse(mat):
 
     .. seealso:: http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.inv.html
     """
-    return np.linalg.inv(mat)
+    try:
+        return np.linalg.inv(mat)
+    except:
+        return np.zeros((3, 3), dtype=mat.dtype)
+
 
 def create_direction_scale(direction, scale):
     """Creates a matrix which can apply a directional scaling to a set of vectors.

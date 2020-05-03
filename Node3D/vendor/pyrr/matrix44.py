@@ -193,7 +193,7 @@ def create_from_z_rotation(theta, dtype=np.float64):
     return mat
 
 @all_parameters_as_numpy_arrays
-def apply_to_vector(mat, vec):
+def apply_to_vector(mat, vec, fill=1.0):
     """Apply a matrix to a vector.
 
     The matrix's rotation and translation are applied to the vector.
@@ -208,7 +208,7 @@ def apply_to_vector(mat, vec):
     """
     if vec.size == 3:
         # convert to a vec4
-        vec4 = np.array([vec[0], vec[1], vec[2], 1.], dtype=vec.dtype)
+        vec4 = np.array([vec[0], vec[1], vec[2], fill], dtype=vec.dtype)
         vec4 = np.dot(vec4, mat)
         if np.allclose(vec4[3], 0.):
             vec4[:] = [np.inf, np.inf, np.inf, np.inf]
@@ -489,7 +489,10 @@ def inverse(m):
 
     .. seealso:: http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.inv.html
     """
-    return np.linalg.inv(m)
+    try:
+        return np.linalg.inv(m)
+    except:
+        return np.zeros((4, 4), dtype=m.dtype)
 
 
 def decompose(m):

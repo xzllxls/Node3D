@@ -1,5 +1,5 @@
 from Qt import QtGui, QtWidgets
-from ..base.node import AutoNode, GeometryNode, SubGraphNode
+from ..base.node import AutoNode, GeometryNode, SubGraphNode, ImageNode
 from ..vendor.NodeGraphQt import NodePublishWidget
 from ..vendor.NodeGraphQt.base import utils
 from ..vendor.NodeGraphQt.constants import (PIPE_LAYOUT_ANGLE, PIPE_LAYOUT_STRAIGHT,
@@ -54,13 +54,15 @@ def publish_node(graph, node):
     wid.show()
 
 
-def draw_node_geometry(graph):
+def draw_node(graph):
     nodes = graph.selected_nodes()
     if not nodes:
         return
     node = nodes[0]
-    if isinstance(node, GeometryNode):
+    if isinstance(node, GeometryNode) and graph.master.glWidget.isVisible():
         graph.master.glWidget.set_node(node)
+    elif isinstance(node, ImageNode) and graph.master.imageViewer.isVisible():
+        graph.master.imageViewer.set_node(node)
 
 
 def add_command(menu, name, func=None, parent=None, shortcut=None):
@@ -140,7 +142,7 @@ def setup_menu_bar(graph, window, root_menu):
     add_command(pipe_menu, 'Lines', lambda: graph.set_grid_mode(VIEWER_GRID_LINES), view)
     add_command(pipe_menu, 'Dots', lambda: graph.set_grid_mode(VIEWER_GRID_DOTS), view)
     graph_menu.addSeparator()
-    add_command(graph_menu, 'Draw Node Geometry', lambda: draw_node_geometry(graph), view, 'S')
+    add_command(graph_menu, 'Draw Node', lambda: draw_node(graph), view, 'S')
 
     # Node Menu
     node_menu = graph.context_nodes_menu()

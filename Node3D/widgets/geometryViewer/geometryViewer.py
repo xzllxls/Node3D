@@ -1,11 +1,11 @@
-from ..vendor.pyqtgraph import opengl as gl
+from ...vendor.pyqtgraph import opengl as gl
 from .glWidget import GLViewWidget
-from ..base.node import GeometryNode
+from ...base.node import GeometryNode
 
 
-class glScene(GLViewWidget):
+class GeometryViewer(GLViewWidget):
     def __init__(self):
-        super(glScene, self).__init__()
+        super(GeometryViewer, self).__init__()
         self.node = None
         self.init_scene()
 

@@ -6,7 +6,7 @@ from ..vendor.NodeGraphQt.widgets.file_dialog import messageBox
 from ..vendor.NodeGraphQt.base import utils
 from ..base.node import RootNode, update_nodes
 from .styles import mainStyle
-from .glScene import glScene
+from .geometryViewer.geometryViewer import GeometryViewer
 from .timeLine import TimeLine
 from .scriptEditor import nodeScriptEditor
 from .dataTreeWidget import NodeDataTreeWidget
@@ -48,7 +48,7 @@ class mainWindow(QMainWindow):
 
         self.dataTreeWidget = NodeDataTreeWidget()
         self.consoleWidget = self.add_console()
-        self.glWidget = glScene()
+        self.glWidget = GeometryViewer()
 
         self.timeline = TimeLine()
         self.timeline.setFps(25)
@@ -93,7 +93,10 @@ class mainWindow(QMainWindow):
 
     def update_view(self, node):
         node = self.graph.get_node_by_id(node.id)
-        self.glWidget.set_node(node)
+        if self.glWidget.isVisible():
+            self.glWidget.set_node(node)
+        if self.imageViewer.isVisible():
+            self.imageViewer.set_node(node)
 
     def update_param_widget(self, node):
         node = self.graph.get_node_by_id(node.id)
@@ -101,8 +104,6 @@ class mainWindow(QMainWindow):
             self.dataTreeWidget.set_node(node)
         if self.consoleWidget.isVisible():
             self.consoleWidget.set_node(node)
-        if self.imageViewer.isVisible():
-            self.imageViewer.set_node(node)
 
     def add_console(self):
         # background-color: #373737; color: #00BFFF

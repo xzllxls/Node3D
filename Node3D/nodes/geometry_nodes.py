@@ -17,7 +17,7 @@ imports = ['3d', '3ds', '3mf', 'ac', 'ac3d', 'acc', 'amj', 'ase', 'ask', 'b3d',
 exports = ['dae ', 'collada', 'stl', 'obj', 'ply', 'x', '3ds', 'json', 'assbin',
            'step', 'gltf', '3mf', 'fbx']
 
-import_flages = aiProcessPreset_TargetRealtime_MaxQuality = ( \
+import_flags = aiProcessPreset_TargetRealtime_MaxQuality = ( \
             pyassimp.postprocess.aiProcess_GenSmoothNormals | \
             pyassimp.postprocess.aiProcess_JoinIdenticalVertices | \
             pyassimp.postprocess.aiProcess_ImproveCacheLocality | \
@@ -44,7 +44,7 @@ class File(GeometryNode):
 
     def load(self, filePath):
         self.geo = Mesh()
-        scene = pyassimp.load(filePath, processing=import_flages)
+        scene = pyassimp.load(filePath, processing=import_flags)
         norms = None
         uvs = None
         for mesh in scene.meshes:
