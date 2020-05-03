@@ -57,7 +57,10 @@ class ImageGraphicsView(QtWidgets.QGraphicsView):
         if update:
             self.image_data = data
         data = data.copy()
-        data = np.clip(data*255, 0, 255).astype(np.uint8)
+        try:
+            data = np.clip(data*255, 0, 255).astype(np.uint8)
+        except:
+            data = (data*255, 0, 255).astype(np.uint8)
         dim = data.shape[-1]
         if dim == 4 or dim == 3:
             if dim == 3:

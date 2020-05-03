@@ -156,15 +156,19 @@ class ImageViewer(QtWidgets.QWidget):
             if gamma <= 0.000001 or multiply <= 0.000001:
                 new_data = np.zeros(self.viewer.image_data.shape, dtype=self.viewer.image_data.dtype)
             else:
-                # if WITH_CUDA:
-                #     cu_image = cupy.asarray(self.viewer.image_data)
-                #     new_data = cupy.asnumpy(cupy.power(cu_image, 1.0 / gamma))
-                # else:
-                new_data = self.viewer.image_data
-                if multiply > 0.000001:
-                    new_data = new_data * multiply
-                if gamma > 0.000001:
-                    new_data = np.power(new_data, 1.0 / gamma)
+                if WITH_CUDA:
+                    cu_image = cupy.asarray(self.viewer.image_data)
+                    if multiply > 0.000001:
+                        cu_image *= multiply
+                    if gamma > 0.000001:
+                        cu_image = cupy.asnumpy(cupy.power(cu_image, 1.0 / gamma))
+                    new_data = cupy.asnumpy(cu_image)
+                else:
+                    new_data = self.viewer.image_data
+                    if multiply > 0.000001:
+                        new_data = new_data * multiply
+                    if gamma > 0.000001:
+                        new_data = np.power(new_data, 1.0 / gamma)
             self.viewer.set_image(new_data, False)
 
     def set_node(self, node):
