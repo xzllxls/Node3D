@@ -890,6 +890,11 @@ class NodeViewer(QtWidgets.QGraphicsView):
             rect = self._combined_rect(nodes)
             self.centerOn(rect.center().x(), rect.center().y())
 
+    def hide_rubber_band(self):
+        self._rubber_band.isActive = False
+        if self._rubber_band.isVisible():
+            self._rubber_band.hide()
+
     def get_pipe_layout(self):
         return self._pipe_layout
 

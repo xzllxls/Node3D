@@ -24,11 +24,11 @@ class ImageViewer(QtWidgets.QWidget):
         hbox.setContentsMargins(0, 0, 0, 0)
         vbox.addLayout(hbox)
 
-        channelLabel = QtWidgets.QLabel()
-        channelLabel.setText("Channels")
-        channelLabel.setAlignment(QtCore.Qt.AlignLeft)
-        channelLabel.setStyleSheet("QLabel{background-color:transparent;margin:0px;padding:0px;"
-                                   "font-size:17px;border-width:0px;max-width:100px}")
+        # channelLabel = QtWidgets.QLabel()
+        # channelLabel.setText("Channels")
+        # channelLabel.setAlignment(QtCore.Qt.AlignLeft)
+        # channelLabel.setStyleSheet("QLabel{background-color:transparent;margin:0px;padding:0px;"
+        #                            "font-size:15px;border-width:0px;max-width:100px}")
 
         self.channelCombobox = QtWidgets.QComboBox()
         self.channelCombobox.addItems(['rgb'])
@@ -39,7 +39,7 @@ class ImageViewer(QtWidgets.QWidget):
         gammaLabel.setText("Gamma")
         gammaLabel.setAlignment(QtCore.Qt.AlignLeft)
         gammaLabel.setStyleSheet("QLabel{background-color:transparent;margin:0px;padding:0px;"
-                                 "font-size:17px;border-width:0px;max-width:100px}")
+                                 "font-size:15px;border-width:0px;max-width:100px}")
         self.gamma = PropFloat()
         self.gamma.set_value(1.0)
         self.gamma.value_changed.connect(self.on_postfx_changed)
@@ -48,12 +48,12 @@ class ImageViewer(QtWidgets.QWidget):
         multiplyLabel.setText("Multiply")
         multiplyLabel.setAlignment(QtCore.Qt.AlignLeft)
         multiplyLabel.setStyleSheet("QLabel{background-color:transparent;margin:0px;padding:0px;"
-                                    "font-size:17px;border-width:0px;max-width:100px}")
+                                    "font-size:15px;border-width:0px;max-width:100px}")
         self.multiply = PropFloat()
         self.multiply.set_value(1.0)
         self.multiply.value_changed.connect(self.on_postfx_changed)
 
-        hbox.addWidget(channelLabel)
+        # hbox.addWidget(channelLabel)
         hbox.addWidget(self.channelCombobox)
         hbox.addWidget(multiplyLabel)
         hbox.addWidget(self.multiply)
@@ -190,7 +190,7 @@ class ImageViewer(QtWidgets.QWidget):
         for item in items:
             num = max(0, len(item))
         self.channelCombobox.addItems(items)
-        self.channelCombobox.setStyleSheet("QComboBox{{max-width:{0}px;min-width:{0}px}}".format(num * 15))
+        self.channelCombobox.setStyleSheet("QComboBox{{max-width:{0}px;min-width:{0}px}}".format(num * 10))
 
     def update_data(self):
         text = self.channelCombobox.currentText()

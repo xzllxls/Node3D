@@ -853,6 +853,7 @@ class NodeGraph(QtCore.QObject):
         """
         if not self._editable:
             return
+        self._viewer.hide_rubber_band()
         NodeCls = self._node_factory.create_node_instance(node_type)
         if NodeCls.NODE_CATEGORY is not None and \
                 NodeCls.NODE_CATEGORY is not self._current_node_space.CHILDREN_CATEGORY:
@@ -912,6 +913,8 @@ class NodeGraph(QtCore.QObject):
                 if node.get_property('create_from_select'):
                     node.create_from_nodes(sel_nodes)
                 self.end_undo()
+                node.model.selected = selected
+                node.view.selected = selected
             else:
                 self._undo_stack.push(undo_cmd)
             self.node_created.emit(node)
