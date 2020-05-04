@@ -1170,6 +1170,8 @@ class BackdropNode(NodeObject):
         self.model.color = (0.0196, 0.506, 0.541, 1)
         self.create_property('backdrop_text', '',
                              widget_type=NODE_PROP_QTEXTEDIT, tab='Backdrop')
+        self.create_property('font_size', 20,
+                             widget_type=NODE_PROP_INT, tab='Backdrop', range=[1, 200])
 
     def auto_size(self):
         """

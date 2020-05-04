@@ -10,11 +10,9 @@ class SubGraphImage(ImageNode, SubGraphNode):
     NODE_CATEGORY = NodeCategory.NONE
     CHILDREN_CATEGORY = NodeCategory.IMAGE
 
-    def __init__(self, dynamic_port=True):
+    def __init__(self, dynamic_port=False):
         super(SubGraphImage, self).__init__(False)
         SubGraphNode.init_sub_graph(self, dynamic_port)
-        self.set_property('input count', 0)
-        self.set_property('output count', 0)
 
     def publish(self, file_path, node_name, node_identifier, node_class_name):
         file_path = super(SubGraphImage, self).publish(
@@ -34,6 +32,16 @@ class SubGraphImage(ImageNode, SubGraphNode):
         if self.output_ports():
             return self.get_data(self.output_ports()[0])
         return None
+
+    def create_from_nodes(self, nodes):
+        if self.parent().CHILDREN_CATEGORY != NodeCategory.IMAGE:
+            self.set_property('create_from_select', False)
+            return
+        else:
+            self.add_int_input('input count', 'input count', 0)
+            self.add_int_input('output count', 'output count', 0)
+            self.set_dynamic_port(True)
+        SubGraphNode.create_from_nodes(self, nodes)
 
 
 class PublishedImage(SubGraphImage, PublishedNode):

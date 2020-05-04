@@ -257,8 +257,6 @@ class SubGraphNode(AutoNode, SubGraph):
         if self in nodes:
             nodes.remove(self)
         [n.set_parent(self) for n in nodes]
-        # if not nodes:
-        #     return
 
         self.set_property('input count', 0)
         self.set_property('output count', 0)
@@ -322,7 +320,8 @@ class SubGraphNode(AutoNode, SubGraph):
         if len(self.output_ports()) == 0:
             self.create_output_node()
         self.set_property('create_from_select', False)
-        print(self.get_property('input count'))
+        self.model.selected = True
+        self.view.selected = True
 
     def update_ports(self):
         """

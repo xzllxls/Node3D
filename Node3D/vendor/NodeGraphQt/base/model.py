@@ -112,12 +112,12 @@ class NodeModel(object):
         """
         tab = tab or 'Properties'
 
-        if name in self.properties.keys():
-            raise NodePropertyError(
-                '"{}" reserved for default property.'.format(name))
-        if name in self._custom_prop.keys():
-            raise NodePropertyError(
-                '"{}" property already exists.'.format(name))
+        # if name in self.properties.keys():
+        #     raise NodePropertyError(
+        #         '"{}" reserved for default property.'.format(name))
+        # if name in self._custom_prop.keys():
+        #     raise NodePropertyError(
+        #         '"{}" property already exists.'.format(name))
 
         self._custom_prop[name] = value
 

@@ -5,7 +5,7 @@ import numpy as np
 import OpenImageIO as oiio
 imports = ['exr', 'png', 'jpg', 'jpeg', 'tif', 'tiff', 'tga',
            'jp2', 'bmp', 'dib', 'jpe', 'pbm', 'ppm', 'pgm',
-           'sr', 'ras', 'hdr']
+           'sr', 'ras', 'hdr', 'tx']
 
 
 def get_type(names):

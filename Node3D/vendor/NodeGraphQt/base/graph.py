@@ -913,8 +913,6 @@ class NodeGraph(QtCore.QObject):
                 if node.get_property('create_from_select'):
                     node.create_from_nodes(sel_nodes)
                 self.end_undo()
-                node.model.selected = selected
-                node.view.selected = selected
             else:
                 self._undo_stack.push(undo_cmd)
             self.node_created.emit(node)

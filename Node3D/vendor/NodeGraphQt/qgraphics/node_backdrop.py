@@ -98,6 +98,7 @@ class BackdropNodeItem(AbstractNodeItem):
         super(BackdropNodeItem, self).__init__(name, parent)
         self.setZValue(Z_VAL_PIPE - 1)
         self._properties['backdrop_text'] = text
+        self._properties['font_size'] = 20
         self._min_size = 80, 80
         self._sizer = BackdropSizer(self, 20.0)
         self._sizer.set_pos(*self._min_size)
@@ -174,6 +175,9 @@ class BackdropNodeItem(AbstractNodeItem):
                 top_rect.x() + 5.0, top_rect.height() + 2.0,
                 rect.width() - 5.0, rect.height())
             painter.setPen(QtGui.QColor.fromRgbF(*self.text_color))
+            font = painter.font()
+            font.setPixelSize(self.font_size)
+            painter.setFont(font)
             painter.drawText(txt_rect,
                              QtCore.Qt.AlignLeft | QtCore.Qt.TextWordWrap,
                              self.backdrop_text)
@@ -185,6 +189,9 @@ class BackdropNodeItem(AbstractNodeItem):
             painter.setPen(QtCore.Qt.NoPen)
             painter.drawRect(rect)
 
+        font = painter.font()
+        font.setPixelSize(15)
+        painter.setFont(font)
         txt_rect = QtCore.QRectF(top_rect.x(), top_rect.y() + 1.2,
                                  rect.width(), top_rect.height())
         painter.setPen(QtGui.QColor.fromRgbF(*self.text_color))
@@ -276,3 +283,12 @@ class BackdropNodeItem(AbstractNodeItem):
     def height(self, height=0.0):
         AbstractNodeItem.height.fset(self, height)
         self._sizer.set_pos(self._width, self._height)
+
+    @property
+    def font_size(self):
+        return self._properties['font_size']
+
+    @font_size.setter
+    def font_size(self, size):
+        self._properties['font_size'] = size
+        self.update(self.boundingRect())

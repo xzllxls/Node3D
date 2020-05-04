@@ -688,7 +688,6 @@ class PropFloat(_ValueSliderEdit):
     def set_value(self, value):
         if value != self.get_value():
             self.setValue(value)
-            self.value_changed.emit(self.toolTip(), value)
 
 
 class PropInt(PropFloat):
