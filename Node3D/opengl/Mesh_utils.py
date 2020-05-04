@@ -6,13 +6,7 @@ from ..vendor.pyqtgraph.opengl.GLGraphicsItem import GLGraphicsItem
 from OpenGL.GL import *
 from ..vendor.pyqtgraph import functions as fn
 import copy
-
-WITH_CUDA = False
-try:
-    import cupy as cp
-    WITH_CUDA = True
-except:
-    pass
+from ..constants import WITH_CUDA, cupy
 
 
 @numba.jit(nopython=True, cache=True, nogil=True)  # parallel=True, nogil=True
@@ -262,9 +256,9 @@ class MeshFuncs(object):
 
         if WITH_CUDA:
             # gpu - cuda
-            p = cp.asarray(positions)
-            m = cp.asarray(matrix)
-            res = cp.asnumpy(p.dot(m))
+            p = cupy.asarray(positions)
+            m = cupy.asarray(matrix)
+            res = cupy.asnumpy(p.dot(m))
         else:
             # cpu
             res = positions.dot(matrix)

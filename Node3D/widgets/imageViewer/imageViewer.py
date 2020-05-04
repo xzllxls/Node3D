@@ -1,16 +1,7 @@
 from PySide2 import QtCore, QtWidgets
-import numpy as np
 from .imageGraphics import ImageGraphicsView
 from ...vendor.NodeGraphQt.widgets.properties import PropFloat
 from ...base.node import ImageNode
-
-WITH_CUDA = False
-try:
-    import cupy
-
-    WITH_CUDA = True
-except:
-    pass
 
 
 class button(QtWidgets.QPushButton):
@@ -136,12 +127,8 @@ class ImageViewer(QtWidgets.QWidget):
         self.block_value = False
 
     def set_image(self, image):
-        gamma = self.gamma.get_value()
-        if gamma != 1.0 or self.multiply.get_value() != 1.0:
-            self.viewer.image_data = image
-            self.on_postfx_changed()
-        else:
-            self.viewer.set_image(image)
+        self.viewer.image_data = image
+        self.on_postfx_changed()
         w = image.shape[0]
         h = image.shape[1]
         self.sizeLabel.setText("Width:{0},Height:{1}".format(w, h))
@@ -179,23 +166,7 @@ class ImageViewer(QtWidgets.QWidget):
             self.block_value = False
 
         if self.viewer.image_data is not None:
-            if gamma <= 0.000001 or multiply <= 0.000001:
-                new_data = np.zeros(self.viewer.image_data.shape, dtype=self.viewer.image_data.dtype)
-            else:
-                if WITH_CUDA:
-                    cu_image = cupy.asarray(self.viewer.image_data)
-                    if multiply > 0.000001:
-                        cu_image *= multiply
-                    if gamma > 0.000001:
-                        cu_image = cupy.asnumpy(cupy.power(cu_image, 1.0 / gamma))
-                    new_data = cupy.asnumpy(cu_image)
-                else:
-                    new_data = self.viewer.image_data
-                    if multiply > 0.000001:
-                        new_data = new_data * multiply
-                    if gamma > 0.000001:
-                        new_data = np.power(new_data, 1.0 / gamma)
-            self.viewer.set_image(new_data, False)
+            self.viewer.set_image(self.viewer.image_data, False, gamma, multiply)
 
     def set_node(self, node):
         if not isinstance(node, ImageNode):

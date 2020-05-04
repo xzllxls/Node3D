@@ -1,5 +1,6 @@
 from Qt import QtGui, QtCore, QtWidgets, QtOpenGL
 from PIL import Image
+from ...constants import WITH_CUDA, cupy
 import numpy as np
 ZOOM_MIN = -0.95
 ZOOM_MAX = 2.0
@@ -33,7 +34,6 @@ class ImageGraphicsView(QtWidgets.QGraphicsView):
         self.scene().addItem(self._image_item)
         self._image_item.mouse_moved.connect(self.update_info)
 
-        self._origin_pos = None
         self._previous_pos = QtCore.QPoint(self.width(), self.height())
 
         self.LMB_state = False
@@ -43,6 +43,7 @@ class ImageGraphicsView(QtWidgets.QGraphicsView):
         self.CTRL_state = False
         self.SHIFT_state = False
         self.COLLIDING_state = False
+        self.current_key = None
 
     def __repr__(self):
         return '{}.{}()'.format(
@@ -53,14 +54,31 @@ class ImageGraphicsView(QtWidgets.QGraphicsView):
             self.position_changed.emit(x, y)
             self.color_changed.emit(self.image_data[x, y])
 
-    def set_image(self, data, update=True):
+    def set_image(self, img, update=True, gamma=1.0, mult=1.0):
         if update:
-            self.image_data = data
-        data = data.copy()
-        try:
-            data = np.clip(data*255, 0, 255).astype(np.uint8)
-        except:
-            data = (data*255, 0, 255).astype(np.uint8)
+            self.image_data = img
+        # data = data.copy()
+
+        if WITH_CUDA:
+            cu_image = cupy.asarray(img)
+            if mult != 1.0:
+                cu_image *= mult
+            cu_image = cupy.power(cu_image, 1.0 / (2.2 * gamma))
+            try:
+                cu_image = cupy.clip(cu_image * 255, 0, 255).astype(cupy.uint8)
+            except:
+                cu_image = (cu_image * 255, 0, 255).astype(cupy.uint8)
+            data = cupy.asnumpy(cu_image)
+        else:
+            if mult != 1.0:
+                data = np.power(img, 1.0 / (2.2 * gamma))
+            else:
+                data = np.power(img * mult, 1.0 / (2.2 * gamma))
+            try:
+                data = np.clip(data*255, 0, 255).astype(np.uint8)
+            except:
+                data = (data*255, 0, 255).astype(np.uint8)
+
         dim = data.shape[-1]
         if dim == 4 or dim == 3:
             if dim == 3:
@@ -142,7 +160,6 @@ class ImageGraphicsView(QtWidgets.QGraphicsView):
         elif event.button() == QtCore.Qt.MiddleButton:
             self.MMB_state = True
 
-        self._origin_pos = event.pos()
         self._previous_pos = event.pos()
 
         super(ImageGraphicsView, self).mousePressEvent(event)
@@ -192,18 +209,27 @@ class ImageGraphicsView(QtWidgets.QGraphicsView):
             self.ALT_state = True
             self.SHIFT_state = True
 
-        if event.key() == QtCore.Qt.Key_F:
-            self.fit_to_image()
-        elif event.key() == QtCore.Qt.Key_R:
-            self.show_channel(0)
-        elif event.key() == QtCore.Qt.Key_G:
-            self.show_channel(1)
-        elif event.key() == QtCore.Qt.Key_B:
-            self.show_channel(2)
-        elif event.key() == QtCore.Qt.Key_A:
-            self.show_channel(3)
-        elif event.key() == QtCore.Qt.Key_Q:
+        key = event.key()
+        if key == self.current_key:
             self.show_channel(None)
+            key = None
+        elif key == QtCore.Qt.Key_F:
+            self.fit_to_image()
+        elif key == QtCore.Qt.Key_R:
+            self.show_channel(0)
+        elif key == QtCore.Qt.Key_G:
+            self.show_channel(1)
+        elif key == QtCore.Qt.Key_B:
+            self.show_channel(2)
+        elif key == QtCore.Qt.Key_A:
+            self.show_channel(3)
+        elif key == QtCore.Qt.Key_Q:
+            self.show_channel(None)
+        else:
+            super(ImageGraphicsView, self).keyPressEvent(event)
+            return
+
+        self.current_key = key
 
         super(ImageGraphicsView, self).keyPressEvent(event)
 
@@ -317,21 +343,6 @@ class ImageGraphicsScene(QtWidgets.QGraphicsScene):
         pos = QtCore.QPoint(20, parent.height()-20)
         painter.setPen(pen)
         painter.drawText(parent.mapToScene(pos), 'Not Editable')
-
-    def drawBackground(self, painter, rect):
-        super(ImageGraphicsScene, self).drawBackground(painter, rect)
-
-    def mousePressEvent(self, event):
-        super(ImageGraphicsScene, self).mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        super(ImageGraphicsScene, self).mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        super(ImageGraphicsScene, self).mouseReleaseEvent(event)
-
-    def viewer(self):
-        return self.views()[0] if self.views() else None
 
 
 class ImageItem(QtWidgets.QGraphicsPixmapItem, QtCore.QObject):

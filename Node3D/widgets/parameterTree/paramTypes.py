@@ -2,7 +2,7 @@ from ...vendor.pyqtgraph.parametertree import parameterTypes as pTypes
 from ...vendor.pyqtgraph.parametertree import Parameter, ParameterItem, registerParameterType
 from ...vendor.NodeGraphQt.widgets.properties import PropFilePath, _ValueEdit, \
     _ValueSliderEdit, PropVector2, PropVector3, PropVector4, PropLabel, \
-    PropColorPicker, PropTextEdit
+    PropColorPicker, PropTextEdit, PropFileSavePath
 from Qt import QtGui, QtWidgets, QtCore
 from .curveEditor import CurveWidget
 
@@ -28,6 +28,29 @@ class FileParameter(Parameter):
 
 
 registerParameterType('file', FileParameter, override=True)
+
+
+class FileSaveParameterItem(pTypes.WidgetParameterItem):
+    def __init__(self, param, depth):
+        self.hideWidget = False
+        super().__init__(param, depth)
+
+    def makeWidget(self):
+        opts = self.param.opts
+        w = PropFileSavePath()
+        w.set_ext(opts['ext'])
+        w.setMaximumHeight(30)
+        w.sigChanged = w.value_changed
+        w.value = w.get_value
+        w.setValue = w.set_value
+        return w
+
+
+class FileSaveParameter(Parameter):
+    itemClass = FileSaveParameterItem
+
+
+registerParameterType('file_save', FileSaveParameter, override=True)
 
 
 class FloatEditParameterItem(pTypes.WidgetParameterItem):

@@ -13,6 +13,8 @@ def get_type(names):
         for i in names:
             if i.lower().endswith('.r'):
                 return "RGB"
+            elif i.lower().endswith('.red'):
+                return "RGB"
             elif i.lower().endswith('.x'):
                 return "XYZ"
             elif i.lower().endswith('.u'):
@@ -43,6 +45,21 @@ def sort_channels(name, mode):
                 img[2] = n
                 name.remove(n)
             elif n.lower().endswith("a"):
+                img[3] = n
+                name.remove(n)
+            elif n.lower().endswith("a"):
+                img[3] = n
+                name.remove(n)
+            elif n.lower().endswith("red"):
+                img[0] = n
+                name.remove(n)
+            elif n.lower().endswith("green"):
+                img[1] = n
+                name.remove(n)
+            elif n.lower().endswith("blue"):
+                img[2] = n
+                name.remove(n)
+            elif n.lower().endswith("alpha"):
                 img[3] = n
                 name.remove(n)
         if None in img:
@@ -96,7 +113,7 @@ def sort_channels(name, mode):
         return name
 
 
-def get_all_channels(image):
+def get_all_channels(image, color_space, auto_color_space=False):
     image_data = {}
     image_offset = {}
     _last_name = None
@@ -174,6 +191,8 @@ def get_all_channels(image):
                 np_image_data[name] = d.transpose((1, 0))
             else:
                 np_image_data[name] = real_data[..., indices].transpose((1, 0, 2))
+            if color_space == 'srgb':
+                np_image_data[name] = np.power(np_image_data[name], 2.2)
         except Exception as e:
             print(e)
             print("************* can not convert ", name, n, channel_type, indices)
@@ -191,14 +210,20 @@ class File(ImageNode):
     def __init__(self):
         super(File, self).__init__()
         ext = "*." + ";*.".join(imports)
-        self.add_file_input("file", "file", ext=ext)
+        params = [{'name': 'File', 'type': 'file', 'ext': ext},
+                  {'name': 'Color Space', 'type': 'list', 'limits': ['linear', 'srgb']}]
+        self.set_parameters(params)
+
+        # self.add_file_input("file", "file", ext=ext)
+        # self.add_combo_menu('color space', 'color space', ['srgb', 'linear'])
+        # # self.
 
     def run(self):
         self.image = None
-        file_path = self.get_property('file')
+        file_path = self.get_property('File')
         if not os.path.exists(file_path):
             return
-
+        color_space = self.get_property('Color Space')
         # opencv
         # self.image = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
         # if "int" in self.image.dtype.name:
@@ -208,7 +233,31 @@ class File(ImageNode):
 
         # oiio
         image = oiio.ImageInput.open(file_path)
-        self.image = get_all_channels(image)
+        self.image = get_all_channels(image, color_space)
+        image.close()
+
+
+def render_image(node):
+    file_path = node.get_property("File")
+
+    if not os.path.exists(os.path.dirname(file_path)):
+        return
+    image = node.get_input_image_ref(0)
+    if not image:
+        return
+    image = image[list(image.keys())[0]].copy()
+    # output = oiio.ImageOutput.create(file_path)
+    # spec = oiio.ImageSpec(image.shape[0], image.shape[1], 3, oiio.TypeFloat)
+    # output.open(file_path, spec)
+    # output.write_image(image)
+    # output.close()
+    if file_path.lower().endswith('tif') or file_path.lower().endswith('tiff'):
+        pass
+    else:
+        image = (image * 255).astype(np.uint8)
+    image = image.transpose((1, 0, 2))
+    image[..., [0, 1, 2]] = image[..., [2, 1, 0]]
+    cv2.imwrite(file_path, image)
 
 
 class Render(ImageNode):
@@ -221,4 +270,7 @@ class Render(ImageNode):
     def __init__(self):
         super(Render, self).__init__()
         ext = "*." + ";*.".join(imports)
-        self.add_file_input("file", "file", ext=ext)
+        params = [{'name': 'File', 'type': 'file_save', 'ext': ext},
+                  {'name': 'Render', 'type': 'button', 'funcs': [render_image], 'node': self}]
+        self.set_parameters(params)
+        self.add_input('in image')
