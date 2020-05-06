@@ -24,14 +24,18 @@ QLabel{{
 QTabWidget::pane {{
         top:20px;
         border-width: 1px;
-        border-color: rgb(70,70,70);
+        border-color: rgb(20,20,20);
         background-color: rgb(70,70,70);
     }}
 QTableWidget::item{{
     selection-background-color: rgb(0,255,2);
+    border-width: 1px;
+    border-color: rgb(20,20,20);
     }}
 QTabWidget::tab-bar{{
     background:transparent;
+    border-width: 1px;
+    border-color: rgb(20,20,20);
     }}
 QTabBar::tab{{
     max-width:200px;
@@ -83,8 +87,8 @@ QPushButton {{
     border-color: rgb(30,30,30);
     min-width: 30;
     min-height: 10;
-    max-width: 30;
-    max-height: 10;
+    max-width: 40;
+    max-height: 25;
     }}
 QPushButton::pressed {{
     border-style: inset;
@@ -162,31 +166,32 @@ QTableCornerButton::section{{
     background:{0};
     }}
 QMainWindow::separator {{
-    width: 0px;
-    height: 0px;
+    width: 2px;
+    height: 2px;
     margin: 0px;
-    padding: 5px;
+    padding: 0px;
+    border: 1px;
     background: rgb(70,70,70);
     border-width: 1px;
-    border-color: rgb(20,20,20)
+    border-color: rgb(20,20,20);
 }}
 QMainWindow::separator:hover {{
-    background: rgb(90,90,90);
-    border-color: rgb(20,20,20)
+    background: rgb(100,100,100);
+    border-color: rgb(150,150,150);
 }}
 QSplitter::handle:horizontal {{
-    width: 4px;
+    width: 0px;
     background: rgb(70,70,70);
-    border-width: 1px;
+    border-width: 0px;
     border-color: rgb(20,20,20)
 }}
 QSplitter::handle:horizontal:hover {{
     background-color: rgb(90,90,90);
 }}
 QSplitter::handle:vertical {{
-    height: 4px;
+    height: 0px;
     background: rgb(70,70,70);
-    border-width: 1px;
+    border-width: 0px;
     border-color: rgb(20,20,20)
 }}
 QMenu::item{{
@@ -225,6 +230,7 @@ QSlider::handle:Horizontal{{
     width: 5px;
     margin: -10px 0;
     border-radius: 1px;
+    background:rgb(70,70,70);
 }}
 QSlider::sub-page:Horizontal{{
     border: 1px solid rgb(0, 0, 0);

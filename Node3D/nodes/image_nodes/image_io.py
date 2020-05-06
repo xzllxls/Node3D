@@ -1,4 +1,6 @@
 from Node3D.base.node import ImageNode
+from Node3D.base.image_process import gamma_cpu, gamma_gpu
+from Node3D.constants import WITH_CUDA
 import cv2
 import os
 import numpy as np
@@ -192,7 +194,10 @@ def get_all_channels(image, color_space, auto_color_space=False):
             else:
                 np_image_data[name] = real_data[..., indices].transpose((1, 0, 2))
             if color_space == 'srgb':
-                np_image_data[name] = np.power(np_image_data[name], 2.2)
+                if WITH_CUDA:
+                    np_image_data[name] = gamma_gpu(np_image_data[name], 1.0 / 2.2)
+                else:
+                    np_image_data[name] = gamma_cpu(np_image_data[name], 1.0 / 2.2)
         except Exception as e:
             print(e)
             print("************* can not convert ", name, n, channel_type, indices)

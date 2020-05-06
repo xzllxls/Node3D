@@ -11,7 +11,7 @@ from ..constants import WITH_CUDA, cupy
 
 @numba.jit(nopython=True, cache=True, nogil=True)  # parallel=True, nogil=True
 def _calVertexSmooth(data, iter, vv):
-    for i in range(iter):
+    for _ in range(iter):
         for v in range(vv.shape[0]):
             pos = data[v]
             num = 1

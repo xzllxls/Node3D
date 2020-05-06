@@ -83,6 +83,7 @@ class mainWindow(QMainWindow):
         self.tabifyDockWidget(glDock, imageViewerDock)
 
         nodeTreeDock.setMaximumWidth(250)
+        self.setTabPosition(Qt.NoDockWidgetArea, QtWidgets.QTabWidget.North)
         self.setup_scene()
 
     def setup_menus(self):
