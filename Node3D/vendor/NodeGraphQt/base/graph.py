@@ -239,7 +239,7 @@ class NodeGraph(QtCore.QObject):
             return
         if self._viewer.underMouse():
             nodes = None
-            if self._current_node_space.CHILDREN_CATEGORY is not self._last_category:
+            if (self._current_node_space.CHILDREN_CATEGORY is not self._last_category) or True:
                 self._viewer.rebuild_tab_search()
                 self._last_category = self._current_node_space.CHILDREN_CATEGORY
                 nodes = self._node_factory.get_names_by_category(self._current_node_space.CHILDREN_CATEGORY)
