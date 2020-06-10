@@ -17,7 +17,7 @@ def run(nodes=None):
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_UseDesktopOpenGL)
     app = QtWidgets.QApplication()
     # app.setFont(QtGui.QFont("Consolas", 9))
-    # app.setStyleSheet(qdarkstyle.load_stylesheet_from_environment())
+    app.setStyleSheet(qdarkstyle.load_stylesheet_from_environment())
     app.setStyleSheet(mainStyle)
 
     win = mainWindow()
