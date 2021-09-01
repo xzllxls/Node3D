@@ -8,7 +8,7 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-    
+
 jobs:
   build:
     # The CMake configure and build commands are platform agnostic and should work equally
@@ -23,6 +23,6 @@ jobs:
   
     steps:
       - name: Set current date as env variable
-        run: echo "NOW::$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+        run: setx sdate (Get-Date).ToString("yyyy-MM-dd")
       - name: Echo current date
-        run: echo $NOW
+        run: echo $ENV:sdate
