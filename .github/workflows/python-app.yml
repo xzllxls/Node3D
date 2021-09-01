@@ -28,4 +28,4 @@ jobs:
           
       - name: Echo current date
         run: |
-          echo "$ENV:current_date"
+          $ENV:current_date
