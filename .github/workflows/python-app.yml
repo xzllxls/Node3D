@@ -23,6 +23,9 @@ jobs:
   
     steps:
       - name: Set current date as env variable
-        run: setx sdate (Get-Date).ToString("yyyy-MM-dd")
+        run: |
+          echo "current_date=(Get-Date).ToString("yyyy-MM-dd")" >> $GITHUB_ENV
+          
       - name: Echo current date
-        run: echo $ENV:sdate
+        run: |
+          echo ${{ env.current_date }}
